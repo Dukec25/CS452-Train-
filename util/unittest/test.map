@@ -1,0 +1,157 @@
+Archive member included because of file (symbol)
+
+../../io/lib/libio.a(io.o)    build/test.o (assert)
+../../io/lib/libio.a(bwio.o)  ../../io/lib/libio.a(io.o) (bwformat)
+../../io/lib/libio.a(bufferio.o)
+                              ../../io/lib/libio.a(io.o) (buffer_putc)
+../../util/lib/libutil.a(fifo.o)
+                              ../../io/lib/libio.a(io.o) (is_fifo_empty)
+../../util/lib/libutil.a(string.o)
+                              build/test.o (atoi)
+../../util/lib/libutil.a(heap.o)
+                              build/test.o (heap_init)
+/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+                              ../../util/lib/libutil.a(string.o) (__udivsi3)
+/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+                              ../../util/lib/libutil.a(string.o) (__umodsi3)
+/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+                              /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o) (__div0)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+ram              0x0000000000000000 0x0000000002000000
+rom              0x0000000060000000 0x0000000000800000
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD build/test.o
+
+data            0x0000000000000000        0x0
+                0x0000000000000000                _DataStart = .
+ *(.data)
+                0x0000000000000000                _DataEnd = .
+
+bss             0x0000000000000000        0x0
+                0x0000000000000000                _BssStart = .
+ *(.bss)
+                0x0000000000000000                _BssEnd = .
+
+text            0x0000000000000000     0x3530
+ *(.text)
+ .text          0x0000000000000000      0xe2c build/test.o
+                0x0000000000000000                main
+ .text          0x0000000000000e2c      0x390 ../../io/lib/libio.a(io.o)
+                0x0000000000001034                assert
+                0x0000000000001130                debug
+                0x0000000000000e2c                channel_select
+                0x0000000000000f64                getC
+                0x0000000000000ee0                putC
+                0x00000000000010b4                warn
+ .text          0x00000000000011bc      0x880 ../../io/lib/libio.a(bwio.o)
+                0x00000000000014ac                bwputr
+                0x00000000000011bc                bwsetfifo
+                0x00000000000013ac                bwputc
+                0x00000000000012a0                bwsetspeed
+                0x00000000000016b0                bwgetc
+                0x000000000000170c                bwformat
+                0x00000000000015a8                bwputw
+                0x0000000000001a04                bwprintf
+                0x0000000000001414                bwputx
+                0x000000000000152c                bwputstr
+ .text          0x0000000000001a3c      0x670 ../../io/lib/libio.a(bufferio.o)
+                0x0000000000002074                buffer_printf
+                0x0000000000001d7c                format
+                0x0000000000001d14                buffer_getc
+                0x0000000000001c0c                buffer_putw
+                0x0000000000001b90                buffer_putstr
+                0x0000000000001a78                buffer_putx
+                0x0000000000001b10                buffer_putr
+                0x0000000000001a3c                buffer_putc
+                0x0000000000001d48                buffer_peekc
+ .text          0x00000000000020ac      0x2ac ../../util/lib/libutil.a(fifo.o)
+                0x0000000000002188                fifo_put
+                0x00000000000022e8                fifo_peek
+                0x00000000000020ac                fifo_init
+                0x0000000000002138                is_fifo_full
+                0x00000000000020f8                is_fifo_empty
+                0x0000000000002238                fifo_get
+ .text          0x0000000000002358      0x694 ../../util/lib/libutil.a(string.o)
+                0x000000000000271c                i2a
+                0x00000000000028a4                memcpy
+                0x000000000000240c                c2x
+                0x00000000000025d8                ui2a
+                0x0000000000002514                a2i
+                0x000000000000246c                a2d
+                0x00000000000027e0                strcmp
+                0x0000000000002358                atoi
+                0x0000000000002780                toupper
+ .text          0x00000000000029ec      0x42c ../../util/lib/libutil.a(heap.o)
+                0x0000000000002aa8                heap_root
+                0x0000000000002a28                is_heap_empty
+                0x00000000000029ec                is_heap_full
+                0x0000000000002a58                heap_init
+                0x0000000000002adc                heap_insert
+                0x0000000000002c18                heap_delete
+ .text          0x0000000000002e18      0x110 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+                0x0000000000002e18                __udivsi3
+                0x0000000000002f10                __aeabi_uidivmod
+ .text          0x0000000000002f28       0xcc /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+                0x0000000000002f28                __umodsi3
+ .text          0x0000000000002ff4        0x4 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+                0x0000000000002ff4                __aeabi_ldiv0
+                0x0000000000002ff4                __div0
+                0x0000000000002ff4                __aeabi_idiv0
+ *(.got)
+ .got           0x0000000000002ff8        0x4 build/test.o
+ *(.got.plt)
+ .got.plt       0x0000000000002ffc        0xc build/test.o
+                0x0000000000002ffc                _GLOBAL_OFFSET_TABLE_
+ *(.rodata)
+ .rodata        0x0000000000003008      0x4a4 build/test.o
+ .rodata        0x00000000000034ac       0x7c ../../io/lib/libio.a(io.o)
+ .rodata        0x0000000000003528        0x4 ../../io/lib/libio.a(bwio.o)
+ .rodata        0x000000000000352c        0x4 ../../io/lib/libio.a(bufferio.o)
+ *(.glue_7)
+ *(.glue_7t)
+
+.rel.dyn
+LOAD ../../common/lib/libcommon.a
+LOAD ../../io/lib/libio.a
+LOAD ../../util/lib/libutil.a
+LOAD /u0/wbcowan/gnuarm-4.0.2/arm-elf/bin/../lib/libc.a
+LOAD /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a
+OUTPUT(test.elf elf32-littlearm)
+
+.comment        0x0000000000000000       0x7e
+ .comment       0x0000000000000000       0x12 build/test.o
+ .comment       0x0000000000000012       0x12 ../../io/lib/libio.a(io.o)
+ .comment       0x0000000000000024       0x12 ../../io/lib/libio.a(bwio.o)
+ .comment       0x0000000000000036       0x12 ../../io/lib/libio.a(bufferio.o)
+ .comment       0x0000000000000048       0x12 ../../util/lib/libutil.a(fifo.o)
+ .comment       0x000000000000005a       0x12 ../../util/lib/libutil.a(string.o)
+ .comment       0x000000000000006c       0x12 ../../util/lib/libutil.a(heap.o)
+
+.debug_line     0x0000000000000000      0x14f
+ .debug_line    0x0000000000000000       0x86 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_line    0x0000000000000086       0x6f /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_line    0x00000000000000f5       0x5a /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+
+.debug_info     0x0000000000000000      0x153
+ .debug_info    0x0000000000000000       0x71 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_info    0x0000000000000071       0x71 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_info    0x00000000000000e2       0x71 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+
+.debug_abbrev   0x0000000000000000       0x3c
+ .debug_abbrev  0x0000000000000000       0x14 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_abbrev  0x0000000000000014       0x14 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_abbrev  0x0000000000000028       0x14 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
+
+.debug_aranges  0x0000000000000000       0x60
+ .debug_aranges
+                0x0000000000000000       0x20 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_udivsi3.o)
+ .debug_aranges
+                0x0000000000000020       0x20 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_umodsi3.o)
+ .debug_aranges
+                0x0000000000000040       0x20 /u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2/libgcc.a(_dvmd_tls.o)
