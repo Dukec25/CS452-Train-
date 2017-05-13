@@ -1,6 +1,10 @@
 #include <kernel.h> 
 #include <heap.h>
 
+int create( int priority, void(*code) ){
+
+}
+
 int main()
 {
     // initialization of priority queue 
@@ -24,6 +28,5 @@ int main()
 	node_t task, del;
         task = heap_root(&ready_queue);
         heap_delete(&task, &del);
-        // active the task, do context switch, leave this tomorrow 
     }
 }

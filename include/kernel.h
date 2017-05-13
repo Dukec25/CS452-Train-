@@ -17,3 +17,9 @@ enum task_state{
     STATE_ZOMBIE,
     STATE_READY
 };
+
+int create( int priority, void(*code) );
+
+int MyTid();
+
+int MyParentTid();
