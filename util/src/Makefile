@@ -1,4 +1,4 @@
-SRC		= fifo.c string.c cursor.c heap.c
+SRC		= fifo.c string.c heap.c
 TARGET_LIB 	= libutil.a
 
 all: build $(TARGET_LIB)
