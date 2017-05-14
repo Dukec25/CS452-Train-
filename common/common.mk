@@ -13,12 +13,12 @@ ARFLAGS = rcs
 
 INCLUDE = -I../../common/include -I../../util/include -I../../io/include
 LDPATHS = -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../../common/lib -L../../io/lib -L../../util/lib 
-LIBS 	= -lcommon -lio -lutil -lc -lgcc
+LIBS 	= -lutil -lc -lgcc
 LDFLAGS = -init main -Map $(MAP) -N  -T orex.ld $(LDPATHS) $(LIBS)
 
 BUILD	= build
 ASM	= $(addprefix $(BUILD)/, $(patsubst %.c, %.s, $(SRC)))
-OBJ	= $(addprefix $(BUILD)/, $(patsubst %.c, %.o, $(SRC)))
+OBJ	= $(addprefix $(BUILD)/, $(patsubst %.c, %.o, $(SRC))) $(ASM_OBJ)
 MAP	= $(patsubst %.elf, %.map, $(TARGET_ELF))
 
 $(BUILD):
