@@ -1,6 +1,5 @@
 #ignore generate .o, .a, .s, .map, .elf files
 *.o
 *.a
-*.s
 *.map
 *.elf
