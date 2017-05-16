@@ -38,7 +38,7 @@ $(TARGET_ELF): $(ASM) $(OBJ)
 	$(LD) $(MSG) -o $@ $(OBJ) $(LDFLAGS) 
 
 copy: $(TARGET_ELF)
-	cp $< /u/cs452/tftp/ARM/$(whoami)
+	cp $< /u/cs452/tftp/ARM/$(shell whoami)
 
 clean:
 	rm -rf $(BUILD)

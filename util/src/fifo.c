@@ -19,7 +19,7 @@ int is_fifo_full(fifo_t **pf)
 	return (next == (*pf)->tail); 
 }
 
-int fifo_put(fifo_t **pf, char c)
+int fifo_put(fifo_t **pf, void *item)
 {
 	if (is_fifo_full(pf)) {
 	    return -1; // fifo full
@@ -29,12 +29,12 @@ int fifo_put(fifo_t **pf, char c)
 	if (next >= FIFO_SIZE) {
 		next = 0;
 	}
-	(*pf)->bytes[(*pf)->head] = c;
+	(*pf)->items[(*pf)->head] = item;
 	(*pf)->head = next;
 	return 0; // No errors
 }
 
-int fifo_get(fifo_t **pf, char *c)
+int fifo_get(fifo_t **pf, void **pitem)
 {
 	if (is_fifo_empty(pf)) {
 	    return -1; // fifo Empty - nothing to get
@@ -44,16 +44,16 @@ int fifo_get(fifo_t **pf, char *c)
 	if (next >= FIFO_SIZE) {
 		next = 0;
 	}
-	*c = (*pf)->bytes[(*pf)->tail];
+	*pitem = (*pf)->items[(*pf)->tail];
 	(*pf)->tail = next;
 	return 0; // No errors
 }
 
-int fifo_peek(fifo_t **pf, char *c)
+int fifo_peek(fifo_t **pf, void **pitem)
 {
 	if (is_fifo_empty(pf)) {
 	    return -1; // fifo Empty - nothing to get
 	}
-	*c = (*pf)->bytes[(*pf)->tail];
+	*pitem = (*pf)->items[(*pf)->tail];
 	return 0; // No errors
 }
