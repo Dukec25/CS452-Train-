@@ -3,6 +3,9 @@
 #include <define.h>
 
 extern int asm_print_sp();
+extern void asm_kernel_swiEntry();
+extern void asm_init_kernel();
+
 
 void print_td(task_descriptor *td)
 {
@@ -37,19 +40,31 @@ void kerxit(task_descriptor *active, void *req)
 
 void handle(task_descriptor *active, void *req) {}
 
+void kernel_swi_entry(){
+    asm_kernel_swiEntry();
+}
+
 int main()
 {
-	vint *available_memeory_ptr = (vint*) TASK_START_LOCATION;
-	task_descriptor task1_td;
-	heap_t ready_queue = intialize(&task1_td, &available_memeory_ptr);
-	{
-		node_t del;
-		task_descriptor *active;
-		void *req;
-        	heap_delete(&ready_queue, &del);
-		active = (task_descriptor *)del.data;
-		kerxit(active, req);
-		handle(active, req); 
-	}
+        vint *swi_handle_entry = (vint*)0x28;
+        bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, swi_handle_entry);
+        bwprintf(COM2, "line %d, asm_kernel_swiEntry = 0x%x\n", __LINE__, asm_kernel_swiEntry);
+        bwprintf(COM2, "line %d, asm_init_kernel = 0x%x\n", __LINE__, asm_init_kernel);
+        *swi_handle_entry = (vint*)(asm_kernel_swiEntry+0x218000);
+        bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, *swi_handle_entry);
+        /*bwprintf(COM2, "line %d, pc = %x\n", __current_pc());*/
+	/*vint *available_memeory_ptr = (vint*) TASK_START_LOCATION;*/
+	/*task_descriptor task1_td;*/
+	/*heap_t ready_queue = intialize(&task1_td, &available_memeory_ptr);*/
+	/*{*/
+		/*node_t del;*/
+		/*task_descriptor *active;*/
+		/*void *req;*/
+                /*heap_delete(&ready_queue, &del);*/
+//		active = (task_descriptor *)del.data;
+//		kerxit(active, req);
+//		handle(active, req); 
+	/*}*/
+        init_kernel();
 	return 0;
 }

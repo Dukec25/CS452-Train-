@@ -19,8 +19,16 @@ typedef struct task_descriptor
     // return value 
 } task_descriptor;
 
-int create( int priority, void(*code) );
+typedef struct kernel_state
+{
 
-int MyTid();
 
-int MyParentTid();
+} kernel_state;
+
+int k_create( int priority, void(*code) );
+
+int k_myTid();
+
+int k_myParentTid();
+
+void k_init_kernel();
