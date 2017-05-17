@@ -5,7 +5,7 @@
 extern int asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
-extern void asm_kernel_activate(task_descriptor *td);
+extern int asm_kernel_activate(task_descriptor *td);
 
 void print_td(task_descriptor *td)
 {
@@ -51,14 +51,14 @@ task_descriptor *schedule(heap_t *ready_queue) {
 	return head.data;
 }
 
-void activate(task_descriptor *td, kernel_state *ks) {
+int activate(task_descriptor *td, kernel_state *ks) {
 	bwprintf(COM2, "line %d, in activate\n", __LINE__);
 	ks->u_sp = td->sp;
 	ks->u_lr = td->lr;
 	ks->u_spsr = td->spsr;
 	bwprintf(COM2, "%s:%d ks->u_sp = 0x%x, ks->u_lr = 0x%x\n", __FILE__, __LINE__, ks->u_sp, ks->u_lr);	
 	//fifo_put(&(ks->active_tasks), td);
-	asm_kernel_activate(td);
+	return asm_kernel_activate(td);
 }
 
 int main()
@@ -85,13 +85,15 @@ int main()
 	ks.active_tasks = &active_tasks;
 	register int *rb asm("lr");
 	ks.rb_lr = rb;
-	for(;;) {
+	//for(;;)
+	{
 		// scheduling td = priorityQueue.pull()
 		task_descriptor *td = schedule(&ready_queue);
 		bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
 		bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
 		// active(td);
-		activate(td, &ks);
+		int req = activate(td, &ks);
+		bwprintf(COM2, "%s:%d get back into kernel again, req = %d\n", __FILE__, __LINE__, req);
           	// handle()
 	}
         // init_kernel();

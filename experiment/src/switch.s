@@ -5,6 +5,7 @@
         .global asm_init_kernel
         .global asm_create
 	.global asm_kernel_activate
+	.global	asm_kernel_pass
 
 @.global activate
 @activate:
@@ -35,23 +36,31 @@ asm_print_sp:
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
-    ldr r8, [lr, #-4]
+	ldr r8, [lr, #-4]
     BIC r8, r8, #0xff000000
-    mov r7, #4
-    mov r9, #0
-    add r6, r8, r9
-    mul r8, r6, r7 
-    add r1, pc, r8
-    b k_init_kernel
-    b k_create
+	mov r0, #2
+	mov r1, r8
+	bl bwputr(PLT)
+	mov	r0, r8
+    ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+    @ldr r8, [lr, #-4]
+    @BIC r8, r8, #0xff000000
+    @mov r7, #4
+    @mov r9, #0
+    @add r6, r8, r9
+    @mul r8, r6, r7 
+    @add r1, pc, r8
+    @b k_init_kernel
+    @b k_create
+	@b k_pass
 
 asm_kernelExit:
 
 asm_kernel_activate:
 @	@ r0 = task_descriptor *td
 @	@ save kernel state
-@	mov 	ip, sp 
-@    stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov 	ip, sp 
+    stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 @	@ install active task state
 @	@@ r10 = r0
 	mov 	r10, r0
@@ -114,6 +123,13 @@ asm_create:
     mov ip, sp 
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
     SWI 	1
+    ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+    movs 	pc, lr
+
+asm_kernel_pass:
+    mov ip, sp 
+    stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+    SWI 	2
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
     movs 	pc, lr
 

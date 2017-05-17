@@ -16,3 +16,6 @@ int k_myParentTid(){
 
 }
 
+int k_pass() {
+	bwprintf(COM2, "in the k_pass\n");
+}
