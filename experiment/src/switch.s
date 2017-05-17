@@ -62,6 +62,7 @@ asm_kernel_activate:
 @	bl		bwputr(PLT)
 	@@ r5 = td->lr
 	ldr		r5, [r10, #4]
+	add		r5, r5, #0x218000
 	mov		r0, #2
 	mov 	r1, r5
 	bl		bwputr(PLT)
@@ -89,8 +90,9 @@ asm_kernel_activate:
 	mov sp, ip
 	msr CPSR_c, #0xD3
 
-	ldr lr,	=init_kernel
-	add lr, lr, #0x218000
+	@ldr lr,	=init_kernel
+	@add lr, lr, #0x218000
+	mov lr, r5
 	mov r0, #0x10
 	msr SPSR, r0
 	movs pc, lr
