@@ -97,3 +97,17 @@ int main()
         // init_kernel();
 	return 0;
 }
+
+/*
+void first(void) {
+	bwputstr(COM2, "In user mode\n");
+	while(1);
+}
+int main(void) {
+	bwputstr(COM2, "Starting\n");
+	activate();
+
+	while(1); // We can't exit, there's nowhere to go
+	return 0;
+}
+*/

@@ -1,4 +1,4 @@
-SRC		= main.c first.c add.c kernel.c user_functions.c
+SRC		= main.c kernel.c user_functions.c
 TARGET_ELF	= main.elf
 ASM_SRC		= switch.s
 ASM_OBJ		= build/switch.o

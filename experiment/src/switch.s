@@ -6,6 +6,19 @@
         .global asm_create
 	.global asm_kernel_activate
 
+@.global activate
+@activate:
+@	mov ip, sp
+@	msr CPSR_c, #0xDF /* System mode */
+@	mov sp, ip
+@	msr CPSR_c, #0xD3 /* Supervisor mode */
+@
+@	mov r0, #0x10
+@	msr SPSR, r0
+@	ldr lr, =first
+@	add lr, lr, #0x218000
+@	movs pc, lr
+@
 asm_print_sp:
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
@@ -35,43 +48,55 @@ asm_kernel_swiEntry:
 asm_kernelExit:
 
 asm_kernel_activate:
-	@ r0 = task_descriptor *td
-	@ save kernel state
-	mov 	ip, sp 
-    stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
-	@ install active task state
-	@@ r10 = r0
+@	@ r0 = task_descriptor *td
+@	@ save kernel state
+@	mov 	ip, sp 
+@    stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+@	@ install active task state
+@	@@ r10 = r0
 	mov 	r10, r0
-	@@ r4 = td->sp
-	ldr		r4, [r10, #0]
-	mov		r0, #2
-	mov 	r1, r4
-	bl		bwputr(PLT)
+@	@@ r4 = td->sp
+@	ldr		r4, [r10, #0]
+@	mov		r0, #2
+@	mov 	r1, r4
+@	bl		bwputr(PLT)
 	@@ r5 = td->lr
 	ldr		r5, [r10, #4]
 	mov		r0, #2
 	mov 	r1, r5
 	bl		bwputr(PLT)
-	@@ r6 = td->spsr
-	ldr		r6, [r10, #8]
-	mov		r0, #2
-	mov 	r1, r6
-	bl		bwputr(PLT)
-	@ bl		asm_print_sp(PLT)
-	@@ lr = r5
-	mov		lr, r5
-	mov		r0, #2
-	add		r1, lr, #0
-	bl		bwputr(PLT)
-	@@ spsr = r6
-	msr		spsr, r6
-	mov		r0, #2
-	mrs 		r1, spsr
-	bl		bwputr(PLT)
+@	@@ r6 = td->spsr
+@	ldr		r6, [r10, #8]
+@	mov		r0, #2
+@	mov 	r1, r6
+@	bl		bwputr(PLT)
+@	@ bl		asm_print_sp(PLT)
+@	@@ lr = r5
+@	mov		lr, r5
+@	mov		r0, #2
+@	add		r1, lr, #0
+@	bl		bwputr(PLT)
+@	@@ spsr = r6
+@	msr		spsr, r6
+@	mov		r0, #2
+@	mrs 		r1, spsr
+@	bl		bwputr(PLT)
 	@@ sp = r4
-	mov		sp, r4
+	@mov		sp, r4
+	@@@
+	mov ip, sp
+	msr CPSR_c, #0xDF
+	mov sp, ip
+	msr CPSR_c, #0xD3
+
+	ldr lr,	=init_kernel
+	add lr, lr, #0x218000
+	mov r0, #0x10
+	msr SPSR, r0
+	movs pc, lr
+	@@@
 	@ start the task executing
-	movs	pc, lr
+	@movs	pc, lr
 
 asm_init_kernel:
     mov 	ip, sp 
