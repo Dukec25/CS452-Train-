@@ -41,7 +41,7 @@ asm_kernel_activate:
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	@ install active task state
 	@@ r10 = r0
-	mov 	r0, r10
+	mov 	r10, r0
 	@@ r4 = td->sp
 	ldr		r4, [r10, #0]
 	mov		r0, #2
@@ -57,21 +57,19 @@ asm_kernel_activate:
 	mov		r0, #2
 	mov 	r1, r6
 	bl		bwputr(PLT)
-	@@ sp = r4
-	mov		sp, r4
-	mov		r0, #2
-	mov 	r1, sp
-	bl		bwputr(PLT)
+	@ bl		asm_print_sp(PLT)
 	@@ lr = r5
 	mov		lr, r5
 	mov		r0, #2
-	mov 	r1, lr
+	add		r1, lr, #0
 	bl		bwputr(PLT)
 	@@ spsr = r6
 	msr		spsr, r6
 	mov		r0, #2
 	mrs 		r1, spsr
 	bl		bwputr(PLT)
+	@@ sp = r4
+	mov		sp, r4
 	@ start the task executing
 	movs	pc, lr
 
