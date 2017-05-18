@@ -29,7 +29,10 @@ void td_intialize(task_descriptor *td, vint **pavailable_memeory_ptr, void (*tas
     td->state = STATE_READY;
 	td->spsr = 16;
 	//assign memory to the first task
-	td->sp = *pavailable_memeory_ptr; 
+	td->sp = *pavailable_memeory_ptr + TASK_SIZE;
+	vint *stack_start = *pavailable_memeory_ptr + TASK_SIZE - 2 * sizeof(uint32);
+	stack_start[0] = 0x10;
+	stack_start[1] = (uint32)(&task);
 	*pavailable_memeory_ptr += TASK_SIZE;
 	// assign lr to point to the function pointer
 	td->lr = (vint *)task;
@@ -114,4 +117,3 @@ int main()
     }
     return 0;
 }
-
