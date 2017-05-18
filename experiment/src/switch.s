@@ -3,7 +3,7 @@
         .global asm_kernel_exit
         .global asm_kernel_swiEntry
         .global asm_init_kernel
-        .global asm_create
+        .global asm_kernel_create
 	.global asm_kernel_activate
 	.global	asm_kernel_pass
 
@@ -57,6 +57,7 @@ asm_kernel_swiEntry:
 asm_kernelExit:
 
 asm_kernel_activate:
+@   didn't store fp to sp here, might cause problems in future
 @	@ r0 = task_descriptor *td
 @	@ save kernel state
 	mov 	ip, sp 
@@ -65,10 +66,10 @@ asm_kernel_activate:
 @	@@ r10 = r0
 	mov 	r10, r0
 @	@@ r4 = td->sp
-@	ldr		r4, [r10, #0]
-@	mov		r0, #2
-@	mov 	r1, r4
-@	bl		bwputr(PLT)
+	ldr		r4, [r10, #0]
+	mov		r0, #2
+	mov 	r1, r4
+	bl		bwputr(PLT)
 	@@ r5 = td->lr
 	ldr		r5, [r10, #4]
 	add		r5, r5, #0x218000
@@ -95,8 +96,10 @@ asm_kernel_activate:
 	@mov		sp, r4
 	@@@
 	mov ip, sp
+    @enter system mode 
 	msr CPSR_c, #0xDF
 	mov sp, ip
+    @get back to svc mode 
 	msr CPSR_c, #0xD3
 
 	@ldr lr,	=init_kernel
@@ -104,6 +107,15 @@ asm_kernel_activate:
 	mov lr, r5
 	mov r0, #0x10
 	msr SPSR, r0
+
+	mov		r0, #2
+	mov 	r1, r4
+	bl		bwputr(PLT)
+
+	mov		r0, #2
+	mov 	r1, fp
+	bl		bwputr(PLT)
+    
 	movs pc, lr
 	@@@
 	@ start the task executing
@@ -119,7 +131,7 @@ asm_init_kernel:
     @ save current a.t.p.s.r
     movs 	pc, lr
 
-asm_create:
+asm_kernel_create:
     mov ip, sp 
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
     SWI 	1

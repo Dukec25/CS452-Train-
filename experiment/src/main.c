@@ -22,11 +22,11 @@ void print_ks(kernel_state *ks)
 	bwprintf(COM2, "%s:%d ks->u_sp = %d, ks->u_lr = %d\n", __FILE__, __LINE__, ks->u_sp, ks->u_lr);
 }
 
-void intialize(task_descriptor *td, vint **pavailable_memeory_ptr, void (*task)(), heap_t *pready_queue)
+void td_intialize(task_descriptor *td, vint **pavailable_memeory_ptr, void (*task)(), heap_t *pready_queue)
 {
-    	td->id = 1;
+    td->id = 1;
 	td->parent_id = 0;
-    	td->state = STATE_READY;
+    td->state = STATE_READY;
 	td->spsr = 16;
 	//assign memory to the first task
 	td->sp = *pavailable_memeory_ptr; 
@@ -63,12 +63,13 @@ int activate(task_descriptor *td, kernel_state *ks) {
 
 int main()
 {
-        vint *swi_handle_entry = (vint*)0x28;
-        bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, swi_handle_entry);
-        bwprintf(COM2, "line %d, asm_kernel_swiEntry = 0x%x\n", __LINE__, asm_kernel_swiEntry);
-        bwprintf(COM2, "line %d, asm_init_kernel = 0x%x\n", __LINE__, asm_init_kernel);
-        *swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
-        bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, *swi_handle_entry);
+    // set up swi jump related 
+    vint *swi_handle_entry = (vint*)0x28;
+    bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, swi_handle_entry);
+    bwprintf(COM2, "line %d, asm_kernel_swiEntry = 0x%x\n", __LINE__, asm_kernel_swiEntry);
+    bwprintf(COM2, "line %d, asm_init_kernel = 0x%x\n", __LINE__, asm_init_kernel);
+    *swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
+    bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, *swi_handle_entry);
 
 	heap_t ready_queue;
 	node_t data[NUM_TASK];
@@ -77,7 +78,7 @@ int main()
 	vint *available_memeory_ptr = (vint*) TASK_START_LOCATION;
 	task_descriptor task1_td;
 	// init_kernel is the first task
-	intialize(&task1_td, &available_memeory_ptr, init_kernel, &ready_queue);
+	td_intialize(&task1_td, &available_memeory_ptr, first_task, &ready_queue);
 
 	fifo_t active_tasks;
 	kernel_state ks;
@@ -85,18 +86,20 @@ int main()
 	ks.active_tasks = &active_tasks;
 	register int *rb asm("lr");
 	ks.rb_lr = rb;
-	//for(;;)
+//	for(;;)
 	{
-		// scheduling td = priorityQueue.pull()
 		task_descriptor *td = schedule(&ready_queue);
 		bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
 		bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
-		// active(td);
 		int req = activate(td, &ks);
 		bwprintf(COM2, "%s:%d get back into kernel again, req = %d\n", __FILE__, __LINE__, req);
-          	// handle()
+        switch(req){
+            case 1: // create new task 
+                register int *priority asm ("r1");
+                register void (*task)() *task_ptr asm ("r2");
+                bwprintf(COM2, "prior = %d\n", priority);
+        }
 	}
-        // init_kernel();
 	return 0;
 }
 
