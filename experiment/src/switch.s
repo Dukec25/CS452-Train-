@@ -8,19 +8,6 @@
 	.global	asm_kernel_pass
     .global asm_kernel_my_tid
 
-@.global activate
-@activate:
-@	mov ip, sp
-@	msr CPSR_c, #0xDF /* System mode */
-@	mov sp, ip
-@	msr CPSR_c, #0xD3 /* Supervisor mode */
-@
-@	mov r0, #0x10
-@	msr SPSR, r0
-@	ldr lr, =first
-@	add lr, lr, #0x218000
-@	movs pc, lr
-@
 asm_print_sp:
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
@@ -53,8 +40,8 @@ asm_kernel_activate:
 @	@ save kernel state
 	mov 	ip, sp 
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
-@	@ install active task state
-@	@@ r10 = r0
+	@ install active task state
+	@@ r10 = r0
 	mov 	r10, r0
 @	@@ r4 = td->sp
 	ldr		r4, [r10, #0]
@@ -67,22 +54,17 @@ asm_kernel_activate:
 	mov		r0, #2
 	mov 	r1, r5
 	bl		bwputr(PLT)
-@	@@ r6 = td->spsr
-@	ldr		r6, [r10, #8]
-@	mov		r0, #2
-@	mov 	r1, r6
-@	bl		bwputr(PLT)
-@	@ bl		asm_print_sp(PLT)
-@	@@ lr = r5
-@	mov		lr, r5
-@	mov		r0, #2
-@	add		r1, lr, #0
-@	bl		bwputr(PLT)
-@	@@ spsr = r6
-@	msr		spsr, r6
-@	mov		r0, #2
-@	mrs 		r1, spsr
-@	bl		bwputr(PLT)
+	@@ r6 = td->spsr
+	ldr		r6, [r10, #8]
+	mov		r0, #2
+	mov 	r1, r6
+	bl		bwputr(PLT)
+	@@ spsr = r6
+	msr		spsr, r6
+	@@ lr = r5
+	mov 	lr, r5
+	@@ set up user task stack
+	msr 	CPSR_c, #0xDF
 	@@ sp = r4
 	@mov		sp, r4
 	@@@
@@ -102,7 +84,7 @@ asm_kernel_activate:
 	movs pc, lr
 	@@@
 	@ start the task executing
-	@movs	pc, lr
+	movs 	pc, lr
 
 asm_init_kernel:
     mov 	ip, sp 
@@ -122,8 +104,9 @@ asm_kernel_create:
     movs 	pc, lr
 
 asm_kernel_pass:
-    mov ip, sp 
+    mov 	ip, sp 
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	bl		asm_print_sp
     SWI 	2
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
     movs 	pc, lr
@@ -134,5 +117,3 @@ asm_kernel_my_tid:
     SWI 	3
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
     movs 	pc, lr
-
-
