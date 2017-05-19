@@ -17,7 +17,8 @@ typedef struct task_descriptor
 	uint32 id;
 	uint32 parent_id;
 	task_state state;
-	int retval;
+	int retval; // how can we be sure the return type is int
+    int priority; // not sure whether needed
 } task_descriptor;
 
 typedef struct kernel_state

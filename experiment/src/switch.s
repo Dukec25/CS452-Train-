@@ -1,11 +1,12 @@
 ;	.type	asm_print_sp, %function
 	.global	asm_print_sp
-        .global asm_kernel_exit
-        .global asm_kernel_swiEntry
-        .global asm_init_kernel
-        .global asm_kernel_create
+    .global asm_kernel_exit
+    .global asm_kernel_swiEntry
+    .global asm_init_kernel
+    .global asm_kernel_create
 	.global asm_kernel_activate
 	.global	asm_kernel_pass
+    .global asm_kernel_my_tid
 
 @.global activate
 @activate:
@@ -124,6 +125,13 @@ asm_kernel_pass:
     mov ip, sp 
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
     SWI 	2
+    ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+    movs 	pc, lr
+
+asm_kernel_my_tid:
+    mov ip, sp 
+    stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+    SWI 	3
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
     movs 	pc, lr
 

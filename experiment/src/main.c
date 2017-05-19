@@ -56,6 +56,7 @@ int activate(task_descriptor *td, kernel_state *ks) {
 	ks->u_sp = td->sp;
 	ks->u_lr = td->lr;
 	ks->u_spsr = td->spsr;
+    td->state = STATE_ACTIVE;
 	bwprintf(COM2, "%s:%d ks->u_sp = 0x%x, ks->u_lr = 0x%x\n", __FILE__, __LINE__, ks->u_sp, ks->u_lr);	
 	//fifo_put(&(ks->active_tasks), td);
 	return asm_kernel_activate(td);
@@ -85,7 +86,7 @@ int main()
     kernel_state ks;
     ks.priority_queue = &ready_queue;
     ks.active_tasks = &active_tasks;
-    int *rb asm("lr");
+    int *rb asm("lr"); // not sure whether this is correct
     ks.rb_lr = rb;
 //	for(;;)
     {
@@ -102,6 +103,13 @@ int main()
             switch(req){
                 case 1:
                     k_create(*((int*)first_arg), *second_arg, current_task_id, td->id, &available_memeory_ptr, &ready_queue);
+                    break;
+                case 2:
+                    k_pass(td, &ready_queue);
+                    break;
+                case 3:
+                    k_my_tid(td);
+                    break;
             }
     }
     return 0;
