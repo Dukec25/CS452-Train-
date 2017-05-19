@@ -23,5 +23,6 @@ typedef unsigned int size_t;
 #define PRIOR_LOW   1 
 #define PRIOR_MEDIUM    2 
 #define PRIOR_HIGH  3 
+#define ARGUMENT_LOCATION   0x9000000 // value get with trial and errors, might cause bug in the future
 
 #endif //__DEFINE_H__

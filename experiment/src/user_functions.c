@@ -1,4 +1,5 @@
 #include <bwio.h>
+#include <user_functions.h>
 
 void init_kernel(){
     bwprintf(COM2, "in the user mode\n");

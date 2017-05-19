@@ -36,22 +36,13 @@ asm_print_sp:
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
+    mov r5, #0x9000000
+    str r0, [r5]
+    str r1, [r5, #4]
     ldr r8, [lr, #-4]
     BIC r8, r8, #0xff000000
     mov	r0, r8
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
-    mov r8, r0
-    mov r9, r1
-    @ldr r8, [lr, #-4]
-    @BIC r8, r8, #0xff000000
-    @mov r7, #4
-    @mov r9, #0
-    @add r6, r8, r9
-    @mul r8, r6, r7 
-    @add r1, pc, r8
-    @b k_init_kernel
-    @b k_create
-	@b k_pass
 
 asm_kernelExit:
 
@@ -106,14 +97,6 @@ asm_kernel_activate:
 	mov lr, r5
 	mov r0, #0x10
 	msr SPSR, r0
-
-	mov		r0, #2
-	mov 	r1, r4
-	bl		bwputr(PLT)
-
-	mov		r0, #2
-	mov 	r1, fp
-	bl		bwputr(PLT)
     
 	movs pc, lr
 	@@@

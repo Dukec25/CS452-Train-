@@ -31,7 +31,7 @@ typedef struct kernel_state
 	vint *rb_lr;
 } kernel_state;
 
-int k_create( int priority, void(*code) );
+int k_create(int priority, void(*task)(), int current_task_id, int parent_task_id, vint **pavailable_memeory_ptr, heap_t *pready_queue);
 
 int k_myTid();
 
@@ -40,3 +40,5 @@ int k_myParentTid();
 void k_init_kernel();
 
 void init_kernel();
+
+void first_task();

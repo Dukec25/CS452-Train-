@@ -89,21 +89,19 @@ int main()
     ks.rb_lr = rb;
 //	for(;;)
     {
+//void (*task)()
             task_descriptor *td = schedule(&ready_queue);
             bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
             bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
             int req = activate(td, &ks);
-            asm("mov %0, %%r8;" : "=r" (priority) : );
-            bwprintf(COM2, "priority value =%d", priority);
+            vint *first_arg= (vint*)0x9000000;
+            vint *second_arg= (vint*)0x9000004;
+
+            //asm("mov %0, %%r8;" : "=r" (priority) : );
             bwprintf(COM2, "%s:%d get back into kernel again, req = %d\n", __FILE__, __LINE__, req);
             switch(req){
-                // create new task 
-                case 1:             
-                    int *priority asm ("r0");
-                    void (*task)() *task_ptr asm ("r2");
-                    bwprintf(COM2, "prior = %d\n", priority);
-                // pass 
-                default:
+                case 1:
+                    k_create(*((int*)first_arg), *second_arg, current_task_id, td->id, &available_memeory_ptr, &ready_queue);
             }
     }
     return 0;
