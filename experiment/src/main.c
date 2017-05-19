@@ -71,48 +71,41 @@ int main()
     *swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
     bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, *swi_handle_entry);
 
-	heap_t ready_queue;
-	node_t data[NUM_TASK];
-	ready_queue = heap_init(data, NUM_TASK);
+    heap_t ready_queue;
+    node_t data[NUM_TASK];
+    ready_queue = heap_init(data, NUM_TASK);
+    vint current_task_id = 0; // task id start with 0
 
-	vint *available_memeory_ptr = (vint*) TASK_START_LOCATION;
-	task_descriptor task1_td;
-	// init_kernel is the first task
-	td_intialize(&task1_td, &available_memeory_ptr, first_task, &ready_queue);
+    vint *available_memeory_ptr = (vint*) TASK_START_LOCATION;
+    task_descriptor task1_td;
+    // init_kernel is the first task
+    td_intialize(&task1_td, &available_memeory_ptr, first_task, &ready_queue);
 
-	fifo_t active_tasks;
-	kernel_state ks;
-	ks.priority_queue = &ready_queue;
-	ks.active_tasks = &active_tasks;
-	register int *rb asm("lr");
-	ks.rb_lr = rb;
+    fifo_t active_tasks;
+    kernel_state ks;
+    ks.priority_queue = &ready_queue;
+    ks.active_tasks = &active_tasks;
+    int *rb asm("lr");
+    ks.rb_lr = rb;
 //	for(;;)
-	{
-		task_descriptor *td = schedule(&ready_queue);
-		bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
-		bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
-		int req = activate(td, &ks);
-		bwprintf(COM2, "%s:%d get back into kernel again, req = %d\n", __FILE__, __LINE__, req);
-        switch(req){
-            case 1: // create new task 
-                register int *priority asm ("r1");
-                register void (*task)() *task_ptr asm ("r2");
-                bwprintf(COM2, "prior = %d\n", priority);
-        }
-	}
-	return 0;
+    {
+            task_descriptor *td = schedule(&ready_queue);
+            bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
+            bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
+            int req = activate(td, &ks);
+            asm("mov %0, %%r8;" : "=r" (priority) : );
+            bwprintf(COM2, "priority value =%d", priority);
+            bwprintf(COM2, "%s:%d get back into kernel again, req = %d\n", __FILE__, __LINE__, req);
+            switch(req){
+                // create new task 
+                case 1:             
+                    int *priority asm ("r0");
+                    void (*task)() *task_ptr asm ("r2");
+                    bwprintf(COM2, "prior = %d\n", priority);
+                // pass 
+                default:
+            }
+    }
+    return 0;
 }
 
-/*
-void first(void) {
-	bwputstr(COM2, "In user mode\n");
-	while(1);
-}
-int main(void) {
-	bwputstr(COM2, "Starting\n");
-	activate();
-
-	while(1); // We can't exit, there's nowhere to go
-	return 0;
-}
-*/

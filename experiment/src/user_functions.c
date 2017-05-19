@@ -8,10 +8,10 @@ void init_kernel(){
 
 int create( int priority, void (*code) (  )  ){
     bwprintf(COM2, "in user_create");
-    asm_kernel_create();
+    asm_kernel_create(priority, code);
 }
 
 void pass() {
-	bwprintf(COM2, "%s:%d in the user mode pass\n", __FILE__, __LINE__);
-	asm_kernel_pass();
+    bwprintf(COM2, "%s:%d in the user mode pass\n", __FILE__, __LINE__);
+    asm_kernel_pass();
 }

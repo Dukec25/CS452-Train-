@@ -36,13 +36,12 @@ asm_print_sp:
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
-	ldr r8, [lr, #-4]
+    ldr r8, [lr, #-4]
     BIC r8, r8, #0xff000000
-	mov r0, #2
-	mov r1, r8
-	bl bwputr(PLT)
-	mov	r0, r8
+    mov	r0, r8
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+    mov r8, r0
+    mov r9, r1
     @ldr r8, [lr, #-4]
     @BIC r8, r8, #0xff000000
     @mov r7, #4
