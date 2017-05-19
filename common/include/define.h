@@ -16,7 +16,7 @@ typedef unsigned int size_t;
 #define	OFF	0
 #define NULL	0
 #define TASK_SIZE 102400 // 100kb
-#define TASK_START_LOCATION 0x10000000 // value to be determined
+#define TASK_START_LOCATION 0x1000000 // value to be determined
 #define NUM_TASK 64 // assume there will be 64 task in the kernel
 /* task priorities */
 #define PRIOR_LOWEST    0

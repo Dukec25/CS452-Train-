@@ -85,15 +85,15 @@ asm_kernel_activate:
 	@@ sp = r4
 	@mov		sp, r4
 	@@@
-	mov ip, sp
+	mov ip, r4
+    mov fp, r4
     @enter system mode 
-	msr CPSR_c, #0xDF
+	msr CPSR, #0xDF
 	mov sp, ip
+    mov fp, ip
     @get back to svc mode 
-	msr CPSR_c, #0xD3
+	msr CPSR, #0xD3
 
-	@ldr lr,	=init_kernel
-	@add lr, lr, #0x218000
 	mov lr, r5
 	mov r0, #0x10
 	msr SPSR, r0
