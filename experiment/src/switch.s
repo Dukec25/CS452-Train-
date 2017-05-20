@@ -83,8 +83,9 @@ asm_kernel_create:
     movs 	pc, lr
 
 asm_kernel_pass:
-    mov ip, sp 
+    mov 	ip, sp 
     stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	bl		asm_print_sp
     SWI 	2
     ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
     movs 	pc, lr

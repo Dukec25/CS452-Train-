@@ -21,6 +21,7 @@ typedef enum task_priority {
 	PRIOR_HIGH
 } task_priority;
 
+<<<<<<< HEAD
 typedef struct task_descriptor {
 	vint 					*sp; 
 	vint 					*lr;
