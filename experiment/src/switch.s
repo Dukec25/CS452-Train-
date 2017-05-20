@@ -26,9 +26,6 @@ asm_print_sp:
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
-	mov 	r5, #0x9000000
-	str 	r0, [r5]
-	str 	r1, [r5, #4]
 	@ get syscall type
 	ldr 	r8, [lr, #-4]
 	BIC 	r8, r8, #0xff000000
@@ -84,17 +81,12 @@ asm_kernel_activate:
 	@ start the task executing
 	movs 	pc, lr
 
-asm_set_usr_lr:
-	mov		ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	sub		fp, ip, #4
-	@@r10 = r0 = td
-	@@td->lr = lr
-	str		r1, [r10, #4]
-	mov		r0, #2
-	ldr		r1, [r10, #4]
-	bl		bwputr(PLT)
-	ldmfd	sp, {fp, sp, pc}
+asm_set_usr_state:
+	mov 	r5, #0x9000000
+	str 	r0, [r5]
+	str 	r1, [r5, #4]
+
+
 
 asm_init_kernel:
 	mov 	ip, sp 
@@ -102,7 +94,7 @@ asm_init_kernel:
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	0
 	@ load k.s
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	@ save current a.t.p.s.r
 	movs 	pc, lr
 
@@ -118,7 +110,7 @@ asm_kernel_create:
 	@ldr		r1, [sp, #4]
 	@bl		bwputr(PLT)
 	SWI 	1
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	movs 	pc, lr
 
 asm_kernel_pass:
@@ -126,26 +118,12 @@ asm_kernel_pass:
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	bl		asm_print_sp
 	SWI 	2
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	movs 	pc, lr
 
 asm_kernel_my_tid:
 	mov ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
-	mov		r10, r0
-	mov		r11, lr
-	mov		r0, #2
-	mov		r1, #0xaa
-	bl		bwputr(PLT)
-	mov		r0, #2
-	add		r1, r11, #0
-	bl		bwputr(PLT)
-	mov		r0, r10
-	mov		r1, r11
-	bl		asm_set_usr_lr
-	mov		r0, #2
-	mov		r1, #0xbb
-	bl		bwputr(PLT)
 	SWI 	3
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	movs 	pc, lr

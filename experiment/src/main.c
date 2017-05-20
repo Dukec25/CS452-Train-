@@ -96,8 +96,10 @@ int main()
 			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
 			int req = activate(td, &ks);
-			vint *first_arg= (vint*)0x9000000;
-			vint *second_arg= (vint*)0x9000004;
+            vint *updated_sp = (vint*)0x9000000;
+            vint *updated_lr = (vint*)0x9000004;
+			vint *first_arg=   (vint*)0x9000008;
+			vint *second_arg=  (vint*)0x900000C;
 			debug("get back into kernel again, req = %d", req);
 			switch(req){
 				case 1:
