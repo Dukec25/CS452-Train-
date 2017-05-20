@@ -7,13 +7,13 @@ void k_init_kernel(){
 
 void k_create(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority)
 {
-	debug("In kernel mode k_create, tid = %d\n", tid);
+	debug("In kernel mode k_create, tid = %d", tid);
 	td_intialize(task, ks, tid, ptid, priority);
 	ks->tasks[tid].retval = tid;
 }
 
 void k_my_tid(task_descriptor *td){
-	debug("In kernel mode k_my_tid, td->tid = %d\n", td->tid);
+	debug("In kernel mode k_my_tid, td->tid = %d", td->tid);
     td->retval = td->tid;
 }
 
@@ -22,7 +22,7 @@ void k_my_parent_tid(task_descriptor *td){
 }
 
 void k_pass(task_descriptor *td, heap_t *pready_queue) {
-/*    bwprintf(COM2, "%s:%d in the kernel pass\n", __FILE__, __LINE__);
+/*    bwprintf(COM2, "%s:%d in the kernel pass", __FILE__, __LINE__);
     td->state = STATE_READY;
     heap_insert(pready_queue, td->priority, td);
 */

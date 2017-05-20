@@ -29,7 +29,7 @@ void channel_select(int channel, vint **ppflags, vint **ppdata);
 /* debug */
 #define debug(fmt, ...) 													 			\
 		do {																			\
-			if (DEBUG) bwprintf(COM2, "%s:%d " fmt, __FILE__, __LINE__, __VA_ARGS__);	\
+			if (DEBUG) bwprintf(COM2, "\r\n%s:%d " fmt, __FILE__, __LINE__, __VA_ARGS__);	\
 			}																			\
 		while (0)
 

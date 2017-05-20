@@ -31,42 +31,42 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 	td->lr = (vint *)task;
 	// set next_ready_task
 	td->next_ready_task = NULL;
-	debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d\n",
+	debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 			ks->tasks[tid].tid, ks->tasks[tid].state, ks->tasks[tid].priority,
 			ks->tasks[tid].sp, ks->tasks[tid].lr, ks->tasks[tid].next_ready_task);
 	// insert td into the ready_queue
-	debug("ks->priority_mask = 0x%x\n", ks->priority_mask);
+	debug("ks->priority_mask = 0x%x", ks->priority_mask);
 	if (ks->priority_mask & (0x1 << priority)) {
 		// ready_queue is non-empty
 		task_descriptor *tail = ks->ready_queues[priority].tail;
 		tail->next_ready_task = td;
-		debug("old tail->tid = %d, old tail->next_ready_task->tid = %d\n", tail->tid, tail->next_ready_task->tid);
+		debug("old tail->tid = %d, old tail->next_ready_task->tid = %d", tail->tid, tail->next_ready_task->tid);
 		ks->ready_queues[priority].tail = td;
-		debug("new tail->tid = %d\n", ks->ready_queues[priority].tail->tid);
+		debug("new tail->tid = %d", ks->ready_queues[priority].tail->tid);
 	} else {
-		debug("old ks->priority_mask = 0x%x\n", ks->priority_mask);
+		debug("old ks->priority_mask = 0x%x", ks->priority_mask);
 		// ready_queue is empty
 		ks->ready_queues[priority].head = td;
 		ks->ready_queues[priority].tail = td;
-		debug("new ks->ready_queues[priority].head->tid = %d, ks->ready_queues[priority].tail->tid = %d\n",
+		debug("new ks->ready_queues[priority].head->tid = %d, ks->ready_queues[priority].tail->tid = %d",
 				ks->ready_queues[priority].head->tid, ks->ready_queues[priority].tail->tid);
 		// set priority_mask
 		ks->priority_mask |= (0x1 << priority);
-		debug("new ks->priority_mask = 0x%x\n", ks->priority_mask);
+		debug("new ks->priority_mask = 0x%x", ks->priority_mask);
 	}
 }
 
 task_descriptor *schedule(kernel_state *ks) {
-	debug("In %s\n", "schedule");
+	debug("In %s", "schedule");
 	uint8 lz = clz(ks->priority_mask);
 	uint8 priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
 	task_descriptor *head = ks->ready_queues[priority].head;
-	debug("lz = %d, priority = %d, head->tid = %d\n", lz, priority, head->tid);
+	debug("lz = %d, priority = %d, head->tid = %d", lz, priority, head->tid);
 	return head;
 }
 
 int activate(task_descriptor *td, kernel_state *ks) {
-	debug("in %s\n", "activate");
+	debug("in %s", "activate");
 	ks->u_sp = td->sp;
 	ks->u_lr = td->lr;
 	td->state = STATE_ACTIVE;
@@ -77,10 +77,10 @@ int main()
 {
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*)0x28;
-	debug("swi_handle_entry = 0x%x\n", swi_handle_entry);
-	debug("asm_kernel_swiEntry = 0x%x\n", asm_kernel_swiEntry);
+	debug("swi_handle_entry = 0x%x", swi_handle_entry);
+	debug("asm_kernel_swiEntry = 0x%x", asm_kernel_swiEntry);
 	*swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
-	debug("swi_handle_entry = 0x%x\n", *swi_handle_entry);
+	debug("swi_handle_entry = 0x%x", *swi_handle_entry);
 
 	kernel_state ks;
 	ks_initialize(&ks);
@@ -93,12 +93,12 @@ int main()
 	for(loop = 0; loop < 4; loop++)
 	{
 			task_descriptor *td = schedule(&ks);
-			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d\n",
+			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
 			int req = activate(td, &ks);
 			vint *first_arg= (vint*)0x9000000;
 			vint *second_arg= (vint*)0x9000004;
-			debug("get back into kernel again, req = %d\n", req);
+			debug("get back into kernel again, req = %d", req);
 			switch(req){
 				case 1:
 					k_create(*second_arg, &ks, tid++, td->tid, *((int*)first_arg));
