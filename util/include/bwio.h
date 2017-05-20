@@ -25,4 +25,12 @@ void bwputw(int channel, int n, char fc, char *bf);
 void bwformat (int channel, char *fmt, va_list va);
 void bwprintf(int channel, char *format, ...);
 void channel_select(int channel, vint **ppflags, vint **ppdata);
+
+/* debug */
+#define debug(fmt, ...) 													 			\
+		do {																			\
+			if (DEBUG) bwprintf(COM2, "%s:%d " fmt, __FILE__, __LINE__, __VA_ARGS__);	\
+			}																			\
+		while (0)
+
 #endif // __BWIO_H__

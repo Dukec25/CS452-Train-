@@ -12,17 +12,11 @@ typedef unsigned int size_t;
 /* defines */
 #define COM1	1
 #define COM2	2
-#define ON	1
-#define	OFF	0
+#define ON		1
+#define	OFF		0
 #define NULL	0
-#define TASK_SIZE 102400 // 100kb
-#define TASK_START_LOCATION 0x1000000 // value to be determined
-#define NUM_TASK 64 // assume there will be 64 task in the kernel
-/* task priorities */
-#define PRIOR_LOWEST    0
-#define PRIOR_LOW   1 
-#define PRIOR_MEDIUM    2 
-#define PRIOR_HIGH  3 
-#define ARGUMENT_LOCATION   0x9000000 // value get with trial and errors, might cause bug in the future
+
+/* debug */
+#define DEBUG	1
 
 #endif //__DEFINE_H__
