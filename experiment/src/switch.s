@@ -1,8 +1,9 @@
-	.equ	USR_MODE, 		0x10
-	.equ	SYS_MODE, 		0xDF
-	.equ	SVC_MODE, 		0xD3
-	.equ	LOAD_OFFSET,	0x218000
- 
+	.equ	USR_MODE, 					0x10
+	.equ	SYS_MODE, 					0xDF
+	.equ	SVC_MODE, 					0xD3
+	.equ	LOAD_OFFSET,				0x218000
+ 	.equ	USER_STATE_STORE_OFFSET, 	0x9000000
+
 	.global	asm_print_sp
 	.global asm_kernel_exit
 	.global asm_kernel_swiEntry
@@ -27,19 +28,31 @@ asm_print_sp:
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
 	@ get syscall type
-	ldr 	r8, [lr, #-4]
-	BIC 	r8, r8, #0xff000000
-	@ enter system mode, ip = user sp 
-	@msr 	CPSR, #SYS_MODE
-	@mov 	ip, sp
-	@ get back to svc mode 
-	@msr 	CPSR, #SVC_MODE
-	@ get arg0
-	@ldr		r0, [ip, #0]
-	@ get arg1
-	@ldr		r1, [ip, #1]
+	ldr 	r2, [lr, #-4]
+	BIC 	r2, r2, #0xff000000
+	mov		r0, #2
+	mov		r1, r2
+	bl		bwputr(PLT)
+	@ user stack = r0
+	@@r10 = r0
+	mov		r10, r0
+	mov		r0, #2
+	mov		r1, r10
+	bl		bwputr(PLT)
+	@ user r10 as base address to load register values stored on user stack
+	@@ r4 = user lr, r5 = user sp, r6 = user arg0, r7 = user arg1
+	ldr		r4, [r10, #-56]
+	ldr		r5, [r10, #-52]
+	ldr		r6, [r10, #0]
+	ldr		r7, [r10, #-4]
+	@ store r4 - r7 into user state storage
+	mov		r3, #USER_STATE_STORE_OFFSET
+	str		r4, [r3]
+	str		r5, [r3, #4]
+	str		r6, [r3, #8]
+	str		r7, [r3, #12]
 	@ set return value
-	mov		r0, r8
+	mov		r0, r2
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 asm_kernelExit:
@@ -86,8 +99,6 @@ asm_set_usr_state:
 	str 	r0, [r5]
 	str 	r1, [r5, #4]
 
-
-
 asm_init_kernel:
 	mov 	ip, sp 
 	@ store a.t.s
@@ -99,31 +110,27 @@ asm_init_kernel:
 	movs 	pc, lr
 
 asm_kernel_create:
-	mov ip, sp 
+	mov 	ip, sp 
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
-	@ arg0
-	@mov		r0, #2
-	@ldr		r1, [sp, #0]
-	@bl		bwputr(PLT)
-	@ arg1
-	@mov		r0, #2
-	@ldr		r1, [sp, #4]
-	@bl		bwputr(PLT)
+	mov		r0, ip
 	SWI 	1
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov		ip, r0
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov		r0, ip
 	movs 	pc, lr
 
 asm_kernel_pass:
 	mov 	ip, sp 
-	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
-	bl		asm_print_sp
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov		r0, ip
 	SWI 	2
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	movs 	pc, lr
 
 asm_kernel_my_tid:
-	mov ip, sp 
+	mov		ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov		r0, ip
 	SWI 	3
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	movs 	pc, lr

@@ -10,7 +10,7 @@ void init_kernel()
 // upper case due to A1 specification 
 int Create(int priority, void (*code) ())
 {
-    debug("In user mode Create, priority = %d, code = 0x%x", priority, code);
+    debug("In user mode Create, priority = %d, code = 0x%x\n", priority, code);
     asm_kernel_create(priority, code);
 }
 
