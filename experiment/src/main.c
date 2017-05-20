@@ -1,117 +1,124 @@
 #include <bwio.h>
 #include <kernel.h>
 #include <define.h>
+#include <math.h>
 
 extern int asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(task_descriptor *td);
 
-void print_td(task_descriptor *td)
+static void ks_initialize(kernel_state *ks)
 {
-	int sp = asm_print_sp();
-	bwprintf(COM2, "%s:%d sp = %x\n", __FILE__, __LINE__, sp);
-	bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
-	bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
+	ks->priority_mask = 0;
+	int i = 0;
+	for (i = PRIOR_LOWEST; i <= PRIOR_HIGH; i++) {
+		ks->ready_queues[i].head = NULL;
+		ks->ready_queues[i].tail = NULL;
+	}
 }
 
-void print_ks(kernel_state *ks)
+void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority)
 {
-	int sp = asm_print_sp();
-	bwprintf(COM2, "%s:%d sp = %x\n", __FILE__, __LINE__, sp);
-	bwprintf(COM2, "%s:%d ks->u_sp = %d, ks->u_lr = %d\n", __FILE__, __LINE__, ks->u_sp, ks->u_lr);
-}
-
-void td_intialize(task_descriptor *td, vint **pavailable_memeory_ptr, void (*task)(), heap_t *pready_queue)
-{
-    td->id = 1;
-	td->parent_id = 0;
-    td->state = STATE_READY;
-	td->spsr = 16;
+	task_descriptor *td = &(ks->tasks[tid]);
+	td->tid = tid;
+	td->ptid = ptid;
+	td->state = STATE_READY;
+	td->priority = priority;
 	//assign memory to the first task
-	td->sp = *pavailable_memeory_ptr; 
-	*pavailable_memeory_ptr += TASK_SIZE;
+	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
 	td->lr = (vint *)task;
-	bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
-	bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
-	heap_insert(pready_queue, PRIOR_MEDIUM, td);
-	td->priority_queue = pready_queue;
+	// set next_ready_task
+	td->next_ready_task = NULL;
+	debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d\n",
+			ks->tasks[tid].tid, ks->tasks[tid].state, ks->tasks[tid].priority,
+			ks->tasks[tid].sp, ks->tasks[tid].lr, ks->tasks[tid].next_ready_task);
+	// insert td into the ready_queue
+	debug("ks->priority_mask = 0x%x\n", ks->priority_mask);
+	if (ks->priority_mask & (0x1 << priority)) {
+		// ready_queue is non-empty
+		task_descriptor *tail = ks->ready_queues[priority].tail;
+		tail->next_ready_task = td;
+		debug("old tail->tid = %d, old tail->next_ready_task->tid = %d\n", tail->tid, tail->next_ready_task->tid);
+		ks->ready_queues[priority].tail = td;
+		debug("new tail->tid = %d\n", ks->ready_queues[priority].tail->tid);
+	} else {
+		// ready_queue is empty
+		ks->ready_queues[priority].head = td;
+		ks->ready_queues[priority].tail = td;
+		debug("new ks->ready_queues[priority].head->tid = %d, ks->ready_queues[priority].tail->tid = %d\n",
+				ks->ready_queues[priority].head->tid, ks->ready_queues[priority].tail->tid);
+		// set priority_mask
+		ks->priority_mask |= (0x1 << priority);
+		debug("ks->priority_mask = 0x%x\n", ks->priority_mask);
+	}
 }
 
-void handle(task_descriptor *active, void *req) {}
-
-void kernel_swi_entry(){
-    asm_kernel_swiEntry();
-}
-
-task_descriptor *schedule(heap_t *ready_queue) {
-	node_t head;
-	heap_delete(ready_queue, &head);
-	return head.data;
+task_descriptor *schedule(kernel_state *ks) {
+	uint8 lz = clz(ks->priority_mask);
+	uint8 priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
+	task_descriptor *head = ks->ready_queues[priority].head;
+	debug("lz = %d, priority = %d, head->tid = %d\n", lz, priority, head->tid);
+	if (head->next_ready_task == NULL) {
+		ks->ready_queues[priority].head = NULL;
+		ks->ready_queues[priority].tail = NULL;
+		ks->priority_mask &= ~(0x1 << head->priority);
+		debug("ks->ready_queues[priority].head = %d, ks->ready_queues[priority].tail = %d, ks->priority_mask = 0x%x\n",
+				ks->ready_queues[priority].head, ks->ready_queues[priority].tail, ks->priority_mask);
+	} else {
+		ks->ready_queues[priority].head = head->next_ready_task;
+		debug("ks->ready_queues[priority].head->tid = %d\n", ks->ready_queues[priority].head->tid);
+	}
+	return head;
 }
 
 int activate(task_descriptor *td, kernel_state *ks) {
-	bwprintf(COM2, "line %d, in activate\n", __LINE__);
+	debug("in %s\n", "activate");
 	ks->u_sp = td->sp;
 	ks->u_lr = td->lr;
-	ks->u_spsr = td->spsr;
-    td->state = STATE_ACTIVE;
-	bwprintf(COM2, "%s:%d ks->u_sp = 0x%x, ks->u_lr = 0x%x\n", __FILE__, __LINE__, ks->u_sp, ks->u_lr);	
-	//fifo_put(&(ks->active_tasks), td);
+	td->state = STATE_ACTIVE;
+	debug("ks->u_sp = 0x%x, ks->u_lr = 0x%x\n", ks->u_sp, ks->u_lr);	
 	return asm_kernel_activate(td);
 }
 
 int main()
 {
-    // set up swi jump related 
-    vint *swi_handle_entry = (vint*)0x28;
-    bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, swi_handle_entry);
-    bwprintf(COM2, "line %d, asm_kernel_swiEntry = 0x%x\n", __LINE__, asm_kernel_swiEntry);
-    bwprintf(COM2, "line %d, asm_init_kernel = 0x%x\n", __LINE__, asm_init_kernel);
-    *swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
-    bwprintf(COM2, "line %d, swi_handle_entry = 0x%x\n", __LINE__, *swi_handle_entry);
+	// set up swi jump table 
+	vint *swi_handle_entry = (vint*)0x28;
+	debug("swi_handle_entry = 0x%x\n", swi_handle_entry);
+	debug("asm_kernel_swiEntry = 0x%x\n", asm_kernel_swiEntry);
+	*swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
+	debug("swi_handle_entry = 0x%x\n", *swi_handle_entry);
 
-    heap_t ready_queue;
-    node_t data[NUM_TASK];
-    ready_queue = heap_init(data, NUM_TASK);
-    vint current_task_id = 0; // task id start with 0
+	kernel_state ks;
+	ks_initialize(&ks);
 
-    vint *available_memeory_ptr = (vint*) TASK_START_LOCATION;
-    task_descriptor task1_td;
-    // init_kernel is the first task
-    td_intialize(&task1_td, &available_memeory_ptr, first_task, &ready_queue);
+	uint8 tid = 0;
 
-    fifo_t active_tasks;
-    kernel_state ks;
-    ks.priority_queue = &ready_queue;
-    ks.active_tasks = &active_tasks;
-    int *rb asm("lr"); // not sure whether this is correct
-    ks.rb_lr = rb;
+	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_LOW);
+	
 //	for(;;)
-    {
-//void (*task)()
-            task_descriptor *td = schedule(&ready_queue);
-            bwprintf(COM2, "%s:%d td->id = %d, td->state = %d\n", __FILE__, __LINE__, td->id, td->state);
-            bwprintf(COM2, "%s:%d td->sp = 0x%x, td->lr = 0x%x\n", __FILE__, __LINE__, td->sp, td->lr);
-            int req = activate(td, &ks);
-            vint *first_arg= (vint*)0x9000000;
-            vint *second_arg= (vint*)0x9000004;
-
-            //asm("mov %0, %%r8;" : "=r" (priority) : );
-            bwprintf(COM2, "%s:%d get back into kernel again, req = %d\n", __FILE__, __LINE__, req);
-            switch(req){
-                case 1:
-                    k_create(*((int*)first_arg), *second_arg, current_task_id, td->id, &available_memeory_ptr, &ready_queue);
-                    break;
-                case 2:
-                    k_pass(td, &ready_queue);
-                    break;
-                case 3:
-                    k_my_tid(td);
-                    break;
-            }
-    }
-    return 0;
+	{
+			task_descriptor *td = schedule(&ks);
+			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d\n",
+					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
+			int req = activate(td, &ks);
+			vint *first_arg= (vint*)0x9000000;
+			vint *second_arg= (vint*)0x9000004;
+			debug("get back into kernel again, req = %d\n", req);
+			switch(req){
+				case 1:
+					k_create(*((int*)first_arg), *second_arg, tid++, td->tid, NULL, NULL);
+					break;
+				case 2:
+					k_pass(td, &ks);
+					break;
+				case 3:
+					k_my_tid(td);
+					break;
+			}
+	}
+	return 0;
 }
 
