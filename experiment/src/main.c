@@ -8,6 +8,12 @@ extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(task_descriptor *td);
 
+static uint32 cur_sp = 0;
+static uint32 cur_lr = 0;
+static uint32 cur_spsr = 0;
+static uint32 cur_arg0 = 0;
+static uint32 cur_arg1 = 0;
+
 static void ks_initialize(kernel_state *ks)
 {
 	ks->priority_mask = 0;
@@ -95,15 +101,27 @@ int main()
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
 			int req = activate(td, &ks);
 			debug("get back into kernel again, req = %d", req);
-            vint *updated_lr = (vint*)0x9000000;
-            vint *updated_sp = (vint*)0x9000004;
-			vint *first_arg=   (vint*)0x9000008;
-			vint *second_arg=  (vint*)0x900000C;
-			debug("get back into kernel again, updated_lr = 0x%x, updated_sp = 0x%x", *updated_lr, *updated_sp);
+			// vint *updated_lr = (vint*)0x9000000;
+			// vint *updated_sp = (vint*)0x9000004;
+			// vint *first_arg=   (vint*)0x9000008;
+			// vint *second_arg=  (vint*)0x900000C;
+
+			// update td lr, sp, spsr
+			// enter system mode 
+			asm volatile("msr CPSR, %0" :: "I" (SYS));
+			asm volatile("str sp, [%0]" : "=r" (cur_sp));
+			asm volatile("mrs r10, spsr");
+			asm volatile("str r10, [%0]" : "=r" (cur_spsr));
+			asm volatile("str lr, [%0]" : "=r" (cur_lr));
+			asm volatile("str r0, [%0]" : "=r" (cur_arg0));
+			asm volatile("str r1, [%0]" : "=r" (cur_arg1));
+			// get back to svc mode 
+			asm volatile("msr CPSR, %0" :: "I" (SVC));
+			debug("get back into kernel again, cur_sp = 0x%x, cur_spsr = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
+					cur_sp, cur_spsr, cur_lr, cur_arg0, cur_arg1);
 			switch(req){
 				case 1:		
-					debug("get back into kernel again, first_arg = 0x%x, second_arg = 0x%x", *first_arg, *second_arg);
-					k_create(*second_arg, &ks, tid++, td->tid, *((int*)first_arg));
+					k_create(cur_arg1, &ks, tid++, td->tid, cur_arg0);
 					break;
 				case 2:
 					k_pass(td, &ks);

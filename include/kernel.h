@@ -48,6 +48,12 @@ typedef struct kernel_state {
 	task_descriptor tasks[MAX_NUM_TASKS];
 } kernel_state;
 
+typedef enum processor_mode {
+	USR = 0x10,
+	SYS = 0xDF,
+	SVC = 0xD3
+} processor_mode;
+
 void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority);
 
 task_descriptor *schedule(kernel_state *ks);
