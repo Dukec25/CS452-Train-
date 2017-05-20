@@ -44,6 +44,7 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 		ks->ready_queues[priority].tail = td;
 		debug("new tail->tid = %d\n", ks->ready_queues[priority].tail->tid);
 	} else {
+		debug("old ks->priority_mask = 0x%x\n", ks->priority_mask);
 		// ready_queue is empty
 		ks->ready_queues[priority].head = td;
 		ks->ready_queues[priority].tail = td;
@@ -51,25 +52,16 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 				ks->ready_queues[priority].head->tid, ks->ready_queues[priority].tail->tid);
 		// set priority_mask
 		ks->priority_mask |= (0x1 << priority);
-		debug("ks->priority_mask = 0x%x\n", ks->priority_mask);
+		debug("new ks->priority_mask = 0x%x\n", ks->priority_mask);
 	}
 }
 
 task_descriptor *schedule(kernel_state *ks) {
+	debug("In %s\n", "schedule");
 	uint8 lz = clz(ks->priority_mask);
 	uint8 priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
 	task_descriptor *head = ks->ready_queues[priority].head;
 	debug("lz = %d, priority = %d, head->tid = %d\n", lz, priority, head->tid);
-	if (head->next_ready_task == NULL) {
-		ks->ready_queues[priority].head = NULL;
-		ks->ready_queues[priority].tail = NULL;
-		ks->priority_mask &= ~(0x1 << head->priority);
-		debug("ks->ready_queues[priority].head = %d, ks->ready_queues[priority].tail = %d, ks->priority_mask = 0x%x\n",
-				ks->ready_queues[priority].head, ks->ready_queues[priority].tail, ks->priority_mask);
-	} else {
-		ks->ready_queues[priority].head = head->next_ready_task;
-		debug("ks->ready_queues[priority].head->tid = %d\n", ks->ready_queues[priority].head->tid);
-	}
 	return head;
 }
 
@@ -78,7 +70,6 @@ int activate(task_descriptor *td, kernel_state *ks) {
 	ks->u_sp = td->sp;
 	ks->u_lr = td->lr;
 	td->state = STATE_ACTIVE;
-	debug("ks->u_sp = 0x%x, ks->u_lr = 0x%x\n", ks->u_sp, ks->u_lr);	
 	return asm_kernel_activate(td);
 }
 
@@ -97,8 +88,9 @@ int main()
 	uint8 tid = 0;
 
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_LOW);
-	
-//	for(;;)
+
+	int loop = 0;	
+	for(loop = 0; loop < 4; loop++)
 	{
 			task_descriptor *td = schedule(&ks);
 			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d\n",
@@ -109,7 +101,7 @@ int main()
 			debug("get back into kernel again, req = %d\n", req);
 			switch(req){
 				case 1:
-					k_create(*((int*)first_arg), *second_arg, tid++, td->tid, NULL, NULL);
+					k_create(*second_arg, &ks, tid++, td->tid, *((int*)first_arg));
 					break;
 				case 2:
 					k_pass(td, &ks);

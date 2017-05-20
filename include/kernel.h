@@ -24,11 +24,11 @@ typedef enum task_priority {
 typedef struct task_descriptor {
 	vint 					*sp; 
 	vint 					*lr;
+	uint32 					retval;
 	uint32 					tid;
 	int 					ptid;
 	task_state 				state;
 	task_priority 			priority;
-	uint32 					retval;
 	struct task_descriptor *next_ready_task;
 } task_descriptor;
 
@@ -56,7 +56,7 @@ void handle(task_descriptor *active, void *req);
 
 int activate(task_descriptor *td, kernel_state *ks);
 
-int k_create(int priority, void(*task)(), int current_task_id, int parent_task_id, vint **pavailable_memeory_ptr, heap_t *pready_queue);
+void k_create(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority);
 
 int k_myTid();
 
