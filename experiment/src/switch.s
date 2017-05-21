@@ -62,7 +62,6 @@ asm_kernel_activate:
 @	mov		r0, #2
 @	ldr		r1, [r4, #-44]
 @	bl		bwputr(PLT)
-
 	@get back to svc mode 
 	msr 	CPSR, #SVC_MODE
 	@spsr = user mode
@@ -84,16 +83,16 @@ asm_init_kernel:
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	0
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	movs 	pc, lr
+	mov 	pc, lr
 
 asm_kernel_create:
 	mov 	ip, sp 
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	1
-	@mov		ip, r0
+	mov		ip, r0
 	@ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	@mov		r0, ip
-	movs 	pc, lr
+	mov		r0, ip
+	mov 	pc, lr
 
 asm_kernel_pass:
 	mov 	ip, sp 
@@ -101,7 +100,7 @@ asm_kernel_pass:
 	mov		r0, ip
 	SWI 	2
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	movs 	pc, lr
+	mov 	pc, lr
 
 asm_kernel_my_tid:
 	mov		ip, sp 
@@ -124,3 +123,12 @@ asm_kernel_my_tid:
 	@ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	mov 	pc, lr
+
+asm_kernel_exit:
+	mov 	ip, sp 
+	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov		r0, ip
+	SWI 	4
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	movs 	pc, lr
+    

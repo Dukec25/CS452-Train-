@@ -8,9 +8,10 @@ void general_task(){
 
 void first_task(){
 	debug("In user task first_task, priority = %d, code = 0x%x", PRIOR_HIGH, general_task);
-    /*int tid = Create(PRIOR_HIGH, general_task);*/
-	uint32 tid = MyTid();
+    int tid = Create(PRIOR_HIGH, general_task);
+	/*uint32 tid = MyTid();*/
 	debug("In user task first_task, tid = %d", tid);
+	debug("the end of first task first_task, tid = %d", 666);
 }
 
 

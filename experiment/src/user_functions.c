@@ -20,6 +20,12 @@ void Pass()
     asm_kernel_pass();
 }
 
+void Exit()
+{
+	debug("In user mode %s", "Exit");
+    asm_kernel_exit();
+}
+
 int MyTid()
 {
 	debug("In user mode %s", "MyTid");

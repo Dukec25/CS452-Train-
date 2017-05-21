@@ -143,6 +143,9 @@ int main()
 				case 3:
 					k_my_tid(td);
 					break;
+                case 4:
+                    k_exit(td, &ks);
+                    break;
 			}
 	}
 	return 0;

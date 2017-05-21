@@ -22,8 +22,11 @@ void k_my_parent_tid(task_descriptor *td){
 }
 
 void k_pass(task_descriptor *td, heap_t *pready_queue) {
-/*    bwprintf(COM2, "%s:%d in the kernel pass", __FILE__, __LINE__);
-    td->state = STATE_READY;
-    heap_insert(pready_queue, td->priority, td);
-*/
+    /*bwprintf(COM2, "%s:%d in the kernel pass", __FILE__, __LINE__);*/
+    /*td->state = STATE_READY;*/
+    /*heap_insert(pready_queue, td->priority, td);*/
+}
+
+void k_exit(task_descriptor *td, heap_t *pready_queue) {
+
 }
