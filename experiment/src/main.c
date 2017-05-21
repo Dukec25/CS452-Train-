@@ -10,7 +10,7 @@ extern int asm_kernel_activate(task_descriptor *td);
 
 static uint32 cur_sp = 0;
 static uint32 cur_lr = 0;
-static uint32 cur_spsr = 0;
+static volatile uint32 cur_spsr = 0;
 static uint32 cur_arg0 = 0;
 static uint32 cur_arg1 = 0;
 
@@ -110,8 +110,7 @@ int main()
 			// enter system mode 
 			asm volatile("msr CPSR, %0" :: "I" (SYS));
 			asm volatile("str sp, [%0]" : "=r" (cur_sp));
-			asm volatile("mrs r10, spsr");
-			asm volatile("str r10, [%0]" : "=r" (cur_spsr));
+			asm volatile("mrs %[spsr], spsr" :: [spsr] "r" (&cur_spsr));
 			asm volatile("str lr, [%0]" : "=r" (cur_lr));
 			asm volatile("str r0, [%0]" : "=r" (cur_arg0));
 			asm volatile("str r1, [%0]" : "=r" (cur_arg1));
