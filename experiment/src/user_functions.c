@@ -23,7 +23,7 @@ void Pass()
 int MyTid()
 {
 	debug("In user mode %s", "MyTid");
-    int tid = asm_kernel_my_tid();
+    vint tid = asm_kernel_my_tid();
 	debug("In user mode MyTid tid = %d", tid);
 	return tid;
 }

@@ -106,7 +106,7 @@ int main()
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
 			// int req = activate(td, &ks);
 			// debug("get back into kernel again, req = %d", req);
-			uint32 cur_lr = activate(td, &ks);
+			vint cur_lr = activate(td, &ks);
 			int req = *((vint *)(cur_lr - 4)) & ~(0xff000000);
 			debug("get back into kernel again, req = %d", req);
 			// update td lr, sp, spsr
@@ -118,7 +118,8 @@ int main()
 			/*asm volatile("str r0, [%0]" : "=r" (cur_arg0));*/
 			/*asm volatile("str r1, [%0]" : "=r" (cur_arg1));*/
             asm volatile("mov ip, sp");
-            register vint cur_sp asm("ip");
+            register vint temp_sp asm("ip"); // extremly dangerous!!!, modify its value after the second read, holy cow waste so much time on this
+            vint cur_sp = temp_sp;
             //uint32 cur_lr = *((vint*) (cur_sp + (req==1?52:48)));
             uint32 arg0 = *((vint*) (cur_sp + 0));
             uint32 arg1 = *((vint*) (cur_sp + 4));
@@ -128,8 +129,10 @@ int main()
 			debug("get back into kernel again, cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, arg0, arg1);
             // update td: sp, lr, spsr
+			debug("cur_sp value is 0x%x", cur_sp);
             td->sp = cur_sp;
             td->lr = cur_lr;
+			debug("td->sp value is 0x%x", td->sp);
 			switch(req){
 				case 1:		
 					k_create(arg1, &ks, tid++, td->tid, arg0);

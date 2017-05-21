@@ -49,16 +49,20 @@ asm_kernel_activate:
 	mov		r0, #2
 	mov 	r1, r4
 	bl		bwputr(PLT)
+    @r5 = td->lr
+    ldr     r5, [r8, #4]
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
 	mov 	sp, r4
-	mov		r0, #2
-	ldr		r1, [r4, #-48]
-	bl		bwputr(PLT)
-	mov		r0, #2
-	ldr		r1, [r4, #-44]
-	bl		bwputr(PLT)
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}	
+
+@	mov		r0, #2
+@	ldr		r1, [r4, #-48]
+@	bl		bwputr(PLT)
+
+@	mov		r0, #2
+@	ldr		r1, [r4, #-44]
+@	bl		bwputr(PLT)
+
 	@get back to svc mode 
 	msr 	CPSR, #SVC_MODE
 	@spsr = user mode
@@ -66,6 +70,7 @@ asm_kernel_activate:
 	msr 	SPSR, r0
 	@ return value = r0 = td->retval
 	ldr		r0, [r10, #8]
+    mov     lr, r5
 	@ install user task state and start the task executing
 	movs 	pc, lr
 
@@ -83,11 +88,11 @@ asm_init_kernel:
 
 asm_kernel_create:
 	mov 	ip, sp 
-	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	1
-	mov		ip, r0
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	mov		r0, ip
+	@mov		ip, r0
+	@ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	@mov		r0, ip
 	movs 	pc, lr
 
 asm_kernel_pass:
@@ -102,7 +107,20 @@ asm_kernel_my_tid:
 	mov		ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	mov		r0, ip
+
+	mov		r0, #2
+    mov		r1, sp
+	bl		bwputr(PLT)
+
 	SWI 	3
+
+	mov		r0, #2
+    mov		r1, #0x100
+	bl		bwputr(PLT)
+
+	mov		r0, #2
+    mov		r1, sp
+	bl		bwputr(PLT)
 	@ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
-	@ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	@movs 	pc, lr
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov 	pc, lr
