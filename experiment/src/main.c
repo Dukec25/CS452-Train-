@@ -3,7 +3,7 @@
 #include <define.h>
 #include <math.h>
 
-extern int asm_print_sp();
+extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(task_descriptor *td);
@@ -31,7 +31,7 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 	td->ptid = ptid;
 	td->state = STATE_READY;
 	td->priority = priority;
-	//assign memory to the first task
+	// assign memory to the first task
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
 	td->lr = (vint *)task;
@@ -73,8 +73,9 @@ task_descriptor *schedule(kernel_state *ks) {
 }
 
 int activate(task_descriptor *td, kernel_state *ks) {
-	debug("in %s", "activate");
 	td->state = STATE_ACTIVE;
+	debug("In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x\r\n",
+					td->tid, td->state, td->priority, td->sp, td->lr);
 	return asm_kernel_activate(td);
 }
 
