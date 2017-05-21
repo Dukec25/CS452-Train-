@@ -8,11 +8,11 @@ extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(task_descriptor *td);
 
-static uint32 cur_sp = 0;
-static uint32 cur_lr = 0;
-static volatile uint32 cur_spsr = 0;
-static uint32 cur_arg0 = 0;
-static uint32 cur_arg1 = 0;
+/*static uint32 cur_sp = 0;*/
+/*static uint32 cur_lr = 0;*/
+/*static volatile uint32 cur_spsr = 0;*/
+/*static uint32 cur_arg0 = 0;*/
+/*static uint32 cur_arg1 = 0;*/
 
 static void ks_initialize(kernel_state *ks)
 {
@@ -35,6 +35,7 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
 	td->lr = (vint *)task;
+    td->lr = (vint *)task + 0x218000 / 4;
 	// set next_ready_task
 	td->next_ready_task = NULL;
 	debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
@@ -108,19 +109,27 @@ int main()
 
 			// update td lr, sp, spsr
 			// enter system mode 
-			asm volatile("msr CPSR, %0" :: "I" (SYS));
-			asm volatile("str sp, [%0]" : "=r" (cur_sp));
-			asm volatile("mrs %[spsr], spsr" :: [spsr] "r" (&cur_spsr));
-			asm volatile("str lr, [%0]" : "=r" (cur_lr));
-			asm volatile("str r0, [%0]" : "=r" (cur_arg0));
-			asm volatile("str r1, [%0]" : "=r" (cur_arg1));
+            asm volatile("msr CPSR, %0" :: "I" (SYS));
+			/*asm volatile("str sp, [%0]" : "=r" (cur_sp));*/
+			/*asm volatile("mrs %[spsr], spsr" :: [spsr] "r" (&cur_spsr));*/
+			/*asm volatile("str lr, [%0]" : "=r" (cur_lr));*/
+			/*asm volatile("str r0, [%0]" : "=r" (cur_arg0));*/
+			/*asm volatile("str r1, [%0]" : "=r" (cur_arg1));*/
+            asm volatile("mov ip, sp");
+            register vint cur_sp asm("ip");
+            uint32 cur_lr = *((vint*) (cur_sp + (req==1?52:48)));
+            uint32 arg0 = *((vint*) (cur_sp + 0));
+            uint32 arg1 = *((vint*) (cur_sp + 4));
 			// get back to svc mode 
 			asm volatile("msr CPSR, %0" :: "I" (SVC));
-			debug("get back into kernel again, cur_sp = 0x%x, cur_spsr = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
-					cur_sp, cur_spsr, cur_lr, cur_arg0, cur_arg1);
+			debug("get back into kernel again, cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
+					cur_sp, cur_lr, arg0, arg1);
+            // update td: sp, lr, spsr
+            td->sp = cur_sp;
+            td->lr = cur_lr;
 			switch(req){
 				case 1:		
-					k_create(cur_arg1, &ks, tid++, td->tid, cur_arg0);
+					k_create(arg1, &ks, tid++, td->tid, arg0);
 					break;
 				case 2:
 					k_pass(td, &ks);

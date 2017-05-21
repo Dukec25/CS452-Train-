@@ -82,7 +82,7 @@ asm_kernel_activate:
 	bl		bwputr(PLT)
 	@@ r5 = td->lr
 	ldr		r5, [r10, #4]
-	add		r5, r5, #LOAD_OFFSET
+	@add		r5, r5, #LOAD_OFFSET
 	mov		r0, #2
 	mov 	r1, r5
 	bl		bwputr(PLT)

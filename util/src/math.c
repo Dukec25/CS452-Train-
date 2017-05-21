@@ -18,9 +18,9 @@ uint8 clz(uint32 x)
 	x = x | (x >> 4);
 	x = x | (x >> 8);
 	x = x | (x >>16);
-	debug("in clz, x = 0x%x", x);
-	debug("in clz, ~x = 0x%x", ~x);
+	/*debug("in clz, x = 0x%x", x);*/
+	/*debug("in clz, ~x = 0x%x", ~x);*/
 	lz = popcount(~x);
-	debug("in clz, lz = %d", lz);
+	/*debug("in clz, lz = %d", lz);*/
 	return lz;
 }
