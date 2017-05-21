@@ -28,14 +28,13 @@ asm_print_sp:
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
 	@ get syscall type
-	ldr 	r2, [lr, #-4]
-	BIC 	r2, r2, #0xff000000
+	@@@ldr 	r2, [lr, #-4]
+	@@@BIC 	r2, r2, #0xff000000
 	@ set return value
-	mov		r0, r2
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+	@@@mov		r0, r2
+	mov		r0, lr
+	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
-asm_kernelExit:
-	
 asm_kernel_activate:
 	@ didn't store fp to sp here, might cause problems in future
 	@@r0 = task_descriptor *td
@@ -43,31 +42,31 @@ asm_kernel_activate:
 	mov 	ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	@ install active task state
-	@@ r10 = r0
-	mov 	r10, r0
-	@@ r4 = td->sp
-	ldr		r4, [r10, #0]
+	@@r8 = r0
+	mov 	r8, r0
+	@@r4 = td->sp
+	ldr		r4, [r8, #0]
 	mov		r0, #2
 	mov 	r1, r4
-	bl		bwputr(PLT)
-	@@ r5 = td->lr
-	ldr		r5, [r10, #4]
-	@add		r5, r5, #LOAD_OFFSET
-	mov		r0, #2
-	mov 	r1, r5
 	bl		bwputr(PLT)
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
 	mov 	sp, r4
+	mov		r0, #2
+	ldr		r1, [r4, #-48]
+	bl		bwputr(PLT)
+	mov		r0, #2
+	ldr		r1, [r4, #-44]
+	bl		bwputr(PLT)
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}	
 	@get back to svc mode 
 	msr 	CPSR, #SVC_MODE
 	@spsr = user mode
 	mov 	r0, #USR_MODE
 	msr 	SPSR, r0
-	mov 	lr, r5
 	@ return value = r0 = td->retval
 	ldr		r0, [r10, #8]
-	@ start the task executing
+	@ install user task state and start the task executing
 	movs 	pc, lr
 
 asm_set_usr_state:
@@ -84,19 +83,19 @@ asm_init_kernel:
 
 asm_kernel_create:
 	mov 	ip, sp 
-	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	1
 	mov		ip, r0
-	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	mov		r0, ip
 	movs 	pc, lr
 
 asm_kernel_pass:
 	mov 	ip, sp 
-	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	mov		r0, ip
 	SWI 	2
-	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	movs 	pc, lr
 
 asm_kernel_my_tid:
@@ -104,5 +103,6 @@ asm_kernel_my_tid:
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	mov		r0, ip
 	SWI 	3
-	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	movs 	pc, lr
+	@ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+	@ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	@movs 	pc, lr

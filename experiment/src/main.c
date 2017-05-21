@@ -36,6 +36,9 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 	// assign lr to point to the function pointer
 	td->lr = (vint *)task;
     td->lr = (vint *)task + 0x218000 / 4;
+	// push lr and sp onto the user task
+	*(td->sp - 12) = td->lr;
+	*(td->sp - 11) = TASK_START_LOCATION + (tid + 1) * TASK_SIZE;
 	// set next_ready_task
 	td->next_ready_task = NULL;
 	debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
@@ -101,13 +104,11 @@ int main()
 			task_descriptor *td = schedule(&ks);
 			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
-			int req = activate(td, &ks);
+			// int req = activate(td, &ks);
+			// debug("get back into kernel again, req = %d", req);
+			uint32 cur_lr = activate(td, &ks);
+			int req = *((vint *)(cur_lr - 4)) & ~(0xff000000);
 			debug("get back into kernel again, req = %d", req);
-			// vint *updated_lr = (vint*)0x9000000;
-			// vint *updated_sp = (vint*)0x9000004;
-			// vint *first_arg=   (vint*)0x9000008;
-			// vint *second_arg=  (vint*)0x900000C;
-
 			// update td lr, sp, spsr
 			// enter system mode 
             asm volatile("msr CPSR, %0" :: "I" (SYS));
@@ -118,11 +119,12 @@ int main()
 			/*asm volatile("str r1, [%0]" : "=r" (cur_arg1));*/
             asm volatile("mov ip, sp");
             register vint cur_sp asm("ip");
-            uint32 cur_lr = *((vint*) (cur_sp + (req==1?52:48)));
+            //uint32 cur_lr = *((vint*) (cur_sp + (req==1?52:48)));
             uint32 arg0 = *((vint*) (cur_sp + 0));
             uint32 arg1 = *((vint*) (cur_sp + 4));
 			// get back to svc mode 
 			asm volatile("msr CPSR, %0" :: "I" (SVC));
+			// register vint cur_lr asm("lr");	// cur_lr = lr_svc
 			debug("get back into kernel again, cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, arg0, arg1);
             // update td: sp, lr, spsr
