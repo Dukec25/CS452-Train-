@@ -76,7 +76,7 @@ task_descriptor *schedule(kernel_state *ks) {
 }
 
 void insert_task(task_descriptor *td, kernel_state *ks) {
-	debug("In insert_task, start removing td %d\n", td->tid);
+	debug("In insert_task, start inserting td %d\n", td->tid);
 	task_priority priority = td->priority;
 	if (ks->priority_mask & (0x1 << priority)) {
 		// ready_queue is non-empty
@@ -155,7 +155,7 @@ int main()
 
 	uint8 tid = 0;
 
-	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_LOW);
+	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	int loop = 0;	
 	for(loop = 0; loop < 4; loop++)
@@ -163,8 +163,6 @@ int main()
 			task_descriptor *td = schedule(&ks);
 			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
-			// int req = activate(td, &ks);
-			// debug("get back into kernel again, req = %d", req);
 			vint cur_lr = activate(td, &ks);
 			int req = *((vint *)(cur_lr - 4)) & ~(0xff000000);
 			debug("get back into kernel again, req = %d", req);

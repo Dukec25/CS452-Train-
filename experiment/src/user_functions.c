@@ -11,7 +11,9 @@ void init_kernel()
 int Create(int priority, void (*code) ())
 {
     debug("In user mode Create, priority = %d, code = 0x%x\n", priority, code);
-    asm_kernel_create(priority, code);
+    int tid = asm_kernel_create(priority, code);
+    debug("In user mode Create, tid = %d", tid);
+    return tid;
 }
 
 void Pass()

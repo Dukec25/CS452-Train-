@@ -27,6 +27,6 @@ void k_pass(task_descriptor *td, heap_t *pready_queue) {
     /*heap_insert(pready_queue, td->priority, td);*/
 }
 
-void k_exit(task_descriptor *td, heap_t *pready_queue) {
-
+void k_exit(task_descriptor *td, kernel_state *ks) {
+    remove_task(td, ks);
 }
