@@ -75,6 +75,65 @@ task_descriptor *schedule(kernel_state *ks) {
 	return head;
 }
 
+void insert_task(task_descriptor *td, kernel_state *ks) {
+	debug("In insert_task, start removing td %d\n", td->tid);
+	task_priority priority = td->priority;
+	if (ks->priority_mask & (0x1 << priority)) {
+		// ready_queue is non-empty
+		task_descriptor *tail = ks->ready_queues[priority].tail;
+		tail->next_ready_task = td;
+		ks->ready_queues[priority].tail = td;
+	} else {
+		// ready_queue is empty
+		ks->ready_queues[priority].head = td;
+		ks->ready_queues[priority].tail = td;
+		// set priority_mask
+		ks->priority_mask |= (0x1 << priority);
+	}
+}
+
+void remove_task(task_descriptor *td, kernel_state *ks) {
+	debug("In remove_task, start removing td %d\n", td->tid);
+	task_priority priority = td->priority;
+	task_descriptor *head = ks->ready_queues[priority].head;
+	task_descriptor *tail = ks->ready_queues[priority].tail;
+	if (td->next_ready_task == NULL) {
+		if (td == head) {
+			// td is the only task on the ready queue, empty the ready queue
+			ks->ready_queues[priority].head = NULL;
+			ks->ready_queues[priority].tail = NULL;
+			// unset corresponding bit in the priority_mask
+			ks->priority_mask &= ~(0x1 << priority);
+		} else {
+			// td is the tail, need to find the task whose next_ready_task is td
+			task_descriptor *iter = head;
+			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
+				if (iter->next_ready_task == td) {
+					break;
+				}
+			}
+			iter->next_ready_task = NULL;
+			ks->ready_queues[priority].tail = iter;
+		}
+	}
+	else {
+		if (td == head) {
+			// td is the head, ready_queue has more than one tasks
+			ks->ready_queues[priority].head = td->next_ready_task;
+		}
+		else {
+			// td is in the middle, need to find the task whose next_ready_task is td
+			task_descriptor *iter = head;
+			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
+				if (iter->next_ready_task == td) {
+					break;
+				}
+			}
+			iter->next_ready_task = td->next_ready_task;
+		}
+	}
+}
+
 int activate(task_descriptor *td, kernel_state *ks) {
 	td->state = STATE_ACTIVE;
 	debug("In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x\r\n",
