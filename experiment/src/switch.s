@@ -27,39 +27,9 @@ asm_print_sp:
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
-@	@@r10 = r0
-@	mov		r10, r0
 	@ get syscall type
 	ldr 	r2, [lr, #-4]
 	BIC 	r2, r2, #0xff000000
-@	@ user stack = r0
-@	mov		r0, #2
-@	mov		r1, r10
-@	bl		bwputr(PLT)
-@	@ user r10 as base address to load register values stored on user stack
-@	@@ r4 = user lr, r5 = user sp, r6 = user arg0, r7 = user arg1
-@	ldr		r4, [r10, #-56]
-@	mov		r0, #2
-@	mov		r1, r4
-@	bl		bwputr(PLT)
-@	ldr		r5, [r10, #-52]
-@	mov		r0, #2
-@	mov		r1, r5
-@	bl		bwputr(PLT)
-@	ldr		r6, [r10, #0]
-@	mov		r0, #2
-@	mov		r1, r6
-@	bl		bwputr(PLT)
-@	ldr		r7, [r10, #-4]
-@	mov		r0, #2
-@	mov		r1, r7
-@	bl		bwputr(PLT)
-@	@ store r4 - r7 into user state storage
-@	mov		r3, #USER_STATE_STORE_OFFSET
-@	str		r4, [r3]
-@	str		r5, [r3, #4]
-@	str		r6, [r3, #8]
-@	str		r7, [r3, #12]
 	@ set return value
 	mov		r0, r2
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
@@ -82,7 +52,7 @@ asm_kernel_activate:
 	bl		bwputr(PLT)
 	@@ r5 = td->lr
 	ldr		r5, [r10, #4]
-	add		r5, r5, #LOAD_OFFSET
+@	add		r5, r5, #LOAD_OFFSET
 	mov		r0, #2
 	mov 	r1, r5
 	bl		bwputr(PLT)
@@ -115,7 +85,6 @@ asm_init_kernel:
 asm_kernel_create:
 	mov 	ip, sp 
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
-	mov		r0, ip
 	SWI 	1
 	mov		ip, r0
 	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}

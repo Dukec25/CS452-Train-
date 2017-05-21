@@ -3,16 +3,10 @@
 #include <define.h>
 #include <math.h>
 
-extern int asm_print_sp();
+extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(task_descriptor *td);
-
-static uint32 cur_sp = 0;
-static uint32 cur_lr = 0;
-static volatile uint32 cur_spsr = 0;
-static uint32 cur_arg0 = 0;
-static uint32 cur_arg1 = 0;
 
 static void ks_initialize(kernel_state *ks)
 {
@@ -31,10 +25,14 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 	td->ptid = ptid;
 	td->state = STATE_READY;
 	td->priority = priority;
-	//assign memory to the first task
+	// assign memory to the first task
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
-	td->lr = (vint *)task;
+	td->lr = (vint *)task + 0x218000 / 4;
+#ifdef DEBUG_SPSR
+	// set spsr to user mode
+	td->spsr = USR;
+#endif // DEBUG_SPSR
 	// set next_ready_task
 	td->next_ready_task = NULL;
 	debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
@@ -72,8 +70,9 @@ task_descriptor *schedule(kernel_state *ks) {
 }
 
 int activate(task_descriptor *td, kernel_state *ks) {
-	debug("in %s", "activate");
 	td->state = STATE_ACTIVE;
+	debug("In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x\r\n",
+					td->tid, td->state, td->priority, td->sp, td->lr);
 	return asm_kernel_activate(td);
 }
 
@@ -101,26 +100,38 @@ int main()
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
 			int req = activate(td, &ks);
 			debug("get back into kernel again, req = %d", req);
-			// vint *updated_lr = (vint*)0x9000000;
-			// vint *updated_sp = (vint*)0x9000004;
-			// vint *first_arg=   (vint*)0x9000008;
-			// vint *second_arg=  (vint*)0x900000C;
-
-			// update td lr, sp, spsr
-			// enter system mode 
+			// retrieve td lr, sp, spsr
+#ifdef	DEBUG_SPSR 
+			asm volatile("mrs r0, spsr");	
+			register uint32 cur_spsr asm("r0");
+#endif // DEBUG_SPSR
+			// enter system mode
 			asm volatile("msr CPSR, %0" :: "I" (SYS));
-			asm volatile("str sp, [%0]" : "=r" (cur_sp));
-			asm volatile("mrs %[spsr], spsr" :: [spsr] "r" (&cur_spsr));
-			asm volatile("str lr, [%0]" : "=r" (cur_lr));
-			asm volatile("str r0, [%0]" : "=r" (cur_arg0));
-			asm volatile("str r1, [%0]" : "=r" (cur_arg1));
+			asm volatile("mov ip, sp");
+			register uint32 cur_sp asm("ip");
+			register uint32 cur_lr asm("lr");
+			uint32 arg0 = *((vint*) (cur_sp + 0));
+			uint32 arg1 = *((vint*) (cur_sp + 4));
 			// get back to svc mode 
 			asm volatile("msr CPSR, %0" :: "I" (SVC));
-			debug("get back into kernel again, cur_sp = 0x%x, cur_spsr = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
-					cur_sp, cur_spsr, cur_lr, cur_arg0, cur_arg1);
+#ifdef DEBUG_SPSR
+			debug("get back into kernel again, cur_sp = 0x%x, cur_lr = 0x%x, cur_spsr = 0x%x", cur_sp, cur_lr, cur_spsr);
+#else
+			debug("get back into kernel again, cur_sp = 0x%x, cur_lr = 0x%x", cur_sp, cur_lr);
+#endif // DEBUG_SPSR
+			// update td: sp, lr, spsr
+			td->sp = cur_sp;
+			td->lr = cur_lr;
+#ifdef	DEBUG_SPSR 
+			td->spsr = cur_spsr;
+			debug("updated td, td->tid = %d, td->sp = 0x%x, td->lr = 0x%x, td->spsr = 0x%x", td->tid, td->sp, td->lr, td->spsr);
+#else
+			debug("updated td, td->tid = %d, td->sp = 0x%x, td->lr = 0x%x", td->tid, td->sp, td->lr);
+#endif	// DEBUG_SPSR
 			switch(req){
-				case 1:		
-					k_create(cur_arg1, &ks, tid++, td->tid, cur_arg0);
+				case 1:
+					debug("ready to call k_create, arg0 = 0x%x, arg1 = 0x%x", arg0, arg1);
+					k_create(arg1, &ks, tid++, td->tid, arg0);
 					break;
 				case 2:
 					k_pass(td, &ks);
