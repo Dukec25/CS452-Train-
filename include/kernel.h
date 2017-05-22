@@ -1,6 +1,5 @@
-#include <heap.h>
 #include <define.h> 
-#include <fifo.h>
+#include <debug.h>
 
 #define TASK_SIZE 			102400 /* 100kb */
 #define TASK_START_LOCATION 0x1000000
@@ -58,17 +57,23 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 
 task_descriptor *schedule(kernel_state *ks);
 
-void handle(task_descriptor *active, void *req);
+void insert_task(task_descriptor *td, kernel_state *ks);
+
+void remove_task(task_descriptor *td, kernel_state *ks);
 
 int activate(task_descriptor *td, kernel_state *ks);
 
 void k_create(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority);
 
-int k_myTid();
+void k_my_tid(task_descriptor *td);
 
-int k_myParentTid();
+void k_my_parent_tid(task_descriptor *td);
 
 void k_init_kernel();
+
+void k_pass(task_descriptor *td, kernel_state *ks);
+
+void k_exit(task_descriptor *td, kernel_state *ks);
 
 void init_kernel();
 
