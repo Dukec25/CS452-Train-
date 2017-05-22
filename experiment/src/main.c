@@ -79,12 +79,12 @@ void insert_task(task_descriptor *td, kernel_state *ks) {
 	debug("In insert_task, start inserting td %d\n", td->tid);
 	task_priority priority = td->priority;
 	if (ks->priority_mask & (0x1 << priority)) {
-        debug("inserting first in the ready queue td->tid %d\n", td->tid);
 		// ready_queue is non-empty
 		task_descriptor *tail = ks->ready_queues[priority].tail;
 		tail->next_ready_task = td;
 		ks->ready_queues[priority].tail = td;
 	} else {
+        debug("inserting first in the ready queue td->tid %d\n", td->tid);
 		// ready_queue is empty
 		ks->ready_queues[priority].head = td;
 		ks->ready_queues[priority].tail = td;
@@ -159,7 +159,9 @@ int main()
 
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-    while(ks.priority_mask != 0)
+    vint loops;
+    /*while(ks.priority_mask != 0)*/ // this should be the correct one
+    for(loops=0; loops < 12; loops++)
 	{
             debug("priority_mask =%d", ks.priority_mask);
 			task_descriptor *td = schedule(&ks);
@@ -188,10 +190,10 @@ int main()
 			debug("get back into kernel again, cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, arg0, arg1);
             // update td: sp, lr, spsr
-			debug("cur_sp value is 0x%x", cur_sp);
+			/*debug("cur_sp value is 0x%x", cur_sp);*/
             td->sp = cur_sp;
             td->lr = cur_lr;
-			debug("td->sp value is 0x%x", td->sp);
+			/*debug("td->sp value is 0x%x", td->sp);*/
 			switch(req){
 				case 1:		
 					k_create(arg1, &ks, tid++, td->tid, arg0);
