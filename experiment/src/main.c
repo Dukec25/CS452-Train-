@@ -79,6 +79,7 @@ void insert_task(task_descriptor *td, kernel_state *ks) {
 	debug("In insert_task, start inserting td %d\n", td->tid);
 	task_priority priority = td->priority;
 	if (ks->priority_mask & (0x1 << priority)) {
+        debug("inserting first in the ready queue td->tid %d\n", td->tid);
 		// ready_queue is non-empty
 		task_descriptor *tail = ks->ready_queues[priority].tail;
 		tail->next_ready_task = td;
@@ -99,6 +100,7 @@ void remove_task(task_descriptor *td, kernel_state *ks) {
 	task_descriptor *tail = ks->ready_queues[priority].tail;
 	if (td->next_ready_task == NULL) {
 		if (td == head) {
+            debug("remove last in the ready queue td->tid %d\n", td->tid);
 			// td is the only task on the ready queue, empty the ready queue
 			ks->ready_queues[priority].head = NULL;
 			ks->ready_queues[priority].tail = NULL;

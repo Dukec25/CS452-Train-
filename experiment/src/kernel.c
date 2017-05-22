@@ -25,6 +25,7 @@ void k_my_parent_tid(task_descriptor *td){
 
 void k_pass(task_descriptor *td, kernel_state *ks) {
 	debug("In %s", "k_pass");
+    remove_task(td, ks);
     td->state = STATE_READY;
     insert_task(td, ks);
 }
