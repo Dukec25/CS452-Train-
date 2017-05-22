@@ -157,10 +157,9 @@ int main()
 
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-	/*int loop = 0;	*/
-	/*for(loop = 0; loop < 4; loop++)*/
     while(ks.priority_mask != 0)
 	{
+            debug("priority_mask =%d", ks.priority_mask);
 			task_descriptor *td = schedule(&ks);
 			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
@@ -203,6 +202,9 @@ int main()
 					break;
                 case 4:
                     k_exit(td, &ks);
+                    break;
+                case 5:
+                    k_my_parent_tid(td);
                     break;
 			}
 	}

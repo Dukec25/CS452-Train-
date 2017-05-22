@@ -38,8 +38,8 @@ int MyTid()
 
 int MyParentTid()
 {
-	/*debug("In user mode %s", "MyParentTid");*/
-    /*vint tid = asm_kernel_my_parent_tid();*/
-	/*debug("In user mode MyParentTid tid = %d", tid);*/
-	/*return tid;*/
+	debug("In user mode %s", "MyParentTid");
+    vint tid = asm_kernel_my_parent_tid();
+	debug("In user mode MyParentTid tid = %d", tid);
+	return tid;
 }

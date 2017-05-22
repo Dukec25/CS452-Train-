@@ -19,15 +19,18 @@ void k_my_tid(task_descriptor *td){
 }
 
 void k_my_parent_tid(task_descriptor *td){
-//    td->retval = td->parent_id;
+	debug("In kernel mode k_my_parent_tid, td->ptid = %d", td->ptid);
+    td->retval = td->ptid;
 }
 
-void k_pass(task_descriptor *td, heap_t *pready_queue) {
-    /*bwprintf(COM2, "%s:%d in the kernel pass", __FILE__, __LINE__);*/
-    /*td->state = STATE_READY;*/
-    /*heap_insert(pready_queue, td->priority, td);*/
+void k_pass(task_descriptor *td, kernel_state *ks) {
+	debug("In %s", "k_pass");
+    td->state = STATE_READY;
+    insert_task(td, ks);
 }
 
 void k_exit(task_descriptor *td, kernel_state *ks) {
+	debug("In %s", "k_exit");
+    td->state = STATE_ZOMBIE;
     remove_task(td, ks);
 }

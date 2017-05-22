@@ -12,6 +12,7 @@
 	.global asm_kernel_activate
 	.global	asm_kernel_pass
 	.global asm_kernel_my_tid
+    .global asm_kernel_my_parent_tid
 
 asm_print_sp:
 	mov		ip, sp
