@@ -4,27 +4,32 @@
 	.global	fifo_init
 	.type	fifo_init, %function
 fifo_init:
-	@ args = 0, pretend = 0, frame = 1008
+	@ args = 0, pretend = 0, frame = 4008
 	@ frame_needed = 1, uses_anonymous_args = 0
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
 	sub	fp, ip, #4
-	sub	sp, sp, #1008
+	sub	sp, sp, #4000
+	sub	sp, sp, #8
 	mov	r4, r0
 	mov	r3, #0
 	str	r3, [fp, #-24]
 	mov	r3, #0
 	str	r3, [fp, #-20]
-	mov	r3, r4
-	sub	r2, fp, #1024
-	mov	ip, #1008
-	mov	r0, r3
-	mov	r1, r2
-	mov	r2, ip
+	mov	r1, r4
+	sub	r3, fp, #4016
+	sub	r3, r3, #8
+	ldr	r2, .L3
+	mov	r0, r1
+	mov	r1, r3
 	bl	memcpy(PLT)
 	mov	r0, r4
 	sub	sp, fp, #16
 	ldmfd	sp, {r4, fp, sp, pc}
+.L4:
+	.align	2
+.L3:
+	.word	4008
 	.size	fifo_init, .-fifo_init
 	.align	2
 	.global	is_fifo_empty
@@ -39,10 +44,10 @@ is_fifo_empty:
 	str	r0, [fp, #-16]
 	ldr	r3, [fp, #-16]
 	ldr	r3, [r3, #0]
-	ldr	r2, [r3, #1000]
+	ldr	r2, [r3, #4000]
 	ldr	r3, [fp, #-16]
 	ldr	r3, [r3, #0]
-	ldr	r3, [r3, #1004]
+	ldr	r3, [r3, #4004]
 	cmp	r2, r3
 	movne	r3, #0
 	moveq	r3, #1
@@ -62,12 +67,12 @@ is_fifo_full:
 	str	r0, [fp, #-20]
 	ldr	r3, [fp, #-20]
 	ldr	r3, [r3, #0]
-	ldr	r3, [r3, #1000]
+	ldr	r3, [r3, #4000]
 	add	r3, r3, #1
 	str	r3, [fp, #-16]
 	ldr	r3, [fp, #-20]
 	ldr	r3, [r3, #0]
-	ldr	r2, [r3, #1004]
+	ldr	r2, [r3, #4004]
 	ldr	r3, [fp, #-16]
 	cmp	r2, r3
 	movne	r3, #0
@@ -87,50 +92,49 @@ fifo_put:
 	sub	fp, ip, #4
 	sub	sp, sp, #16
 	str	r0, [fp, #-20]
-	mov	r3, r1
-	strb	r3, [fp, #-24]
+	str	r1, [fp, #-24]
 	ldr	r0, [fp, #-20]
 	bl	is_fifo_full(PLT)
 	mov	r3, r0
 	cmp	r3, #0
-	beq	.L8
+	beq	.L10
 	mvn	r3, #0
 	str	r3, [fp, #-28]
-	b	.L10
-.L8:
+	b	.L12
+.L10:
 	ldr	r3, [fp, #-20]
 	ldr	r3, [r3, #0]
-	ldr	r3, [r3, #1000]
+	ldr	r3, [r3, #4000]
 	add	r3, r3, #1
 	str	r3, [fp, #-16]
 	ldr	r2, [fp, #-16]
-	ldr	r3, .L14
+	ldr	r3, .L16
 	cmp	r2, r3
-	ble	.L11
+	ble	.L13
 	mov	r3, #0
 	str	r3, [fp, #-16]
-.L11:
+.L13:
 	ldr	r3, [fp, #-20]
 	ldr	r1, [r3, #0]
 	ldr	r3, [fp, #-20]
 	ldr	r3, [r3, #0]
-	ldr	r2, [r3, #1000]
-	ldrb	r3, [fp, #-24]
-	strb	r3, [r1, r2]
+	ldr	r2, [r3, #4000]
+	ldr	r3, [fp, #-24]
+	str	r3, [r1, r2, asl #2]
 	ldr	r3, [fp, #-20]
 	ldr	r2, [r3, #0]
 	ldr	r3, [fp, #-16]
-	str	r3, [r2, #1000]
+	str	r3, [r2, #4000]
 	mov	r3, #0
 	str	r3, [fp, #-28]
-.L10:
+.L12:
 	ldr	r3, [fp, #-28]
 	mov	r0, r3
 	sub	sp, fp, #12
 	ldmfd	sp, {fp, sp, pc}
-.L15:
+.L17:
 	.align	2
-.L14:
+.L16:
 	.word	999
 	.size	fifo_put, .-fifo_put
 	.align	2
@@ -149,45 +153,45 @@ fifo_get:
 	bl	is_fifo_empty(PLT)
 	mov	r3, r0
 	cmp	r3, #0
-	beq	.L17
+	beq	.L19
 	mvn	r3, #0
 	str	r3, [fp, #-28]
-	b	.L19
-.L17:
+	b	.L21
+.L19:
 	ldr	r3, [fp, #-20]
 	ldr	r3, [r3, #0]
-	ldr	r3, [r3, #1004]
+	ldr	r3, [r3, #4004]
 	add	r3, r3, #1
 	str	r3, [fp, #-16]
 	ldr	r2, [fp, #-16]
-	ldr	r3, .L23
+	ldr	r3, .L25
 	cmp	r2, r3
-	ble	.L20
+	ble	.L22
 	mov	r3, #0
 	str	r3, [fp, #-16]
-.L20:
+.L22:
 	ldr	r3, [fp, #-20]
 	ldr	r2, [r3, #0]
 	ldr	r3, [fp, #-20]
 	ldr	r3, [r3, #0]
-	ldr	r3, [r3, #1004]
-	ldrb	r3, [r2, r3]	@ zero_extendqisi2
-	ldr	r2, [fp, #-24]
-	strb	r3, [r2, #0]
+	ldr	r3, [r3, #4004]
+	ldr	r2, [r2, r3, asl #2]
+	ldr	r3, [fp, #-24]
+	str	r2, [r3, #0]
 	ldr	r3, [fp, #-20]
 	ldr	r2, [r3, #0]
 	ldr	r3, [fp, #-16]
-	str	r3, [r2, #1004]
+	str	r3, [r2, #4004]
 	mov	r3, #0
 	str	r3, [fp, #-28]
-.L19:
+.L21:
 	ldr	r3, [fp, #-28]
 	mov	r0, r3
 	sub	sp, fp, #12
 	ldmfd	sp, {fp, sp, pc}
-.L24:
+.L26:
 	.align	2
-.L23:
+.L25:
 	.word	999
 	.size	fifo_get, .-fifo_get
 	.align	2
@@ -206,22 +210,22 @@ fifo_peek:
 	bl	is_fifo_empty(PLT)
 	mov	r3, r0
 	cmp	r3, #0
-	beq	.L26
+	beq	.L28
 	mvn	r3, #0
 	str	r3, [fp, #-24]
-	b	.L28
-.L26:
+	b	.L30
+.L28:
 	ldr	r3, [fp, #-16]
 	ldr	r2, [r3, #0]
 	ldr	r3, [fp, #-16]
 	ldr	r3, [r3, #0]
-	ldr	r3, [r3, #1004]
-	ldrb	r3, [r2, r3]	@ zero_extendqisi2
-	ldr	r2, [fp, #-20]
-	strb	r3, [r2, #0]
+	ldr	r3, [r3, #4004]
+	ldr	r2, [r2, r3, asl #2]
+	ldr	r3, [fp, #-20]
+	str	r2, [r3, #0]
 	mov	r3, #0
 	str	r3, [fp, #-24]
-.L28:
+.L30:
 	ldr	r3, [fp, #-24]
 	mov	r0, r3
 	sub	sp, fp, #12

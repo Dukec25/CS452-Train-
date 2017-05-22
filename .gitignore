@@ -1,7 +1,6 @@
+#ignore generate .o, .a, .s, .map, .elf files
 *.o
-*.elf
+lib/
+build/
 *.map
-*.s 
-
-
-
+*.elf
