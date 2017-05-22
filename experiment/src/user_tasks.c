@@ -20,10 +20,10 @@ void first_task()
 	debug(DEBUG_TASK, "created taskId = %d", tid);
 	tid = Create(PRIOR_LOW, general_task);
 	debug(DEBUG_TASK, "created taskId = %d", tid);
-	/*tid = Create(PRIOR_HIGH, general_task);*/
-	/*debug("created taskId = %d", tid);*/
-	/*tid = Create(PRIOR_HIGH, general_task);*/
-	/*debug("created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, general_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, general_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 	debug(DEBUG_TASK, "%s", "FirstUserTask: exiting");
 	Exit();
 }
