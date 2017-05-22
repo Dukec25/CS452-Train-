@@ -11,7 +11,7 @@ void init_kernel()
 int Create(int priority, void (*code) ())
 {
     debug("In user mode Create, priority = %d, code = 0x%x\n", priority, code);
-    int tid = asm_kernel_create(priority, code);
+    vint tid = asm_kernel_create(priority, code);
     debug("In user mode Create, tid = %d", tid);
     return tid;
 }
@@ -34,4 +34,12 @@ int MyTid()
     vint tid = asm_kernel_my_tid();
 	debug("In user mode MyTid tid = %d", tid);
 	return tid;
+}
+
+int MyParentTid()
+{
+	/*debug("In user mode %s", "MyParentTid");*/
+    /*vint tid = asm_kernel_my_parent_tid();*/
+	/*debug("In user mode MyParentTid tid = %d", tid);*/
+	/*return tid;*/
 }

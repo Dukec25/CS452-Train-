@@ -9,7 +9,8 @@ void k_create(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_pr
 {
 	debug("In kernel mode k_create, tid = %d", tid);
 	td_intialize(task, ks, tid, ptid, priority);
-	ks->tasks[tid].retval = tid;
+	debug("In kernel mode k_create before add into retval, tid = %d", tid);
+	ks->tasks[ptid].retval = tid;
 }
 
 void k_my_tid(task_descriptor *td){

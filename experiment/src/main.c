@@ -136,8 +136,8 @@ void remove_task(task_descriptor *td, kernel_state *ks) {
 
 int activate(task_descriptor *td, kernel_state *ks) {
 	td->state = STATE_ACTIVE;
-	debug("In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x\r\n",
-					td->tid, td->state, td->priority, td->sp, td->lr);
+	debug("In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x \r\n",
+					td->tid, td->state, td->priority, td->sp, td->lr, td->retval);
 	return asm_kernel_activate(td);
 }
 
@@ -157,8 +157,9 @@ int main()
 
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-	int loop = 0;	
-	for(loop = 0; loop < 4; loop++)
+	/*int loop = 0;	*/
+	/*for(loop = 0; loop < 4; loop++)*/
+    while(ks.priority_mask != 0)
 	{
 			task_descriptor *td = schedule(&ks);
 			debug("tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",

@@ -85,7 +85,9 @@ asm_kernel_create:
 	SWI 	1
 
 	mov		ip, r0
+
 	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+
 	mov		r0, ip
 	mov 	pc, lr
 
@@ -101,21 +103,7 @@ asm_kernel_my_tid:
 	mov		ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	mov		r0, ip
-
-	mov		r0, #2
-    mov		r1, sp
-	bl		bwputr(PLT)
-
 	SWI 	3
-
-	mov		r0, #2
-    mov		r1, #0x100
-	bl		bwputr(PLT)
-
-	mov		r0, #2
-    mov		r1, sp
-	bl		bwputr(PLT)
-	@ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	mov 	pc, lr
 
@@ -126,3 +114,11 @@ asm_kernel_exit:
 	SWI 	4
     @no restore as the task end after SWI
     
+asm_kernel_my_parent_tid:
+	mov		ip, sp 
+	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov		r0, ip
+	SWI 	5
+	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov 	pc, lr
+
