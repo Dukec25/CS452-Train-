@@ -27,11 +27,6 @@ asm_print_sp:
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
-	@ get syscall type
-	@@@ldr 	r2, [lr, #-4]
-	@@@BIC 	r2, r2, #0xff000000
-	@ set return value
-	@@@mov		r0, r2
 	mov		r0, lr
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 

@@ -7,12 +7,6 @@ extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(task_descriptor *td);
 
-/*static uint32 cur_sp = 0;*/
-/*static uint32 cur_lr = 0;*/
-/*static volatile uint32 cur_spsr = 0;*/
-/*static uint32 cur_arg0 = 0;*/
-/*static uint32 cur_arg1 = 0;*/
-
 static void ks_initialize(kernel_state *ks)
 {
 	ks->priority_mask = 0;
@@ -175,7 +169,6 @@ int main()
 
 	vint loops;
 	while(ks.priority_mask != 0) { // this should be the correct one
-	// for(loops=0; loops < 12; loops++) {
 			debug(DEBUG_SCHEDULER, "priority_mask =%d", ks.priority_mask);
 			task_descriptor *td = schedule(&ks);
 			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
@@ -187,15 +180,9 @@ int main()
 			// update td lr, sp, spsr
 			// enter system mode 
 			asm volatile("msr CPSR, %0" :: "I" (SYS));
-			/*asm volatile("str sp, [%0]" : "=r" (cur_sp));*/
-			/*asm volatile("mrs %[spsr], spsr" :: [spsr] "r" (&cur_spsr));*/
-			/*asm volatile("str lr, [%0]" : "=r" (cur_lr));*/
-			/*asm volatile("str r0, [%0]" : "=r" (cur_arg0));*/
-			/*asm volatile("str r1, [%0]" : "=r" (cur_arg1));*/
 			asm volatile("mov ip, sp");
 			register vint temp_sp asm("ip"); // extremly dangerous!!!, modify its value after the second read, holy cow waste so much time on this
 			vint cur_sp = temp_sp;
-			//uint32 cur_lr = *((vint*) (cur_sp + (req==1?52:48)));
 			uint32 arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
 			// get back to svc mode 
@@ -204,10 +191,8 @@ int main()
 			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, arg0, arg1);
 			// update td: sp, lr, spsr
-			/*debug("cur_sp value is 0x%x", cur_sp);*/
 			td->sp = cur_sp;
 			td->lr = cur_lr;
-			/*debug("td->sp value is 0x%x", td->sp);*/
 			switch(req){
 				case 1:		
 					k_create(arg1, &ks, tid++, td->tid, arg0);
