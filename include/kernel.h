@@ -23,6 +23,7 @@ typedef enum task_priority {
 typedef struct task_descriptor {
 	vint 					*sp; 
 	vint 					*lr;
+	uint32					spsr;
 	uint32 					retval;
 	uint32 					tid;
 	int 					ptid;

@@ -20,10 +20,12 @@ static void ks_initialize(kernel_state *ks)
 void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority)
 {
 	task_descriptor *td = &(ks->tasks[tid]);
+	// initialize tid, ptid, state, priority, and spsr
 	td->tid = tid;
 	td->ptid = ptid;
 	td->state = STATE_READY;
 	td->priority = priority;
+	td->spsr = USR; // hardcoded to user mode, not flag bit set
 	// assign memory to the first task
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
@@ -175,25 +177,28 @@ int main()
 			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
 					td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
+			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td, &ks);
 			int req = *((vint *)(cur_lr - 4)) & ~(0xff000000);
 			debug(DEBUG_TRACE, "get back into kernel again, req = %d", req);
-			// update td lr, sp, spsr
-			// enter system mode 
-			asm volatile("msr CPSR, %0" :: "I" (SYS));
+			// retrieve spsr
+			asm volatile("mrs ip, spsr"); // assign spsr to ip
+			register uint32 temp_spsr asm("ip");
+			uint32 cur_spsr = temp_spsr;
+			// retrieve sp and arg0 and arg1
+			asm volatile("msr CPSR, %0" :: "I" (SYS)); // enter system mode
 			asm volatile("mov ip, sp");
 			register vint temp_sp asm("ip"); // extremly dangerous!!!, modify its value after the second read, holy cow waste so much time on this
 			vint cur_sp = temp_sp;
 			uint32 arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
-			// get back to svc mode 
-			asm volatile("msr CPSR, %0" :: "I" (SVC));
-			// register vint cur_lr asm("lr");	// cur_lr = lr_svc
+			asm volatile("msr CPSR, %0" :: "I" (SVC)); // get back to svc mode 
 			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, arg0, arg1);
 			// update td: sp, lr, spsr
 			td->sp = cur_sp;
 			td->lr = cur_lr;
+			td->spsr = cur_spsr;
 			switch(req){
 				case 1:		
 					k_create(arg1, &ks, tid++, td->tid, arg0);

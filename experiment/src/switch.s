@@ -45,6 +45,13 @@ asm_kernel_activate:
 	bl		debug_asm(PLT)
 	@r5 = td->lr
 	ldr		r5, [r8, #4]
+	@@@@
+	@r6 = td->spsr
+	ldr		r6, [r8, #8]
+	mov		r0, r6
+	bl		debug_asm(PLT)
+	@@@@
+
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
 	mov 	sp, r4
@@ -52,10 +59,15 @@ asm_kernel_activate:
 	@get back to svc mode 
 	msr 	CPSR, #SVC_MODE
 	@spsr = user mode
-	mov 	r0, #USR_MODE
-	msr 	SPSR, r0
+	@@@mov 	r0, #USR_MODE
+	@@@msr 	SPSR, r0
+	@@@@
+	msr		SPSR, r6
+	@@@@
+
 	@ return value = r0 = td->retval
-	ldr		r0, [r8, #8]
+	@@@ldr		r0, [r8, #8]
+	ldr		r0, [r8, #12]
 
 	mov		lr, r5
 	@ install user task state and start the task executing
