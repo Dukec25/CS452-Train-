@@ -202,13 +202,13 @@ int main()
 					k_pass(td, &ks);
 					break;
 				case 3:
-					k_my_tid(td);
+					k_my_tid(td, &ks);
 					break;
 				case 4:
 					k_exit(td, &ks);
 					break;
 				case 5:
-					k_my_parent_tid(td);
+					k_my_parent_tid(td, &ks);
 					break;
 			}
 	}

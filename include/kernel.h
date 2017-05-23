@@ -65,9 +65,9 @@ int activate(task_descriptor *td, kernel_state *ks);
 
 void k_create(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority);
 
-void k_my_tid(task_descriptor *td);
+void k_my_tid(task_descriptor *td, kernel_state *ks);
 
-void k_my_parent_tid(task_descriptor *td);
+void k_my_parent_tid(task_descriptor *td, kernel_state *ks);
 
 void k_init_kernel();
 
