@@ -11,6 +11,7 @@ void k_create(task_descriptor *td, kernel_state *ks, void (*task)(), uint32 tid,
 	debug(DEBUG_SYSCALL, "In kernel mode k_create, tid = %d", tid);
 	uint32 ptid = td->tid;
 	td_intialize(task, ks, tid, ptid, priority);
+	td->retval = tid;
     reschedule(td, ks); 
 }
 
