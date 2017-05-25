@@ -1,4 +1,5 @@
 #include <string.h>
+#include <debug.h>
 
 int atoi(char *str)
 {
@@ -88,31 +89,38 @@ int strcmp(char *str1, char *str2, size_t num)
 
 void *memcpy(void *destination, const void *source, size_t num)
 {
-	void *dest_pos = destination;
-	void *src_pos = (void *)source;
-	while(!num) {
-		if (num / sizeof(uint64)) {
+	uint8 *dest_pos = (uint8 *)destination;
+	uint8 *src_pos = (uint8 *)source;
+	debug(DEBUG_TRACE, "memcpy dest_pos = 0x%x, src_pos = 0x%x, num = %d", dest_pos, src_pos, num);
+	while(num > 0) {
+		if (num >= sizeof(uint64)) {
 			*((uint64 *)dest_pos) = *((uint64 *)src_pos);
-			dest_pos += sizeof(uint64);
+			debug(DEBUG_TRACE, "memcpy strlen %d using uint64, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint64 *)dest_pos), dest_pos);
+			dest_pos += sizeof(uint64);	
 			src_pos += sizeof(uint64);
 			num -= sizeof(uint64);
 		}
-		else if (num / sizeof(uint32)) {
+		else if (num >= sizeof(uint32)) {
 			*((uint32 *)dest_pos) = *((uint32 *)src_pos);
-			dest_pos += sizeof(uint32);
+			debug(DEBUG_TRACE, "memcpy strlen %d using uint32, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint32 *)dest_pos), dest_pos);
+			dest_pos += sizeof(uint32);	
 			src_pos += sizeof(uint32);
 			num -= sizeof(uint32);
 		}
-		else if (num / sizeof(uint16)) {
+		else if (num >= sizeof(uint16)) {
 			*((uint16 *)dest_pos) = *((uint16 *)src_pos);
+			debug(DEBUG_TRACE, "memcpy strlen %d using uint16, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint16 *)dest_pos), dest_pos);
 			dest_pos += sizeof(uint16);	
 			src_pos += sizeof(uint16);
 			num -= sizeof(uint16);
 		}
-		*((uint8 *)dest_pos) = *((uint8 *)src_pos);
-		dest_pos += sizeof(uint8);
-		src_pos += sizeof(uint8);
-		num -= sizeof(uint8);
+		else {
+			*((uint8 *)dest_pos) = *((uint8 *)src_pos);
+			debug(DEBUG_TRACE, "memcpy strlen %d using uint8, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint8 *)dest_pos), dest_pos);
+			dest_pos += sizeof(uint8);
+			src_pos += sizeof(uint8);
+			num -= sizeof(uint8);
+		}
 	}
 	return destination;
 }

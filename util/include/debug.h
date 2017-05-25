@@ -7,6 +7,7 @@ typedef enum debug_level
 {
 	DEBUG_ALL,
 	DEBUG_TRACE,
+	DEBUG_INFO,
 	DEBUG_ASM,
 	DEBUG_SCHEDULER,
 	DEBUG_SYSCALL,
