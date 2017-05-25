@@ -5,23 +5,23 @@
 extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_init_kernel();
-extern int asm_kernel_activate(task_descriptor *td);
+extern int asm_kernel_activate(Task_descriptor *td);
 
 /* Initialze kernel state by setting task priority queue to be empty */
-static void ks_initialize(kernel_state *ks)
+static void ks_initialize(Kernel_state *ks)
 {
-	ks->priority_queue.priority_mask = 0;
+	ks->priority_queue.mask = 0;
 	int i = 0;
 	for (i = PRIOR_LOWEST; i <= PRIOR_HIGH; i++) {
-		ks->priority_queue.task_fifos[i].head = NULL;
-		ks->priority_queue.task_fifos[i].tail = NULL;
+		ks->priority_queue.fifos[i].head = NULL;
+		ks->priority_queue.fifos[i].tail = NULL;
 	}
 }
 
 /* task descriptor */
-void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, task_priority priority)
+void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Task_priority priority)
 {
-	task_descriptor *td = &(ks->priority_queue.tasks[tid]);
+	Task_descriptor *td = &(ks->priority_queue.tasks[tid]);
 	// initialize tid, ptid, state, priority, and spsr
 	td->tid = tid;
 	td->ptid = ptid;
@@ -46,13 +46,13 @@ void td_intialize(void (*task)(), kernel_state *ks, uint32 tid, uint32 ptid, tas
 }
 
 /* scheduler */
-task_descriptor *schedule(kernel_state *ks)
+Task_descriptor *schedule(Kernel_state *ks)
 {
 	debug(DEBUG_SCHEDULER, "In %s", "schedule");
 	return pull_highest_priority_task(&(ks->priority_queue));
 }
 
-void reschedule(task_descriptor *td, kernel_state *ks){
+void reschedule(Task_descriptor *td, Kernel_state *ks){
 	debug(DEBUG_SYSCALL, "In %s", "k_reschedule");
 	remove_task(td, &(ks->priority_queue));
 	td->state = STATE_READY;
@@ -60,77 +60,77 @@ void reschedule(task_descriptor *td, kernel_state *ks){
 }
 
 /* priority queue operations */
-task_descriptor *pull_highest_priority_task(task_priority_queue *priority_queue)
+Task_descriptor *pull_highest_priority_task(Task_priority_queue *ppriority_queue)
 {
 	debug(DEBUG_SCHEDULER, "In %s", "pull_highest_priority_task");
-	uint8 lz = clz(priority_queue->priority_mask);
+	uint8 lz = clz(ppriority_queue->mask);
 	uint8 priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
-	task_descriptor *head = priority_queue->task_fifos[priority].head;
+	Task_descriptor *head = ppriority_queue->fifos[priority].head;
 	debug(DEBUG_SCHEDULER, "lz = %d, priority = %d, head->tid = %d", lz, priority, head->tid);
 	return head;
 }
 
-void insert_task(task_descriptor *td, task_priority_queue *priority_queue)
+void insert_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 {
-	task_priority priority = td->priority;
+	Task_priority priority = td->priority;
 	debug(DEBUG_SCHEDULER, "In insert_task, start inserting td %d into ready queue %d", td->tid, priority);
-	if (priority_queue->priority_mask & (0x1 << priority)) {
+	if (ppriority_queue->mask & (0x1 << priority)) {
 		// ready_queue is non-empty
-		task_descriptor *tail = priority_queue->task_fifos[priority].tail;
+		Task_descriptor *tail = ppriority_queue->fifos[priority].tail;
 		tail->next_ready_task = td;
-		priority_queue->task_fifos[priority].tail = td;
-		debug(DEBUG_SCHEDULER, "inserted into the ready queue, tail = %d", priority_queue->task_fifos[priority].tail->tid);
+		ppriority_queue->fifos[priority].tail = td;
+		debug(DEBUG_SCHEDULER, "inserted into the ready queue, tail = %d", ppriority_queue->fifos[priority].tail->tid);
 	} else {
 		// ready_queue is empty
-		priority_queue->task_fifos[priority].head = td;
-		priority_queue->task_fifos[priority].tail = td;
-		// set priority_mask
-		priority_queue->priority_mask |= (0x1 << priority);
-		debug(DEBUG_SCHEDULER, "inserted into the empty ready queue, priority_mask = 0x%x, head = %d, tail = %d",
-				priority_queue->priority_mask,
-				priority_queue->task_fifos[priority].head->tid, priority_queue->task_fifos[priority].tail->tid);
+		ppriority_queue->fifos[priority].head = td;
+		ppriority_queue->fifos[priority].tail = td;
+		// set mask
+		ppriority_queue->mask |= (0x1 << priority);
+		debug(DEBUG_SCHEDULER, "inserted into the empty ready queue, mask = 0x%x, head = %d, tail = %d",
+				ppriority_queue->mask,
+				ppriority_queue->fifos[priority].head->tid, ppriority_queue->fifos[priority].tail->tid);
 	}
 }
 
-void remove_task(task_descriptor *td, task_priority_queue *priority_queue)
+void remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 {
-	task_priority priority = td->priority;
-	debug(DEBUG_SCHEDULER, "In remove_task, start removing td %d from ready queue %d, priority_mask = 0x%x",
-			td->tid, priority, priority_queue->priority_mask);
-	task_descriptor *head = priority_queue->task_fifos[priority].head;
+	Task_priority priority = td->priority;
+	debug(DEBUG_SCHEDULER, "In remove_task, start removing td %d from ready queue %d, mask = 0x%x",
+			td->tid, priority, ppriority_queue->mask);
+	Task_descriptor *head = ppriority_queue->fifos[priority].head;
 	if (td->next_ready_task == NULL) {
 		if (td == head) {
 			// td is the only task on the ready queue, empty the ready queue
-			priority_queue->task_fifos[priority].head = NULL;
-			priority_queue->task_fifos[priority].tail = NULL;
-			// unset corresponding bit in the priority_mask
-			priority_queue->priority_mask &= (~(0x1 << priority));
-			debug(DEBUG_SCHEDULER, "removed the only td in ready queue, head = tail = %d, priority_mask = 0x%x",
-					priority_queue->task_fifos[priority].head, priority_queue->priority_mask);
+			ppriority_queue->fifos[priority].head = NULL;
+			ppriority_queue->fifos[priority].tail = NULL;
+			// unset corresponding bit in the mask
+			ppriority_queue->mask &= (~(0x1 << priority));
+			debug(DEBUG_SCHEDULER, "removed the only td in ready queue, head = tail = %d, mask = 0x%x",
+					ppriority_queue->fifos[priority].head, ppriority_queue->mask);
 		} else {
 			// td is the tail, need to find the task whose next_ready_task is td
-			task_descriptor *iter = head;
+			Task_descriptor *iter = head;
 			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
 				if (iter->next_ready_task == td) {
 					break;
 				}
 			}
 			iter->next_ready_task = NULL;
-			priority_queue->task_fifos[priority].tail = iter;
+			ppriority_queue->fifos[priority].tail = iter;
 			debug(DEBUG_SCHEDULER, "removed td after %d, %d is now tail",
-					iter->tid, priority_queue->task_fifos[priority].tail->tid);
+					iter->tid, ppriority_queue->fifos[priority].tail->tid);
 		}
 	}
 	else {
 		if (td == head) {
 			// td is the head, ready_queue has more than one tasks
-			priority_queue->task_fifos[priority].head = td->next_ready_task;
+			ppriority_queue->fifos[priority].head = td->next_ready_task;
 			td->next_ready_task = NULL;
-			debug(DEBUG_SCHEDULER, "%d is old head, head is now %d", td->tid, priority_queue->task_fifos[priority].head->tid);
+			debug(DEBUG_SCHEDULER, "%d is old head, head is now %d", td->tid, ppriority_queue->fifos[priority].head->tid);
 		}
 		else {
 			// td is in the middle, need to find the task whose next_ready_task is td
-			task_descriptor *iter = head;
+			Task_descriptor *iter = head;
 			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
 				if (iter->next_ready_task == td) {
 					break;
@@ -144,7 +144,7 @@ void remove_task(task_descriptor *td, task_priority_queue *priority_queue)
 	}
 }
 
-int activate(task_descriptor *td)
+int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
 	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x",
@@ -163,17 +163,17 @@ int main()
 	*swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", *swi_handle_entry);
 
-	kernel_state ks;
+	Kernel_state ks;
 	ks_initialize(&ks);
 
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-	task_priority_queue send_block;
+	Task_priority_queue send_block;
 
-	while(ks.priority_queue.priority_mask != 0) { // this should be the correct one
-			debug(DEBUG_SCHEDULER, "priority_mask =%d", ks.priority_queue.priority_mask);
-			task_descriptor *td = schedule(&ks);
+	while(ks.priority_queue.mask != 0) { // this should be the correct one
+			debug(DEBUG_SCHEDULER, "mask =%d", ks.priority_queue.mask);
+			Task_descriptor *td = schedule(&ks);
 
 			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
