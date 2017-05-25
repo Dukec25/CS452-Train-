@@ -198,7 +198,7 @@ int main()
 			uint32 arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
             uint32 arg2 = *((vint*) (cur_sp + 8));
-            uint32 arg3 = *((vint*) (cur_fp + 0)); // not too sure, need experiment
+            uint32 arg3 = *((vint*) (cur_sp + 12 )); // not too sure, need experiment
             uint32 arg4 = *((vint*) (cur_fp + 4));
 			asm volatile("msr CPSR, %0" :: "I" (SVC)); // get back to svc mode 
 			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
@@ -224,7 +224,7 @@ int main()
 					k_my_parent_tid(td, &ks);
 					break;
                 case 6:
-                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, send_block);
+                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, &send_block);
                     break;
 			}
 	}

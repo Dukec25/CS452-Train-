@@ -51,14 +51,13 @@ void k_exit(task_descriptor *td, kernel_state *ks)
 }
 
 void k_send(int tid, void *message, int length, void *reply, int replylen,
-        task_descriptor *td, kernel_state *ks){
+        task_descriptor *td, kernel_state *ks, Block_queue send_block){
     Message *msg = (Message*)(message);
     Message *reply_msg = (Message*)(reply);
-    debug(DEBUG_TRACE, "tid = 0x%x, message = 0x%x, length = 0x%x, reply = 0x%x, replylen = 0x%x",
+    debug(DEBUG_TRACE, "tid = 0x%x, message = %s, length = 0x%x, reply = %s, replylen = 0x%x",
         tid, msg->content, length, reply_msg->content, replylen);
-    send_block();
-
-    // check the blocked queue 
+    // check the received blocked queue 
+    // 
     // if found some tasks, then unblock that task and pass the message
     // if no task found, block this task 
 }

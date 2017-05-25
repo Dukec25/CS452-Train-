@@ -58,10 +58,10 @@ typedef struct kernel_state {
 	task_descriptor tasks[MAX_NUM_TASKS];
 } kernel_state;
 
-type struct Block_queue{
+typedef struct Block_queue{
 	uint32			priority_mask;
 	ready_queue		ready_queues[PRIOR_HIGH + 1];
-	task_descriptor tasks[MAX_NUM_TASKS];
+// highly doubt we need this here	task_descriptor tasks[MAX_NUM_TASKS]; 
 } Block_queue;
 
 typedef enum processor_mode {

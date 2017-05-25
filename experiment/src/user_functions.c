@@ -54,7 +54,7 @@ int MyParentTid()
 int Send( int tid, void *msg, int msglen, void *reply, int replylen )
 {
     debug(DEBUG_SYSCALL, "this is in %s", "user Send");
-    asm_kernel_send();
+    asm_kernel_send(5, msg, msglen, reply, replylen);
 }
 
 int Receive( int *tid, void *msg, int msglen )

@@ -15,12 +15,14 @@ void general_task()
 
 void special_task()
 {
+	debug(KERNEL2, "enter %s", "special task");
     Message send_msg;
     send_msg.tid = 100;
     memcpy(&send_msg.content, "hello", 6);
     Message reply_msg;
     memcpy(&reply_msg.content, "hi", 3);
-    Send(100, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
+	debug(KERNEL2, "tid=%d, message=%s, msgLength=%d, replyMsg=%s, replyMsgLen=%d", 5, send_msg.content, sizeof(send_msg), reply_msg.content, sizeof(reply_msg));
+    Send(5, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
 }
 
 void first_task()
