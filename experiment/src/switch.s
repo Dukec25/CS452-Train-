@@ -13,6 +13,7 @@
 	.global	asm_kernel_pass
 	.global asm_kernel_my_tid
 	.global asm_kernel_my_parent_tid
+    .global asm_kernel_send
 
 asm_print_sp:
 	mov		ip, sp
@@ -127,4 +128,28 @@ asm_kernel_my_parent_tid:
 	SWI 	5
 	ldmia   sp,  {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	mov 	pc, lr
+
+asm_kernel_send:
+	mov 	ip, sp 
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 	6
+	;mov		ip, r0
+	;ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	;mov		r0, ip
+	;mov 	pc, lr
+
+asm_kernel_receive:
+	mov 	ip, sp 
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 	7
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov 	pc, lr
+
+asm_kernel_reply:
+	mov 	ip, sp 
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 	8
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov 	pc, lr
+
 

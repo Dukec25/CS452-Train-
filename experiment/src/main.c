@@ -171,6 +171,9 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	vint loops;
+
+    Block_queue send_block;
+
 	while(ks.priority_mask != 0) { // this should be the correct one
 			debug(DEBUG_SCHEDULER, "priority_mask =%d", ks.priority_mask);
 			task_descriptor *td = schedule(&ks);
@@ -190,8 +193,13 @@ int main()
 			asm volatile("mov ip, sp");
 			register vint temp_sp asm("ip"); // extremly dangerous!!!, modify its value after the second read, holy cow waste so much time on this
 			vint cur_sp = temp_sp;
+			register vint temp_fp asm("fp");
+			vint cur_fp = temp_fp;
 			uint32 arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
+            uint32 arg2 = *((vint*) (cur_sp + 8));
+            uint32 arg3 = *((vint*) (cur_fp + 0)); // not too sure, need experiment
+            uint32 arg4 = *((vint*) (cur_fp + 4));
 			asm volatile("msr CPSR, %0" :: "I" (SVC)); // get back to svc mode 
 			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, arg0, arg1);
@@ -215,6 +223,9 @@ int main()
 				case 5:
 					k_my_parent_tid(td, &ks);
 					break;
+                case 6:
+                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, send_block);
+                    break;
 			}
 	}
 	return 0;

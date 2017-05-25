@@ -49,3 +49,16 @@ void k_exit(task_descriptor *td, kernel_state *ks)
 	td->state = STATE_ZOMBIE;
 	remove_task(td, ks);
 }
+
+void k_send(int tid, void *message, int length, void *reply, int replylen,
+        task_descriptor *td, kernel_state *ks){
+    Message *msg = (Message*)(message);
+    Message *reply_msg = (Message*)(reply);
+    debug(DEBUG_TRACE, "tid = 0x%x, message = 0x%x, length = 0x%x, reply = 0x%x, replylen = 0x%x",
+        tid, msg->content, length, reply_msg->content, replylen);
+    send_block();
+
+    // check the blocked queue 
+    // if found some tasks, then unblock that task and pass the message
+    // if no task found, block this task 
+}

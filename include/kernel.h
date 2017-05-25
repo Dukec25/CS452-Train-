@@ -10,7 +10,10 @@
 typedef enum task_state {
 	STATE_ACTIVE, 
 	STATE_ZOMBIE,
-	STATE_READY
+	STATE_READY,
+    STATE_SEND_BLK,
+    STATE_RECEIVE_BLK,
+    STATE_REPLY_BLK
 } task_state;
 
 typedef enum task_priority {
@@ -32,6 +35,13 @@ typedef struct task_descriptor {
 	struct task_descriptor *next_ready_task;
 } task_descriptor;
 
+typedef struct Message {
+    // bool             is_match;
+    vint                tid; 
+    char                content[64];
+    // to be continued
+} Message;
+
 typedef struct ready_queue {
 	task_descriptor *head;
 	task_descriptor *tail;
@@ -47,6 +57,12 @@ typedef struct kernel_state {
 	ready_queue		ready_queues[PRIOR_HIGH + 1];
 	task_descriptor tasks[MAX_NUM_TASKS];
 } kernel_state;
+
+type struct Block_queue{
+	uint32			priority_mask;
+	ready_queue		ready_queues[PRIOR_HIGH + 1];
+	task_descriptor tasks[MAX_NUM_TASKS];
+} Block_queue;
 
 typedef enum processor_mode {
 	USR = 0x10,
