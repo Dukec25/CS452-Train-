@@ -1,6 +1,7 @@
 #include <kernel.h>
 #include <user_functions.h>
 #include <debug.h>
+#include <string.h>
 
 void general_task()
 {
@@ -28,16 +29,16 @@ void special_task()
 void first_task()
 {
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-	int tid = Create(PRIOR_LOW, special_task);
+	/* int tid = Create(PRIOR_LOW, special_task); */ // comment out for now to test generalized priority queue
+	// debug(KERNEL1, "created taskId = %d", tid);
+	int tid = Create(PRIOR_LOW, general_task);
 	debug(KERNEL1, "created taskId = %d", tid);
-	/*int tid = Create(PRIOR_LOW, general_task);*/
-	/*debug(KERNEL1, "created taskId = %d", tid);*/
-	/*tid = Create(PRIOR_LOW, general_task);*/
-	/*debug(KERNEL1, "created taskId = %d", tid);*/
-    /*tid = Create(PRIOR_HIGH, general_task);*/
-    /*debug(KERNEL1, "created taskId = %d", tid);*/
-    /*tid = Create(PRIOR_HIGH, general_task);*/
-    /*debug(KERNEL1, "created taskId = %d", tid);*/
-	/*debug(KERNEL1, "%s", "FirstUserTask: exiting");*/
+	tid = Create(PRIOR_LOW, general_task);
+	debug(KERNEL1, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, general_task);
+    debug(KERNEL1, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, general_task);
+    debug(KERNEL1, "created taskId = %d", tid);
+	debug(KERNEL1, "%s", "FirstUserTask: exiting");
 	Exit();
 }
