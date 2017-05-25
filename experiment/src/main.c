@@ -92,11 +92,12 @@ void insert_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 	}
 }
 
-void remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
+int remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 {
 	Task_priority priority = td->priority;
 	debug(DEBUG_SCHEDULER, "In remove_task, start removing td %d from ready queue %d, mask = 0x%x",
 			td->tid, priority, ppriority_queue->mask);
+	uint8 is_exist = 0;
 	Task_descriptor *head = ppriority_queue->fifos[priority].head;
 	if (td->next_ready_task == NULL) {
 		if (td == head) {
@@ -112,13 +113,19 @@ void remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 			Task_descriptor *iter = head;
 			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
 				if (iter->next_ready_task == td) {
+					is_exist = 1;
 					break;
 				}
 			}
-			iter->next_ready_task = NULL;
-			ppriority_queue->fifos[priority].tail = iter;
-			debug(DEBUG_SCHEDULER, "removed td after %d, %d is now tail",
-					iter->tid, ppriority_queue->fifos[priority].tail->tid);
+			if (is_exist) {
+				iter->next_ready_task = NULL;
+				ppriority_queue->fifos[priority].tail = iter;
+				debug(DEBUG_SCHEDULER, "removed td after %d, %d is now tail",
+						iter->tid, ppriority_queue->fifos[priority].tail->tid);
+			}
+			else {
+				return -1;
+			}
 		}
 	}
 	else {
@@ -133,15 +140,22 @@ void remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 			Task_descriptor *iter = head;
 			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
 				if (iter->next_ready_task == td) {
+					is_exist = 1;
 					break;
 				}
 			}
-			iter->next_ready_task = td->next_ready_task;
-			td->next_ready_task = NULL;
-			debug(DEBUG_SCHEDULER, "removed td after %d, next_ready_task of %d is now %d",
-					iter->tid, iter->tid, iter->next_ready_task->tid);
+			if (is_exist) {
+				iter->next_ready_task = td->next_ready_task;
+				td->next_ready_task = NULL;
+				debug(DEBUG_SCHEDULER, "removed td after %d, next_ready_task of %d is now %d",
+						iter->tid, iter->tid, iter->next_ready_task->tid);
+			}
+			else {
+				return -1;
+			}
 		}
 	}
+	return 0;
 }
 
 int activate(Task_descriptor *td)

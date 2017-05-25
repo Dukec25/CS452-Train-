@@ -100,9 +100,10 @@ Task_descriptor *pull_highest_priority_task(Task_priority_queue *priority_queue)
  */
 void insert_task(Task_descriptor *td, Task_priority_queue *priority_queue);
 /*
- * Removes the task from the task priority queue
+ * Removes the task from the task priority queue.
+ * Return -1 if the task doesn't exist in the priority queue, 0 otherwise.
  */
-void remove_task(Task_descriptor *td, Task_priority_queue *priority_queue);
+int remove_task(Task_descriptor *td, Task_priority_queue *priority_queue);
 
 /*
  * Activate a task
