@@ -180,7 +180,7 @@ int activate(Task_descriptor *td)
 	return asm_kernel_activate(td);
 }
 
-int find_sender(Priority_fifo *blocked_queue, Message *msg, Task_descriptor **psender)
+int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender)
 {
 	/*debug(DEBUG_ITC, "In %s", "find_sender");*/
 	uint8 lz = clz(blocked_queue->mask);
@@ -197,7 +197,10 @@ int find_sender(Priority_fifo *blocked_queue, Message *msg, Task_descriptor **ps
 
 		Task_descriptor *iter = NULL;
 		for (iter = blocked_queue->fifos[priority].head; iter->next_task != NULL; iter = iter->next_task) {
-			if (iter->tid == msg->tid) {
+            vint iter_sp = iter->sp;
+            int receiver =  *((vint*) (iter_sp + 0));
+            Message *iter_msg = *((vint*) (iter_sp + 4));
+			if (tid == receiver) {
 				is_found = 1;
 				*psender = iter;
 				break;
@@ -226,10 +229,6 @@ int main()
 
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
-
-    Priority_fifo send_block;
-    Priority_fifo receive_block;
-    Priority_fifo reply_block;
 
 	while(ks.ready_queue.mask != 0) { // this should be the correct one
 			debug(DEBUG_SCHEDULER, "mask =%d", ks.ready_queue.mask);
@@ -290,7 +289,7 @@ int main()
 					k_my_parent_tid(td, &ks);
 					break;
                 case 6:
-                    /*k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, &send_block, &receive_block);*/
+                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks);
                     break;
                 /*case 7:*/
                     /*k_receive(arg0, arg1, arg2, td, &send_block, &receive_block, &reply_block);*/

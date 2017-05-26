@@ -131,7 +131,7 @@ int activate(Task_descriptor *td);
  * Given a receiver, finds the matching sender that has the highest priority.
  * Return -1 if not found, 0 otherwise.
  */
-int find_sender(Priority_fifo *blocked_queue, Message *msg, Task_descriptor **psender);
+int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender);
 
 /* Kernel syscall handlers */
 void k_create(Task_descriptor *td, Kernel_state *ks, void (*task)(), uint32 tid, Task_priority priority);
