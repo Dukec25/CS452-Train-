@@ -133,10 +133,8 @@ asm_kernel_send:
 	mov 	ip, sp 
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	6
-	;mov		ip, r0
-	;ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
-	;mov		r0, ip
-	;mov 	pc, lr
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov 	pc, lr
 
 asm_kernel_receive:
 	mov 	ip, sp 

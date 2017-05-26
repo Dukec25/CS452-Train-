@@ -184,6 +184,8 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	Task_priority_queue send_block;
+	Task_priority_queue receive_block;
+	Task_priority_queue reply_block;
 
 	while(ks.priority_queue.mask != 0) { // this should be the correct one
 			debug(DEBUG_SCHEDULER, "mask =%d", ks.priority_queue.mask);
@@ -213,15 +215,16 @@ int main()
 			uint32 arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
             uint32 arg2 = *((vint*) (cur_sp + 8));
-            uint32 arg3 = *((vint*) (cur_sp + 12 )); // not too sure, need experiment
+            uint32 arg3 = *((vint*) (cur_sp + 12 )); 
             uint32 arg4 = *((vint*) (cur_fp + 4));
 			asm volatile("msr CPSR, %0" :: "I" (SVC)); // get back to svc mode 
-			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
-					cur_sp, cur_lr, arg0, arg1);
+			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
+					cur_sp, cur_lr, cur_fp, arg0, arg1);
 
 			// update td: sp, lr, spsr
 			td->sp = (vint *)cur_sp;
 			td->lr = (vint *)cur_lr;
+            td->fp = (vint *)cur_fp; // pay attention, confirm with Alicia  
 			td->spsr = cur_spsr;
 
 			switch(req){
@@ -241,7 +244,13 @@ int main()
 					k_my_parent_tid(td, &ks);
 					break;
                 case 6:
-                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, &send_block);
+                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, &send_block, &receive_block);
+                    break;
+                case 7:
+                    k_receive(arg0, arg1, arg2, td, &send_block, &receive_block, &reply_block);
+                    break;
+                case 8:
+                    k_reply(arg0, arg1, arg2, &reply_block);
                     break;
 			}
 	}

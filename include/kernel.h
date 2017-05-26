@@ -40,6 +40,7 @@ typedef struct Task_descriptor {
 	Task_state 				state;
 	Task_priority 			priority;
 	struct Task_descriptor *next_ready_task;
+    vint                    *fp;
 } Task_descriptor;
 
 /* Inter-tasks communication */
