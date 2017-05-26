@@ -24,8 +24,8 @@ typedef struct Message {
     vint                tid; 
 	uint8				content_len;
     char                content[MAX_MSG_LEN];
-	uint8				reply_content_len;
-	char				reply_content[MAX_MSG_LEN];
+	//uint8				reply_content_len;
+	//char				reply_content[MAX_MSG_LEN]; To be determined
 } Message;
 
 /* task descriptor */
@@ -141,6 +141,8 @@ void k_init_kernel();
 void k_pass(Task_descriptor *td, Kernel_state *ks);
 void k_exit(Task_descriptor *td, Kernel_state *ks);
 void k_send(int tid, void *msg, int msglen, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
+void k_receive(int *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks);
+void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
  
 /* User tasks */
 void init_kernel();

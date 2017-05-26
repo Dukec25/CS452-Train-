@@ -56,6 +56,7 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
         // if the task not existed in the receive_block queue 
         // block the task in the send_block 
         td->state = STATE_SEND_BLK; 
+        debug(DEBUG_TRACE, "task being send_blocked, tid=", td->tid);
         insert_task(td, &(ks->send_block));
     } else{
         // pass tid, message to receive task
@@ -66,7 +67,7 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
         int receive_length = *((vint*) (receive_task_sp + 8));
         *receive_tid = tid;
         // if receive_length and send_length are different, shall we deal
-        // with it 
+        // with it ?
         memcpy(receive_message, send_message, receive_length);
 
         receive_td->state = STATE_READY;
@@ -83,6 +84,7 @@ void k_receive(int *receive_tid, void *receive_message, int receive_length, Task
     // if yes, put that task onto reply_block and grab its data 
     if(result != -1){
         remove_task(*send_td, &(ks->send_block));
+        debug(DEBUG_TRACE, "task being reply_blocked, tid=%d", (*send_td)->tid);
         insert_task(*send_td, &(ks->reply_block));
         vint send_task_sp = (*send_td)->sp;
         int send_tid = *((vint*) (send_task_sp + 0));

@@ -291,12 +291,12 @@ int main()
                 case 6:
                     k_send(arg0, arg1, arg2, arg3, arg4, td, &ks);
                     break;
-                /*case 7:*/
-                    /*k_receive(arg0, arg1, arg2, td, &send_block, &receive_block, &reply_block);*/
-                    /*break;*/
-                /*case 8:*/
-                    /*k_reply(arg0, arg1, arg2, &reply_block);*/
-                    /*break;*/
+                case 7:
+                    k_receive(arg0, arg1, arg2, td, &ks);
+                    break;
+                case 8:
+                    k_reply(arg0, arg1, arg2, td, &ks);
+                    break;
 			}
 	}
 	return 0;
