@@ -10,18 +10,25 @@ extern int asm_kernel_activate(Task_descriptor *td);
 /* Initialze kernel state by setting task priority queue to be empty */
 static void ks_initialize(Kernel_state *ks)
 {
-	ks->priority_queue.mask = 0;
+	ks->free_list = 0;
+	ks->ready_queue.mask = 0;
+	ks->send_block.mask = 0;
+	ks->reply_block.mask = 0;
 	int i = 0;
 	for (i = PRIOR_LOWEST; i <= PRIOR_HIGH; i++) {
-		ks->priority_queue.fifos[i].head = NULL;
-		ks->priority_queue.fifos[i].tail = NULL;
+		ks->ready_queue.fifos[i].head = NULL;
+		ks->ready_queue.fifos[i].tail = NULL;
+		ks->send_block.fifos[i].head = NULL;	
+		ks->send_block.fifos[i].tail = NULL;
+		ks->reply_block.fifos[i].head = NULL;	
+		ks->reply_block.fifos[i].tail = NULL;	
 	}
 }
 
 /* task descriptor */
 void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Task_priority priority)
 {
-	Task_descriptor *td = &(ks->priority_queue.tasks[tid]);
+	Task_descriptor *td = &(ks->tasks[tid]);
 	// initialize tid, ptid, state, priority, and spsr
 	td->tid = tid;
 	td->ptid = ptid;
@@ -34,93 +41,99 @@ void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Tas
 	td->lr = (vint *)task;
 	td->lr = (vint *)task + 0x218000 / 4;
 	// push lr and sp onto the user task
-	*(td->sp - 12) = td->lr;
+	*(td->sp - 12) = (vint) td->lr;
 	*(td->sp - 11) = TASK_START_LOCATION + (tid + 1) * TASK_SIZE;
-	// set next_ready_task
-	td->next_ready_task = NULL;
+	// set next_task
+	td->next_task = NULL;
+	// initialze msg
+	/*td->msg.content_len = 0;*/
+	/*td->msg.reply_content_len = 0;*/
 	// insert td into the ready_queue
-	insert_task(td, &(ks->priority_queue));
-	debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
-			ks->priority_queue.tasks[tid].tid, ks->priority_queue.tasks[tid].state, ks->priority_queue.tasks[tid].priority,
-			ks->priority_queue.tasks[tid].sp, ks->priority_queue.tasks[tid].lr, ks->priority_queue.tasks[tid].next_ready_task);
+	insert_task(td, &(ks->ready_queue));
+	// update free_list
+	ks->free_list |= (0x1 << tid);
+	debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d, free_list = 0x%x",
+			ks->tasks[tid].tid, ks->tasks[tid].state, ks->tasks[tid].priority,
+			ks->tasks[tid].sp, ks->tasks[tid].lr, ks->tasks[tid].next_task, ks->free_list);
 }
 
 /* scheduler */
 Task_descriptor *schedule(Kernel_state *ks)
 {
 	debug(DEBUG_SCHEDULER, "In %s", "schedule");
-	return pull_highest_priority_task(&(ks->priority_queue));
+	return pull_highest_priority_task(&(ks->ready_queue));
 }
 
 void reschedule(Task_descriptor *td, Kernel_state *ks){
 	debug(DEBUG_SYSCALL, "In %s", "k_reschedule");
-	remove_task(td, &(ks->priority_queue));
+	remove_task(td, &(ks->ready_queue));
 	td->state = STATE_READY;
-	insert_task(td, &(ks->priority_queue));
+	insert_task(td, &(ks->ready_queue));
 }
 
 /* priority queue operations */
-Task_descriptor *pull_highest_priority_task(Task_priority_queue *ppriority_queue)
+Task_descriptor *pull_highest_priority_task(Priority_fifo *ppriority_queue)
 {
-	debug(DEBUG_SCHEDULER, "In %s", "pull_highest_priority_task");
+	debug(DEBUG_PRIOR_FIFO, "In %s", "pull_highest_priority_task");
 	uint8 lz = clz(ppriority_queue->mask);
 	uint8 priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
 	Task_descriptor *head = ppriority_queue->fifos[priority].head;
-	debug(DEBUG_SCHEDULER, "lz = %d, priority = %d, head->tid = %d", lz, priority, head->tid);
+	debug(DEBUG_PRIOR_FIFO, "lz = %d, priority = %d, head->tid = %d", lz, priority, head->tid);
 	return head;
 }
 
-void insert_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
+void insert_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 {
 	Task_priority priority = td->priority;
-	debug(DEBUG_SCHEDULER, "In insert_task, start inserting td %d into ready queue %d", td->tid, priority);
+	debug(DEBUG_PRIOR_FIFO, "In insert_task, start inserting td %d into fifo %d", td->tid, priority);
 	if (ppriority_queue->mask & (0x1 << priority)) {
 		// ready_queue is non-empty
 		Task_descriptor *tail = ppriority_queue->fifos[priority].tail;
-		tail->next_ready_task = td;
+		tail->next_task = td;
 		ppriority_queue->fifos[priority].tail = td;
-		debug(DEBUG_SCHEDULER, "inserted into the ready queue, tail = %d", ppriority_queue->fifos[priority].tail->tid);
+		debug(DEBUG_PRIOR_FIFO, "inserted into the fifo, tail = %d", ppriority_queue->fifos[priority].tail->tid);
 	} else {
 		// ready_queue is empty
 		ppriority_queue->fifos[priority].head = td;
 		ppriority_queue->fifos[priority].tail = td;
 		// set mask
 		ppriority_queue->mask |= (0x1 << priority);
-		debug(DEBUG_SCHEDULER, "inserted into the empty ready queue, mask = 0x%x, head = %d, tail = %d",
+		debug(DEBUG_PRIOR_FIFO, "inserted into the empty fifo, mask = 0x%x, head = %d, tail = %d",
 				ppriority_queue->mask,
 				ppriority_queue->fifos[priority].head->tid, ppriority_queue->fifos[priority].tail->tid);
 	}
 }
 
-int remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
+int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 {
 	Task_priority priority = td->priority;
-	debug(DEBUG_SCHEDULER, "In remove_task, start removing td %d from ready queue %d, mask = 0x%x",
+	debug(DEBUG_PRIOR_FIFO, "In remove_task, start removing td %d from fifo %d, mask = 0x%x",
 			td->tid, priority, ppriority_queue->mask);
-	uint8 is_exist = 0;
+	uint8 is_found = 0;
 	Task_descriptor *head = ppriority_queue->fifos[priority].head;
-	if (td->next_ready_task == NULL) {
+	if (td->next_task == NULL) {
 		if (td == head) {
-			// td is the only task on the ready queue, empty the ready queue
+			// td is the only task on the fifo, empty the fifo
 			ppriority_queue->fifos[priority].head = NULL;
 			ppriority_queue->fifos[priority].tail = NULL;
 			// unset corresponding bit in the mask
 			ppriority_queue->mask &= (~(0x1 << priority));
-			debug(DEBUG_SCHEDULER, "removed the only td in ready queue, head = tail = %d, mask = 0x%x",
+			debug(DEBUG_PRIOR_FIFO, "removed the only td in fifo, head = tail = %d, mask = 0x%x",
 					ppriority_queue->fifos[priority].head, ppriority_queue->mask);
+			is_found = 1;
 		} else {
-			// td is the tail, need to find the task whose next_ready_task is td
+			// td is the tail, need to find the task whose next_task is td
 			Task_descriptor *iter = head;
-			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
-				if (iter->next_ready_task == td) {
-					is_exist = 1;
+			for (iter = head; iter->next_task != NULL; iter = iter->next_task) {
+				if (iter->next_task == td) {
+					is_found = 1;
 					break;
 				}
 			}
-			if (is_exist) {
-				iter->next_ready_task = NULL;
+			if (is_found) {
+				iter->next_task = NULL;
 				ppriority_queue->fifos[priority].tail = iter;
-				debug(DEBUG_SCHEDULER, "removed td after %d, %d is now tail",
+				debug(DEBUG_PRIOR_FIFO, "removed td after %d, %d is now tail",
 						iter->tid, ppriority_queue->fifos[priority].tail->tid);
 			}
 			else {
@@ -131,24 +144,25 @@ int remove_task(Task_descriptor *td, Task_priority_queue *ppriority_queue)
 	else {
 		if (td == head) {
 			// td is the head, ready_queue has more than one tasks
-			ppriority_queue->fifos[priority].head = td->next_ready_task;
-			td->next_ready_task = NULL;
-			debug(DEBUG_SCHEDULER, "%d is old head, head is now %d", td->tid, ppriority_queue->fifos[priority].head->tid);
+			ppriority_queue->fifos[priority].head = td->next_task;
+			td->next_task = NULL;
+			debug(DEBUG_PRIOR_FIFO, "%d is old head, head is now %d",
+					td->tid, ppriority_queue->fifos[priority].head->tid);
 		}
 		else {
-			// td is in the middle, need to find the task whose next_ready_task is td
+			// td is in the middle, need to find the task whose next_task is td
 			Task_descriptor *iter = head;
-			for (iter = head; iter->next_ready_task != NULL; iter = iter->next_ready_task) {
-				if (iter->next_ready_task == td) {
-					is_exist = 1;
+			for (iter = head; iter->next_task != NULL; iter = iter->next_task) {
+				if (iter->next_task == td) {
+					is_found = 1;
 					break;
 				}
 			}
-			if (is_exist) {
-				iter->next_ready_task = td->next_ready_task;
-				td->next_ready_task = NULL;
-				debug(DEBUG_SCHEDULER, "removed td after %d, next_ready_task of %d is now %d",
-						iter->tid, iter->tid, iter->next_ready_task->tid);
+			if (is_found) {
+				iter->next_task = td->next_task;
+				td->next_task = NULL;
+				debug(DEBUG_PRIOR_FIFO, "removed td after %d, next_task of %d is now %d",
+						iter->tid, iter->tid, iter->next_task->tid);
 			}
 			else {
 				return -1;
@@ -166,15 +180,45 @@ int activate(Task_descriptor *td)
 	return asm_kernel_activate(td);
 }
 
+int find_sender(Priority_fifo *blocked_queue, Message *msg, Task_descriptor **psender)
+{
+	/*debug(DEBUG_ITC, "In %s", "find_sender");*/
+	uint8 lz = clz(blocked_queue->mask);
+	uint8 highest_priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
+	/*debug(DEBUG_ITC, "start with highest non-empty fifo %d", highest_priority);*/
+
+	uint8 is_found = 0;
+	int priority = 0;
+	for (priority = highest_priority; priority >= PRIOR_LOWEST; priority--) {
+		if (!(blocked_queue->mask & (0x1 << priority))) {
+			// fifo is empty
+			continue;
+		}
+
+		Task_descriptor *iter = NULL;
+		for (iter = blocked_queue->fifos[priority].head; iter->next_task != NULL; iter = iter->next_task) {
+			if (iter->tid == msg->tid) {
+				is_found = 1;
+				*psender = iter;
+				break;
+			}
+		}
+		if (is_found) {
+			break;
+		}
+	}
+	return (is_found == 1 ? 0 : -1);
+}
+
 int main()
 {
     bwsetfifo(COM2, OFF);
 
 	// set up swi jump table 
-	vint *swi_handle_entry = (vint*)0x28;
+	vint *swi_handle_entry = (vint*) 0x28;
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", swi_handle_entry);
 	debug(DEBUG_TRACE, "asm_kernel_swiEntry = 0x%x", asm_kernel_swiEntry);
-	*swi_handle_entry = (vint*)(asm_kernel_swiEntry + 0x218000);
+	*swi_handle_entry = (vint) (asm_kernel_swiEntry + 0x218000);
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", *swi_handle_entry);
 
 	Kernel_state ks;
@@ -183,22 +227,24 @@ int main()
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-	Task_priority_queue send_block;
-	Task_priority_queue receive_block;
-	Task_priority_queue reply_block;
+    Priority_fifo send_block;
+    Priority_fifo receive_block;
+    Priority_fifo reply_block;
 
-	while(ks.priority_queue.mask != 0) { // this should be the correct one
-			debug(DEBUG_SCHEDULER, "mask =%d", ks.priority_queue.mask);
+	while(ks.ready_queue.mask != 0) { // this should be the correct one
+			debug(DEBUG_SCHEDULER, "mask =%d", ks.ready_queue.mask);
 			Task_descriptor *td = schedule(&ks);
 
-			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_ready_task = %d",
+			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
-					td->next_ready_task ? td->next_ready_task->tid : INVALID_TID);
+					td->next_task ? td->next_task->tid : INVALID_TID);
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
-			int req = *((vint *)(cur_lr - 4)) & ~(0xff000000);
-			debug(DEBUG_TRACE, "get back into kernel again, req = %d", req);
+			uint32 immed_24 = *((vint *)(cur_lr - 4)) & ~(0xff000000);
+			uint32 req = immed_24 & 0xfff;
+			uint32 argc = (immed_24 << 12) && 0xfff;
+			debug(DEBUG_TRACE, "get back into kernel again, req = %d, argc = %d", req, argc);
 
 			// retrieve spsr
 			asm volatile("mrs ip, spsr"); // assign spsr to ip
@@ -229,7 +275,7 @@ int main()
 
 			switch(req){
 				case 1:		
-					k_create(td, &ks, arg1, tid++, arg0);
+					k_create(td, &ks, (void (*) ()) arg1, tid++, arg0);
 					break;
 				case 2:
 					k_pass(td, &ks);
@@ -244,14 +290,14 @@ int main()
 					k_my_parent_tid(td, &ks);
 					break;
                 case 6:
-                    k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, &send_block, &receive_block);
+                    /*k_send(arg0, arg1, arg2, arg3, arg4, td, &ks, &send_block, &receive_block);*/
                     break;
-                case 7:
-                    k_receive(arg0, arg1, arg2, td, &send_block, &receive_block, &reply_block);
-                    break;
-                case 8:
-                    k_reply(arg0, arg1, arg2, &reply_block);
-                    break;
+                /*case 7:*/
+                    /*k_receive(arg0, arg1, arg2, td, &send_block, &receive_block, &reply_block);*/
+                    /*break;*/
+                /*case 8:*/
+                    /*k_reply(arg0, arg1, arg2, &reply_block);*/
+                    /*break;*/
 			}
 	}
 	return 0;
