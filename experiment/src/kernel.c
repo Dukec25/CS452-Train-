@@ -102,20 +102,20 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
 void k_receive(int *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks)
 {
     debug(DEBUG_MESSAGE, "enter kernel_receive tid=%d", td->tid);
-    Task_descriptor **send_td; 
-    find_sender(&(ks->send_block), td->tid, send_td);
-    /*debug(DEBUG_MESSAGE, "return result=%d", result);*/
-    debug(DEBUG_MESSAGE, "result=%d", 100000000);
+    Task_descriptor *send_td; 
+    find_sender(&(ks->send_block), td->tid, &send_td);
     int result = -1;
+    debug(DEBUG_MESSAGE, "return result=%d", result);
+    debug(DEBUG_MESSAGE, "result=%d", 100000000);
 
 
     // check if anyone send any messages to this task by looking at send_block(don't yet know how)
     // if yes, put that task onto reply_block and grab its data 
     if(result != -1){
-        remove_task(*send_td, &(ks->send_block));
-        debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", (*send_td)->tid);
-        insert_task(*send_td, &(ks->reply_block));
-        vint send_task_sp = (*send_td)->sp;
+        remove_task(send_td, &(ks->send_block));
+        debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", send_td->tid);
+        insert_task(send_td, &(ks->reply_block));
+        vint send_task_sp = send_td->sp;
         int send_tid = *((vint*) (send_task_sp + 0));
         void *send_message = *((vint*) (send_task_sp + 4));
         int send_length = *((vint*) (send_task_sp + 8));
