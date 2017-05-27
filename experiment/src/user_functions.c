@@ -66,5 +66,5 @@ int Receive( int *tid, void *msg, int msglen )
 int Reply( int tid, void *reply, int replylen )
 {
     debug(DEBUG_TRACE, "this is in %s", "user Reply");
-    /*asm_kernel_reply(tid, msg, msglen, reply, replylen);*/
+    asm_kernel_reply(tid, reply, replylen);
 }

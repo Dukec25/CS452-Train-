@@ -25,6 +25,7 @@
 	.global asm_kernel_exit
     .global asm_kernel_send
     .global asm_kernel_receive
+    .global asm_kernel_reply
 
 asm_print_sp:
 	mov		ip, sp
@@ -160,3 +161,5 @@ asm_kernel_reply:
 	mov 	ip, sp 
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	SWI 	#REPLY
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov 	pc, lr

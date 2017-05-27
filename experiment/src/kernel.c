@@ -131,21 +131,24 @@ void k_receive(vint *receive_tid, void *receive_message, int receive_length, Tas
 }
 
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks){
+    Message *reply_msg = (Message*)reply;
     debug(DEBUG_MESSAGE, "enter kernel_reply %s", "this is kernel reply");
-    // is there a situation that someone reply before send ???
-    Task_descriptor *send_td = &ks->tasks[td->tid];
-    int task_exist = remove_task(send_td, &(ks->reply_block));
+    debug(DEBUG_MESSAGE, "want to reply to tid = %d, message is %s", reply_tid, reply_msg->content);
+    Task_descriptor *reply_to_td = &ks->tasks[reply_tid];
+    int task_exist = remove_task(reply_to_td, &(ks->reply_block));
     if(task_exist == -1){
         // should return -3 in this case  
     }    
     else{
-        vint send_task_sp = send_td->sp;
+        debug(DEBUG_MESSAGE, "task does exist in reply_block %s", "that's right");
+        vint send_task_sp = reply_to_td->sp;
         void *send_reply_message = *((vint*) (send_task_sp + 12));
-        vint send_task_fp = send_td->fp;
+        vint send_task_fp = reply_to_td->fp;
         vint send_reply_message_length = *((vint*) (send_task_fp + 4));
         // return error code if length doesn't match
         memcpy(send_reply_message, reply, replylen);
-        send_td->state = STATE_READY;
+        reply_to_td->state = STATE_READY;
+        insert_task(reply_to_td, &(ks->ready_queue));
     }
     reschedule(td, ks);
 }
