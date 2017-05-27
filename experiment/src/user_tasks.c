@@ -24,11 +24,9 @@ void send_task()
     send_msg.tid = tid;
     char message[] = "hello"; 
     memcpy(&send_msg.content, message, sizeof(message));
-    debug(DEBUG_TRACE, "is memcpy has any issue %d", tid);
-    /*debug(DEBUG_TRACE, "tid=%d, message=%s, msgLength=%d, replyMsg=%s, replyMsgLen=%d", 2, send_msg.content, sizeof(send_msg), reply_msg.content, sizeof(reply_msg));*/
     debug(DEBUG_TRACE, "entering send %s", "yes!!!");
-    Send(2, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
-    debug(DEBUG_TRACE, "unblock from reply_block%s", " yes, this what I want");
+    vint send_result = Send(1, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
+    debug(DEBUG_TRACE, "unblock from reply_block, result = %d", send_result);
 	debug(DEBUG_TRACE, "replied_message=%s", reply_msg.content);
 
 	debug(DEBUG_TRACE, "tid =%d exiting", tid);
@@ -39,7 +37,6 @@ void receive_task()
 {
 	debug(DEBUG_TRACE, "enter %s", "receive task");
     int sender_tid; // why, why, why????????? Compare with previous version 
-    // why can't I pass in *sender_tid 
     Message msg;
 	uint32 tid = MyTid();
 	debug(DEBUG_TRACE, "this receive_task tid = %d", tid);
@@ -50,16 +47,16 @@ void receive_task()
     char message[] = "I am great, wanna have sashimi together???";
     Message reply_msg;
     memcpy(&reply_msg.content, message, sizeof(message));
-    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+    vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
     Exit();
 }
 
 void first_task()
 {
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-     int tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
+     int tid = Create(PRIOR_HIGH, receive_task);  // comment out for now to test generalized priority queue
      debug(DEBUG_TRACE, "created taskId = %d", tid);
-     tid = Create(PRIOR_HIGH, receive_task);  
+     tid = Create(PRIOR_HIGH, send_task);  
      debug(DEBUG_TRACE, "created taskId = %d", tid);
 	/*int tid = Create(PRIOR_LOW, general_task);*/
 	/*debug(KERNEL1, "created taskId = %d", tid);*/

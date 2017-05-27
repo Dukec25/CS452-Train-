@@ -43,6 +43,7 @@ void k_pass(Task_descriptor *td, Kernel_state *ks)
 
 void k_exit(Task_descriptor *td, Kernel_state *ks)
 {
+	ks->free_list &= ~(0x1 << td->tid);
 	debug(DEBUG_SYSCALL, "In %s", "k_exit");
 	td->state = STATE_ZOMBIE;
 	remove_task(td, &(ks->ready_queue));
@@ -68,10 +69,9 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
             // if the task not existed in the receive_block queue 
             // block the task in the send_block 
             td->state = STATE_SEND_BLK; 
-            debug(DEBUG_MESSAGE, "task being send_blocked, tid=", td->tid);
+            debug(DEBUG_MESSAGE, "task being send_blocked, tid=%d", td->tid);
             insert_task(td, &(ks->send_block));
             remove_task(td, &(ks->ready_queue));
-            return;
         } else{
             // pass tid, message to receive task
             // put the received blocked task into the ready queue
@@ -79,24 +79,25 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
             int *receive_tid = *((vint*) (receive_task_sp + 0));
             void *receive_message = *((vint*) (receive_task_sp + 4));
             int receive_length = *((vint*) (receive_task_sp + 8));
-            *receive_tid = tid;
+            *receive_tid = td->tid;
             // if receive_length and send_length are different, shall we deal
             // with it ?
             memcpy(receive_message, send_message, receive_length);
 
             receive_td->state = STATE_READY;
-            insert_task(receive_td, &(ks->ready_queue)); //should receiver be inserted first??
+            insert_task(receive_td, &(ks->ready_queue)); 
+            td->state = STATE_REPLY_BLK;
+            debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", td->tid);
+            insert_task(td, &(ks->reply_block));
+            remove_task(td, &(ks->ready_queue));
         }
+        /*reschedule(td, ks);*/
+        td->retval = 0; // currently didn't consider situation of trunction
     } else {
         // if the receiver task has not been created
-        td->state = STATE_SEND_BLK; 
-        debug(DEBUG_MESSAGE, "task being send_blocked, tid=%x", td->tid);
-        insert_task(td, &(ks->send_block));
-        remove_task(td, &(ks->ready_queue));
-        return;
+        reschedule(td, ks);
+        td->retval = -2;
     }
-
-    reschedule(td, ks);
 }
 
 void k_receive(vint *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks)
@@ -113,13 +114,10 @@ void k_receive(vint *receive_tid, void *receive_message, int receive_length, Tas
         debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", send_td->tid);
         insert_task(send_td, &(ks->reply_block));
         vint send_task_sp = send_td->sp;
-        debug(DEBUG_MESSAGE, "get before the variables, tid=%d", send_td->tid);
         void *send_message = *((vint*) (send_task_sp + 4));
         int send_length = *((vint*) (send_task_sp + 8));
-        debug(DEBUG_MESSAGE, "get after the variables, tid=%d", send_td->tid);
         // be aware the case receive_length and send_length are different 
         *receive_tid = send_td->tid; // ??? *receive_tid = send_tid will crash
-        debug(DEBUG_MESSAGE, "get before the memcpy, tid=%d", send_td->tid);
         memcpy(receive_message, send_message, receive_length);
         debug(DEBUG_MESSAGE, "get to the end, tid=%d", send_td->tid);
         reschedule(td, ks);
@@ -127,29 +125,40 @@ void k_receive(vint *receive_tid, void *receive_message, int receive_length, Tas
         insert_task(td, &(ks->receive_block));
         remove_task(td, &(ks->ready_queue));
     }
-    debug(DEBUG_MESSAGE, "get to the very end, tid=%d", send_td->tid);
+    td->retval = 0;
+    debug(DEBUG_MESSAGE, "get to the very end, tid=%d", td->tid);
 }
 
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks){
     Message *reply_msg = (Message*)reply;
     debug(DEBUG_MESSAGE, "enter kernel_reply %s", "this is kernel reply");
     debug(DEBUG_MESSAGE, "want to reply to tid = %d, message is %s", reply_tid, reply_msg->content);
-    Task_descriptor *reply_to_td = &ks->tasks[reply_tid];
-    int task_exist = remove_task(reply_to_td, &(ks->reply_block));
-    if(task_exist == -1){
-        // should return -3 in this case  
-    }    
-    else{
-        debug(DEBUG_MESSAGE, "task does exist in reply_block %s", "that's right");
-        vint send_task_sp = reply_to_td->sp;
-        void *send_reply_message = *((vint*) (send_task_sp + 12));
-        vint send_task_fp = reply_to_td->fp;
-        vint send_reply_message_length = *((vint*) (send_task_fp + 4));
-        // return error code if length doesn't match
-        memcpy(send_reply_message, reply, replylen);
-        reply_to_td->state = STATE_READY;
-        insert_task(reply_to_td, &(ks->ready_queue));
+    int task_created = is_task_created(reply_tid, ks);
+    if(task_created){
+        Task_descriptor *reply_to_td = &ks->tasks[reply_tid];
+        debug(DEBUG_MESSAGE, "getting into here %d", reply_to_td->tid);
+        int task_exist = remove_task(reply_to_td, &(ks->reply_block));
+        debug(DEBUG_MESSAGE, "getting into here task_exist=%d", task_exist);
+        if(task_exist == -1){
+            debug(DEBUG_MESSAGE, "getting into here %s", "this is kernel reply");
+            td->retval = -3;
+        } else{
+            debug(DEBUG_MESSAGE, "task does exist in reply_block %s", "that's right");
+            vint send_task_sp = reply_to_td->sp;
+            void *send_reply_message = *((vint*) (send_task_sp + 12));
+            /*vint send_task_fp = reply_to_td->fp;*/
+            /*vint send_reply_message_length = *((vint*) (send_task_fp + 4));*/
+            memcpy(send_reply_message, reply, replylen);
+            Message *output = (Message*)send_reply_message;
+            debug(DEBUG_MESSAGE, "!!!!!!!!!!! value of send_reply_message%s", output->content);
+            reply_to_td->state = STATE_READY;
+            insert_task(reply_to_td, &(ks->ready_queue));
+            td->retval = 0; // currently didn't consider truncation
+        }
+    } else{
+        td->retval = -2;
     }
+    
     reschedule(td, ks);
 }
 
