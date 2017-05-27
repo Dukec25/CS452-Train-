@@ -245,8 +245,8 @@ int main()
 			vint cur_lr = activate(td);
 			uint32 immed_24 = *((vint *)(cur_lr - 4)) & ~(0xff000000);
 			uint32 req = immed_24 & 0xfff;
-			uint32 argc = (immed_24 << 12) && 0xfff;
-			debug(DEBUG_TRACE, "get back into kernel again, req = %d, argc = %d", req, argc);
+			uint32 argc = (immed_24 >> 12) & 0xfff;
+			debug(DEBUG_TRACE, "get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
 
 			// retrieve spsr
 			asm volatile("mrs ip, spsr"); // assign spsr to ip
