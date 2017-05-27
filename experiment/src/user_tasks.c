@@ -68,32 +68,43 @@ void name_client_task1()
     uint32 tid = MyTid();
 
 	int result = 0;
+	// expected 0
     debug(DEBUG_TASK, "starting RegisterAs Apple1 tid = %d, size = %d", tid, sizeof("Apple1")); 
 	result = RegisterAs("Apple1");
 	debug(DEBUG_TASK, "RegisterAs Apple1 result = %d", result);
 
-    debug(DEBUG_TASK, "starting RegisterAs Apple2 tid = %d", tid); 
+	// expected 16
+    debug(DEBUG_TASK, "starting RegisterAs Apple1 tid = %d, size = %d, again", tid, sizeof("Apple1")); 
+	result = RegisterAs("Apple1");
+	debug(DEBUG_TASK, "RegisterAs Apple1 result = %d", result); 
+    
+	// expected 0
+	debug(DEBUG_TASK, "starting RegisterAs Apple2 tid = %d", tid); 
 	result = RegisterAs("Apple2");
 	debug(DEBUG_TASK, "RegisterAs Apple2 result = %d", result);	
 
+	// expected 18
     debug(DEBUG_TASK, "starting RegisterAs Apple3 tid = %d", tid); 
 	debug(DEBUG_TASK, "starting registeras_task tid = %d", tid); 
 	result = RegisterAs("Apple3");
 	debug(DEBUG_TASK, "RegisterAs Apple3 result = %d", result);	
 
+	// expected 2
 	debug(DEBUG_TASK, "starting WhoIs Apple1 tid = %d", tid); 
 	result = WhoIs("Apple1");
 	debug(DEBUG_TASK, "WhoIs Apple1 result = %d", result);
 
+	// expected 2
 	debug(DEBUG_TASK, "starting WhoIs Apple2 tid = %d", tid); 
 	result = WhoIs("Apple2");
 	debug(DEBUG_TASK, "WhoIs Apple2 result = %d", result);
 
+	// expected 17
 	debug(DEBUG_TASK, "starting WhoIs Apple3 tid = %d", tid); 
 	result = WhoIs("Apple3");
 	debug(DEBUG_TASK, "WhoIs Apple3 result = %d", result);
 
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
+	debug(DEBUG_TASK, "tid = %d exiting", tid);
     Exit();
 }
 
@@ -107,23 +118,33 @@ void name_client_task2()
 	result = RegisterAs("Orange1");
 	debug(DEBUG_TASK, "RegisterAs Orange1 result = %d", result);
 
+	// expected 16
+	 debug(DEBUG_TASK, "starting RegisterAs Orange1 tid = %d again", tid); 
+	result = RegisterAs("Orange1");
+	debug(DEBUG_TASK, "RegisterAs Orange1 result = %d", result);
+
+	// expected 0
     debug(DEBUG_TASK, "starting RegisterAs Orange2 tid = %d", tid); 
 	result = RegisterAs("Orange2");
 	debug(DEBUG_TASK, "RegisterAs Orange2 result = %d", result);	
 
+	// expected 18
     debug(DEBUG_TASK, "starting RegisterAs Orange3 tid = %d", tid); 
 	debug(DEBUG_TASK, "starting registeras_task tid = %d", tid); 
 	result = RegisterAs("Orange3");
 	debug(DEBUG_TASK, "RegisterAs Orange3 result = %d", result);	
 
+	// expected 3
 	debug(DEBUG_TASK, "starting WhoIs Orange1 tid = %d", tid); 
 	result = WhoIs("Orange1");
 	debug(DEBUG_TASK, "WhoIs Orange1 result = %d", result);
 
+	// expected 3
 	debug(DEBUG_TASK, "starting WhoIs Orange2 tid = %d", tid); 
 	result = WhoIs("Orange2");
 	debug(DEBUG_TASK, "WhoIs Orange2 result = %d", result);
 
+	// expected 17
 	debug(DEBUG_TASK, "starting WhoIs Orange3 tid = %d", tid); 
 	result = WhoIs("Orange3");
 	debug(DEBUG_TASK, "WhoIs Orange3 result = %d", result);

@@ -12,7 +12,7 @@ static int NAME_SERVER_TID = INVALID_TID;
 
 #define READ_NAME_SERVER_TID(pval)	\
 		do {						\
-			*pval = INVALID_TID;	\
+			*pval = NAME_SERVER_TID;	\
 		} while(0)
  
 static void initialize(Name_server *ns)
@@ -32,6 +32,7 @@ static void initialize(Name_server *ns)
 		ns->req_map[i + 1].tid = INVALID_TID;
 		//ns->req_map[i + 1].content[0] = '\0';	
 	}
+	ns->req_map_pos = 0;
 }
 
 /*
@@ -44,8 +45,11 @@ static Server_err locate_service(Name_server *ns, char *name, int *postion)
 	int is_found = 0;
 	int idx = 0;
 	for(idx = 0; idx < ns->req_map_pos; idx++) {
-		if (strlen(name) + 1 == sizeof(ns->req_map[idx].content) &&
-			!strcmp(name, ns->req_map[idx].content, strlen(name) + 1)) {
+		debug(DEBUG_SYSCALL, "!!!!search for %s len %d, current idx = %d, service = %s len %d",
+								name, strlen(name), idx, ns->req_map[idx].content, strlen(ns->req_map[idx].content));
+		if (strlen(name) == strlen(ns->req_map[idx].content) &&
+			strcmp(name, ns->req_map[idx].content, strlen(name)) == 0) {
+			debug(DEBUG_SYSCALL, "!!!!FOUND %s, current idx = %d, service = %s", name, idx, ns->req_map[idx].content);
 			is_found = 1;
 			*postion = idx;
 			break;
@@ -57,10 +61,12 @@ static Server_err locate_service(Name_server *ns, char *name, int *postion)
 /*
  * Insert a request into the req_map.
  * Return SERVER_ERR_MAX_NUM_NAMES_REACHED if there are two names associated with the task.
+ * Return SERVER_ERR_ALREADY_REGISTERED if the task is already registered.
  * Overwrite the <name, tid> pair if neccessary.
  */
 static Server_err insert_service(Name_server *ns, Name_server_message *req)
 {
+	debug(DEBUG_SYSCALL, "enter %s", "insert_service");
 	int tid = req->tid;
 	if (ns->tid_filled[tid] == 2) {
 		// task already has two names associate with it
@@ -70,9 +76,14 @@ static Server_err insert_service(Name_server *ns, Name_server_message *req)
 	// Check whether there is another task reqistered under the same name
 	int postion;
 	int result = locate_service(ns, req->content, &postion);
+	debug(DEBUG_SYSCALL, "result = %d", result);
 	if (result == SERVER_ERR_SUCCESS) {
 		// another task is reqistered under the same name, overwrites it
 		Name_server_message *old_req = &(ns->req_map[postion]);
+		if (old_req->tid == req->tid) {
+			// already registered task
+			return SERVER_ERR_ALREADY_REGISTERED;
+		}
 		old_req->tid = req->tid;
 		old_req->type = req->type;
 	}
@@ -81,8 +92,11 @@ static Server_err insert_service(Name_server *ns, Name_server_message *req)
 		Name_server_message *entry = &(ns->req_map[ns->req_map_pos]);
 		entry->tid = req->tid;
 		entry->type = req->type;
-		memcpy(req->content, entry->content, sizeof(req->content));
+		memcpy(entry->content, req->content, strlen(req->content) + 1);
 		ns->req_map_pos++;
+		ns->tid_filled[tid]++;
+		debug(DEBUG_SYSCALL, "entry->content = %s, ns->req_map_pos = %d, ns->tid_filled = %d",
+								entry->content, ns->req_map_pos, ns->tid_filled[tid]);
 	}
 	return SERVER_ERR_SUCCESS;
 }
@@ -117,6 +131,7 @@ void name_server_start()
 					reply.type = MSG_SUCCESS;
 					reply.content[0] = '\0';
 				}
+				debug(DEBUG_SYSCALL, "reply.tid = %d, reply.type = %d, reply.content = %d", reply.tid, reply.type, reply.content[0]);
 				Reply(request.tid, &reply, sizeof(reply));
 		 		break;
 			case MSG_WHO_IS:
@@ -132,6 +147,7 @@ void name_server_start()
 					reply.content[0] = ns.req_map[position].tid;
 					reply.content[1] = '\0';
 				}
+				debug(DEBUG_SYSCALL, "reply.tid = %d, reply.type = %d, reply.content = %d", reply.tid, reply.type, reply.content[0]);
 				Reply(request.tid, &reply, sizeof(reply));
 		 		break;
 			default:
@@ -161,10 +177,12 @@ int RegisterAs(char *name)
 	if (!result) {
 		// Send successful	
 		if (reply.type == MSG_SUCCESS) {
+			debug(DEBUG_SYSCALL, "%s", "MSG_SUCCESS");
 			return 0;
 		}
 		else {
 			// MSG_REGITSER_AS_FAILURE
+			debug(DEBUG_SYSCALL, "%s, return %d", "MSG_FAILURE", reply.content[0]);
 			return reply.content[0];
 		}
 	}
@@ -191,11 +209,13 @@ int WhoIs(char *name)
 	if (!result) {
 		// Send successful	
 		if (reply.type == MSG_SUCCESS) {
+			debug(DEBUG_SYSCALL, "%s, return = %d", "MSG_SUCCESS", reply.content);
 			return reply.content[0]; // return tid associated with the name
 		}
 		else {
 			// MSG_FAILURE
 			return reply.content[0];
+			debug(DEBUG_SYSCALL, "%s, return %d", "MSG_FAILURE", reply.content[0]);
 		}
 	}
 	return result;
