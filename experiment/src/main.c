@@ -182,7 +182,7 @@ int activate(Task_descriptor *td)
 
 int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender)
 {
-	/*debug(DEBUG_ITC, "In %s", "find_sender");*/
+    debug(DEBUG_MESSAGE, "within %s", "find_sender");
 	uint8 lz = clz(blocked_queue->mask);
 	uint8 highest_priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
 	/*debug(DEBUG_ITC, "start with highest non-empty fifo %d", highest_priority);*/
@@ -196,11 +196,14 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 		}
 
 		Task_descriptor *iter = NULL;
-		for (iter = blocked_queue->fifos[priority].head; iter->next_task != NULL; iter = iter->next_task) {
+		for (iter = blocked_queue->fifos[priority].head; iter != NULL; iter = iter->next_task) {
             vint iter_sp = iter->sp;
             int receiver =  *((vint*) (iter_sp + 0));
-            Message *iter_msg = *((vint*) (iter_sp + 4));
+            debug(DEBUG_MESSAGE, "receiver value is = %d", receiver);
+            debug(DEBUG_MESSAGE, "tid is = %d", tid);
+
 			if (tid == receiver) {
+                debug(DEBUG_MESSAGE, "there is a match %d", 100);
 				is_found = 1;
 				*psender = iter;
 				break;
@@ -210,6 +213,7 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 			break;
 		}
 	}
+    debug(DEBUG_MESSAGE, "is there an infinite loop? = %d", 100);
 	return (is_found == 1 ? 0 : -1);
 }
 
@@ -230,7 +234,7 @@ int main()
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-	while(ks.ready_queue.mask != 0) { // this should be the correct one
+	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_SCHEDULER, "mask =%d", ks.ready_queue.mask);
 			Task_descriptor *td = schedule(&ks);
 
@@ -257,7 +261,7 @@ int main()
 			vint cur_sp = temp_sp;
 			register vint temp_fp asm("fp");
 			vint cur_fp = temp_fp;
-			uint32 arg0 = *((vint*) (cur_sp + 0));
+			vint arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
             uint32 arg2 = *((vint*) (cur_sp + 8));
             uint32 arg3 = *((vint*) (cur_sp + 12 )); 

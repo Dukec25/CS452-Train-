@@ -6,15 +6,16 @@
 typedef enum debug_level
 {
 	DEBUG_ALL,
+	DEBUG_PRIOR_FIFO,
+	DEBUG_ASM,
 	DEBUG_TRACE,
 	DEBUG_INFO,
-	DEBUG_ASM,
-	DEBUG_PRIOR_FIFO,
 	DEBUG_SCHEDULER,
 	DEBUG_SYSCALL,
 	DEBUG_TASK,
-	KERNEL1,
-    KERNEL2
+    DEBUG_MESSAGE,
+    KERNEL2,
+	KERNEL1
 } debug_level;
 
 /* debug */

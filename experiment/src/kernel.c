@@ -2,6 +2,11 @@
 #include <debug.h>
 #include <string.h>
 
+static uint8 is_task_created(int tid, Kernel_state *ks)
+{
+	return (ks->free_list & (0x1 << tid));
+}
+
 void k_init_kernel()
 {
 	debug(DEBUG_SYSCALL, "In %s", "k_init_kernel");
@@ -48,43 +53,67 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
 {
     Message *msg = (Message*)send_message;
     Message *reply_msg = (Message*)(reply);
-    debug(DEBUG_TRACE, "tid = 0x%x, message = %s, length = 0x%x, reply = %s, replylen = 0x%x",
+    
+    debug(DEBUG_MESSAGE, "enter kernel_send %s", "this is kernel send");
+    
+    debug(DEBUG_MESSAGE, "tid = 0x%x, message = %s, length = 0x%x, reply = %s, replylen = 0x%x",
         tid, msg->content, send_length, reply_msg->content, replylen);
-    Task_descriptor *receive_td =  &(ks->tasks[tid]);
-    int task_exist = remove_task(receive_td, &(ks->receive_block));
-    if(task_exist == -1){
-        // if the task not existed in the receive_block queue 
-        // block the task in the send_block 
-        td->state = STATE_SEND_BLK; 
-        debug(DEBUG_TRACE, "task being send_blocked, tid=", td->tid);
-        insert_task(td, &(ks->send_block));
-    } else{
-        // pass tid, message to receive task
-        // put the received blocked task into the ready queue
-        vint receive_task_sp = receive_td->sp; // get the task sp
-        int *receive_tid = *((vint*) (receive_task_sp + 0));
-        void *receive_message = *((vint*) (receive_task_sp + 4));
-        int receive_length = *((vint*) (receive_task_sp + 8));
-        *receive_tid = tid;
-        // if receive_length and send_length are different, shall we deal
-        // with it ?
-        memcpy(receive_message, send_message, receive_length);
+    int result = is_task_created(tid, ks);
 
-        receive_td->state = STATE_READY;
-        insert_task(receive_td, &(ks->ready_queue));
+    if(result){
+        // if the receiver task has already been created
+        Task_descriptor *receive_td =  &(ks->tasks[tid]);
+        int task_exist = remove_task(receive_td, &(ks->receive_block));
+        if(task_exist == -1){
+            // if the task not existed in the receive_block queue 
+            // block the task in the send_block 
+            td->state = STATE_SEND_BLK; 
+            debug(DEBUG_MESSAGE, "task being send_blocked, tid=", td->tid);
+            insert_task(td, &(ks->send_block));
+            remove_task(td, &(ks->ready_queue));
+            return;
+        } else{
+            // pass tid, message to receive task
+            // put the received blocked task into the ready queue
+            vint receive_task_sp = receive_td->sp; // get the task sp
+            int *receive_tid = *((vint*) (receive_task_sp + 0));
+            void *receive_message = *((vint*) (receive_task_sp + 4));
+            int receive_length = *((vint*) (receive_task_sp + 8));
+            *receive_tid = tid;
+            // if receive_length and send_length are different, shall we deal
+            // with it ?
+            memcpy(receive_message, send_message, receive_length);
+
+            receive_td->state = STATE_READY;
+            insert_task(receive_td, &(ks->ready_queue)); //should receiver be inserted first??
+        }
+    } else {
+        // if the receiver task has not been created
+        td->state = STATE_SEND_BLK; 
+        debug(DEBUG_MESSAGE, "task being send_blocked, tid=%x", td->tid);
+        insert_task(td, &(ks->send_block));
+        remove_task(td, &(ks->ready_queue));
+        return;
     }
+
     reschedule(td, ks);
 }
 
 void k_receive(int *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks)
 {
+    debug(DEBUG_MESSAGE, "enter kernel_receive tid=%d", td->tid);
     Task_descriptor **send_td; 
-    int result = find_sender(&(ks->send_block), td->tid, send_td);
+    find_sender(&(ks->send_block), td->tid, send_td);
+    /*debug(DEBUG_MESSAGE, "return result=%d", result);*/
+    debug(DEBUG_MESSAGE, "result=%d", 100000000);
+    int result = -1;
+
+
     // check if anyone send any messages to this task by looking at send_block(don't yet know how)
     // if yes, put that task onto reply_block and grab its data 
     if(result != -1){
         remove_task(*send_td, &(ks->send_block));
-        debug(DEBUG_TRACE, "task being reply_blocked, tid=%d", (*send_td)->tid);
+        debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", (*send_td)->tid);
         insert_task(*send_td, &(ks->reply_block));
         vint send_task_sp = (*send_td)->sp;
         int send_tid = *((vint*) (send_task_sp + 0));
@@ -100,6 +129,7 @@ void k_receive(int *receive_tid, void *receive_message, int receive_length, Task
 }
 
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks){
+    debug(DEBUG_MESSAGE, "enter kernel_reply %s", "this is kernel reply");
     // is there a situation that someone reply before send ???
     Task_descriptor *send_td = &ks->tasks[td->tid];
     int task_exist = remove_task(send_td, &(ks->reply_block));
@@ -116,11 +146,6 @@ void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kern
         send_td->state = STATE_READY;
     }
     reschedule(td, ks);
-}
-
-static uint8 is_task_created(int tid, Kernel_state *ks)
-{
-	return (ks->free_list & (0x1 << tid));
 }
 
 /*void k_send(int tid, void *msg, int msglen, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks)*/

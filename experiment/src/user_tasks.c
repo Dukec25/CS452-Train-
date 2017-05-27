@@ -23,14 +23,14 @@ void send_task()
     int tid = 1;
     debug(DEBUG_TRACE, "this send task tid = %d", tid);
     send_msg.tid = tid;
-    /*char message[] = "How is your day?";*/ //?????
-    memcpy(&send_msg.content, "hello", 6);
+    char message[] = "hello"; 
+    memcpy(&send_msg.content, message, sizeof(message));
     debug(DEBUG_TRACE, "is memcpy has any issue %d", tid);
     /*debug(DEBUG_TRACE, "tid=%d, message=%s, msgLength=%d, replyMsg=%s, replyMsgLen=%d", 2, send_msg.content, sizeof(send_msg), reply_msg.content, sizeof(reply_msg));*/
     debug(DEBUG_TRACE, "entering send %s", "I don't know");
     Send(2, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
     debug(DEBUG_TRACE, "unblock from reply_block%s", " yes, this what I want");
-    exit();
+    Exit();
 }
 
 void receive_task()
@@ -50,8 +50,8 @@ void first_task()
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
      int tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
      debug(DEBUG_TRACE, "created taskId = %d", tid);
-     /*tid = Create(PRIOR_HIGH, receive_task);  */
-     /*debug(DEBUG_TRACE, "created taskId = %d", tid);*/
+     tid = Create(PRIOR_HIGH, receive_task);  
+     debug(DEBUG_TRACE, "created taskId = %d", tid);
 	/*int tid = Create(PRIOR_LOW, general_task);*/
 	/*debug(KERNEL1, "created taskId = %d", tid);*/
 	/*tid = Create(PRIOR_LOW, general_task);*/

@@ -24,6 +24,7 @@
 	.global	asm_kernel_pass
 	.global asm_kernel_exit
     .global asm_kernel_send
+    .global asm_kernel_receive
 
 asm_print_sp:
 	mov		ip, sp
