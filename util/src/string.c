@@ -87,6 +87,15 @@ int strcmp(char *str1, char *str2, size_t num)
 	return 0;
 }
 
+int strlen(char *str)
+{
+	int i = 0;
+	while(str[i] != '\0') {
+		i++;
+	}
+	return i;
+}
+
 void *memcpy(void *destination, const void *source, size_t num)
 {
 	void *dest_pos = (void *)destination;

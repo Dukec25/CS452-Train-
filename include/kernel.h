@@ -12,12 +12,7 @@
 #define INVALID_TID			-1
 
 /* inter-tasks communication */
-#define MAX_MSG_LEN		64
-typedef enum Error {
-	ERR_SUCCESS			= 0x0,
-	ERR_INVALID_TID 	= 0x10,
-	ERR_INVALID_MSG_LEN = 0x11
-} Error;
+#define MAX_MSG_LEN		64 + 1
 
 /* inter-tasks communication */
 typedef struct Message {
