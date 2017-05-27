@@ -99,15 +99,12 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
     reschedule(td, ks);
 }
 
-void k_receive(int *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks)
+void k_receive(vint *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks)
 {
     debug(DEBUG_MESSAGE, "enter kernel_receive tid=%d", td->tid);
     Task_descriptor *send_td; 
-    find_sender(&(ks->send_block), td->tid, &send_td);
-    int result = -1;
+    int result = find_sender(&(ks->send_block), td->tid, &send_td);
     debug(DEBUG_MESSAGE, "return result=%d", result);
-    debug(DEBUG_MESSAGE, "result=%d", 100000000);
-
 
     // check if anyone send any messages to this task by looking at send_block(don't yet know how)
     // if yes, put that task onto reply_block and grab its data 
@@ -116,16 +113,21 @@ void k_receive(int *receive_tid, void *receive_message, int receive_length, Task
         debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", send_td->tid);
         insert_task(send_td, &(ks->reply_block));
         vint send_task_sp = send_td->sp;
-        int send_tid = *((vint*) (send_task_sp + 0));
+        debug(DEBUG_MESSAGE, "get before the variables, tid=%d", send_td->tid);
         void *send_message = *((vint*) (send_task_sp + 4));
         int send_length = *((vint*) (send_task_sp + 8));
+        debug(DEBUG_MESSAGE, "get after the variables, tid=%d", send_td->tid);
         // be aware the case receive_length and send_length are different 
-        *receive_tid = send_tid; 
+        *receive_tid = send_td->tid; // ??? *receive_tid = send_tid will crash
+        debug(DEBUG_MESSAGE, "get before the memcpy, tid=%d", send_td->tid);
         memcpy(receive_message, send_message, receive_length);
+        debug(DEBUG_MESSAGE, "get to the end, tid=%d", send_td->tid);
+        reschedule(td, ks);
     } else {
         insert_task(td, &(ks->receive_block));
-        reschedule(td, ks);
+        remove_task(td, &(ks->ready_queue));
     }
+    debug(DEBUG_MESSAGE, "get to the very end, tid=%d", send_td->tid);
 }
 
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks){

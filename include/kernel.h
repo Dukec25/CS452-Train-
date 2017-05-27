@@ -57,8 +57,8 @@ typedef struct Task_descriptor {
 	int 					ptid;
 	Task_state 				state;
 	Task_priority 			priority;
-    vint                    *fp;
 	struct Task_descriptor *next_task;
+    vint                    *fp;
 	//Message					msg; to be determined 
 } Task_descriptor;
 
@@ -141,7 +141,7 @@ void k_init_kernel();
 void k_pass(Task_descriptor *td, Kernel_state *ks);
 void k_exit(Task_descriptor *td, Kernel_state *ks);
 void k_send(int tid, void *msg, int msglen, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
-void k_receive(int *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks);
+void k_receive(vint *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks);
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
  
 /* User tasks */

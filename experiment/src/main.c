@@ -213,7 +213,6 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 			break;
 		}
 	}
-    debug(DEBUG_MESSAGE, "is there an infinite loop? = %d", 100);
 	return (is_found == 1 ? 0 : -1);
 }
 

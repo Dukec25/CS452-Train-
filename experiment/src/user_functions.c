@@ -59,12 +59,12 @@ int Send( int tid, void *msg, int msglen, void *reply, int replylen )
 
 int Receive( int *tid, void *msg, int msglen )
 {
-    debug(DEBUG_TRACE, "this is in %s", "user Send");
+    debug(DEBUG_TRACE, "this is in %s", "user Receive");
     asm_kernel_receive(tid, msg, msglen);
 }
 
 int Reply( int tid, void *reply, int replylen )
 {
-    debug(DEBUG_TRACE, "this is in %s", "user Send");
+    debug(DEBUG_TRACE, "this is in %s", "user Reply");
     /*asm_kernel_reply(tid, msg, msglen, reply, replylen);*/
 }

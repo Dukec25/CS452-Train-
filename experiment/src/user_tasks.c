@@ -36,13 +36,15 @@ void send_task()
 void receive_task()
 {
 	debug(DEBUG_TRACE, "enter %s", "receive task");
-    int *sender_tid;
+    int sender_tid = -1; // why, why, why????????? Compare with previous version 
+    // why can't I pass in *sender_tid 
     Message msg;
 	uint32 tid = MyTid();
 	debug(DEBUG_TRACE, "this receive_task tid = %d", tid);
     msg.tid = tid;
-    Receive( sender_tid, &msg, sizeof(msg) ); // should return value here later
-	debug(DEBUG_TRACE, "sender_tid=%d, received_message=%s", *sender_tid, msg.content);
+    Receive( &sender_tid, &msg, sizeof(msg) ); // should return value here later
+	debug(DEBUG_TRACE, "sender_tid=%d, received_message=%s", sender_tid, msg.content);
+    Exit();
 }
 
 void first_task()
