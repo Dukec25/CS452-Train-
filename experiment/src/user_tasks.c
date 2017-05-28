@@ -156,7 +156,7 @@ void name_client_task2()
 
 void rps_server_task()
 {
-	debug(DEBUG_TASK, "enter %s", "name_client_task2");
+	debug(DEBUG_TASK, "enter %s", "rps_server_task");
     uint32 tid = MyTid();
 
     debug(DEBUG_TASK, "starting rps_server_start %d", tid); 
@@ -168,10 +168,10 @@ void rps_server_task()
 
 void rps_client_task()
 {
-	debug(DEBUG_TASK, "enter %s", "name_client_task2");
+	debug(DEBUG_TASK, "enter %s", "rps_client_task");
     uint32 tid = MyTid();
 
-    debug(DEBUG_TASK, "starting rps_server_start %d", tid); 
+    debug(DEBUG_TASK, "starting rps_client_start %d", tid); 
 	rps_client_start();
 
 	debug(DEBUG_TASK, "tid =%d exiting", tid);
@@ -183,20 +183,20 @@ void first_task()
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
     int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue
     debug(DEBUG_TASK, "created taskId = %d", tid);
-	
+/*	
 	tid = Create(PRIOR_HIGH, rps_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 	
 	int i = 0;
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 2; i++) {
 		tid = Create(PRIOR_HIGH, rps_client_task);
 		debug(DEBUG_TASK, "created taskId = %d", tid);
 	}
-
-   	/* tid = Create(PRIOR_HIGH, name_client_task1); */
-   	/* debug(DEBUG_TASK, "created taskId = %d", tid); */
-    /* tid = Create(PRIOR_HIGH, name_client_task2); */ 
-    /* debug(DEBUG_TASK, "created taskId = %d", tid); */
+*/
+   	tid = Create(PRIOR_HIGH, name_client_task1);
+   	debug(DEBUG_TASK, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, name_client_task2);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 	
     /* int tid = Create(PRIOR_HIGH, send_task); */  // comment out for now to test generalized priority queue
     /* debug(DEBUG_TRACE, "created taskId = %d", tid); */

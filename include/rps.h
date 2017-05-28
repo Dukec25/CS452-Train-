@@ -5,7 +5,7 @@
 #include <debug.h>
 #include <kernel.h>
 
-#define NUM_ROUNDS	3
+#define NUM_ROUNDS	1
 
 typedef enum RPS_choice {
 	ROCK,
@@ -77,10 +77,10 @@ void rps_reply_result(RPS_server *rps_server);
 uint32 rand(uint32 state[static 1]);
 
 // client
-void rps_client_initialize(RPS_client *rps_client);
+void rps_client_initialize();
 void rps_client_start();
-int rps_client_sign_in(RPS_client *rps_client);
-int rps_client_play(RPS_client *rps_client);
-int rps_client_quit(RPS_client *rps_client);
+int rps_client_sign_in(int sever_tid, RPS_client *rps_client);
+int rps_client_play(int sever_tid, RPS_client *rps_client);
+int rps_client_quit(int sever_tid, RPS_client *rps_client);
 
 #endif // __RPS_H__

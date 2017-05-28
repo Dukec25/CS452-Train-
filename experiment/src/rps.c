@@ -26,14 +26,14 @@ void rps_server_initialize(RPS_server *rps_server)
 
 void rps_server_start()
 {
-	debug(DEBUG_TASK, "enter %s", rps_server_start);
+	debug(DEBUG_TASK, "enter %s", "rps_server_start");
 	RPS_server rps_server;
 	rps_server_initialize(&rps_server);
 
 	int register_result = RegisterAs(RPS_SERVER_NAME);
 	debug(DEBUG_TASK, "RegisterAs result = %d", register_result);
 
-	if (!register_result) {
+	if (register_result) {
 		debug(KERNEL2, "RPS server RegisterAs failed, error code = %d, Exiting %d", register_result, rps_server.tid);
 		Exit();
 	}
@@ -44,20 +44,20 @@ void rps_server_start()
 		Receive(&tid, &request, sizeof(request));
 		switch(request.type) {
 			case RPS_MSG_SIGN_IN:
-			debug(DEBUG_TASK, "%s", "RPS_MSG_SIGN_IN");
+			debug(DEBUG_TASK, "%s %d", "RPS_MSG_SIGN_IN", tid);
 			rps_handle_sign_in(&rps_server, &request);
 			rps_pair_players(&rps_server);
 			break;
 			case RPS_MSG_PLAY:
-			debug(DEBUG_TASK, "%s", "RPS_MSG_PLAY");
+			debug(DEBUG_TASK, "%s %d", "RPS_MSG_PLAY", tid);
 			rps_handle_play(&rps_server, &request);
 			break;
 			case RPS_MSG_QUIT:
-			debug(DEBUG_TASK, "%s", "RPS_MSG_QUIT");
+			debug(DEBUG_TASK, "%s %d", "RPS_MSG_QUIT", tid);
 			rps_handle_quit(&rps_server, &request);
 			break;
 			default:
-			debug(DEBUG_TASK, "%s", "!!!!!!!Unkown");
+			debug(DEBUG_TASK, "%s %d", "!!!!!!!Unkown", tid);
 			break;
 		}
 
@@ -320,7 +320,7 @@ void rps_client_start()
 		debug(KERNEL2, "WhoIs failed, invalid server tid %d", server_tid);
 	}
 
-	result = rps_client_sign_in(&rps_client);
+	result = rps_client_sign_in(server_tid, &rps_client);
 	if (result == -1) {
 		debug(KERNEL2, "player %d failed to sign in, Exiting", rps_client.tid);
 		Exit();
@@ -328,13 +328,13 @@ void rps_client_start()
 
 	int i = 0;
 	for (i = 0; i < NUM_ROUNDS; i++) {
-		result = rps_client_play(&rps_client);
+		result = rps_client_play(server_tid, &rps_client);
 		if (result == -1) {
 			debug(KERNEL2, "player %d failed to play", rps_client.tid);
 		}
 	}
 
-	result = rps_client_quit(&rps_client);
+	result = rps_client_quit(server_tid, &rps_client);
 	if (result == -1) {
 		debug(KERNEL2, "player %d failed to quit, Exiting", rps_client.tid);
 		Exit();
@@ -342,12 +342,12 @@ void rps_client_start()
 	Exit();
 }
 
-int rps_client_sign_in(RPS_client *rps_client)
+int rps_client_sign_in(int server_tid, RPS_client *rps_client)
 {
 	debug(DEBUG_TASK, "enter %s", "rps_client_sign_in");
 	RPS_message sign_in_request;
 	RPS_message *request = &sign_in_request;
-	request->tid = rps_client->tid;
+	request->tid = server_tid;
 	request->content[0] = '\0';
 	request->type = RPS_MSG_SIGN_IN;
 	RPS_message reply;
@@ -361,12 +361,12 @@ int rps_client_sign_in(RPS_client *rps_client)
 	return 0;
 }
 
-int rps_client_play(RPS_client *rps_client)
+int rps_client_play(int server_tid, RPS_client *rps_client)
 {
 	debug(DEBUG_TASK, "enter %s", "rps_client_play");
 	RPS_message play_request;
 	RPS_message *request = &play_request;
-	request->tid = rps_client->tid;
+	request->tid = server_tid;
 	RPS_choice choice = rand(&rps_client->choice_seed) % 3;
 	request->content[0] = choice;
 	request->content[1] = '\0';
@@ -392,12 +392,12 @@ int rps_client_play(RPS_client *rps_client)
 	return -1;
 }
 
-int rps_client_quit(RPS_client *rps_client)
+int rps_client_quit(int server_tid, RPS_client *rps_client)
 {
 	debug(DEBUG_TASK, "enter %s", "rps_client_quit");
 	RPS_message quit_request;
 	RPS_message *request = &quit_request;
-	request->tid = rps_client->tid;
+	request->tid = server_tid;
 	request->content[0] = '\0';
 	request->type = RPS_MSG_QUIT;
 	RPS_message reply;
@@ -409,7 +409,7 @@ int rps_client_quit(RPS_client *rps_client)
 		Exit();
 	}
 	else if (reply.type == RPS_MSG_SERVER_DOWN) {
-		debug(KERNEL2, "server is down, Exiting", rps_client->tid);
+		debug(KERNEL2, "server is down, Exiting %d", rps_client->tid);
 		Exit();
 	}
 	else if (reply.type == RPS_MSG_GOODBYE) {
