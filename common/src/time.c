@@ -56,3 +56,9 @@ int time_update(Time *pt)
 	}
 	return 0;
 }
+
+int get_microsecond(){
+	vint *ptimer = timer();
+	uint32 timer_output = TIMER_MAX - *ptimer;
+    return timer_output;
+}

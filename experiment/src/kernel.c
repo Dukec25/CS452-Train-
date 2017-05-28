@@ -152,7 +152,7 @@ void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kern
             Message *output = (Message*)send_reply_message;
             debug(DEBUG_MESSAGE, "!!!!!!!!!!! value of send_reply_message%s", output->content);
             reply_to_td->state = STATE_READY;
-            insert_task(reply_to_td, &(ks->ready_queue));
+            insert_task(reply_to_td, &(ks->ready_queue)); // send get inserted before reply
             td->retval = 0; // currently didn't consider truncation
         }
     } else{

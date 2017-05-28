@@ -155,28 +155,29 @@ void name_client_task2()
 
 void time_receive(){
     int round;
-    debug(DEBUG_TIME, "enter %s", "time receive");
+    /*debug(DEBUG_TIME, "enter %s", "time receive");*/
     int sender_tid;   
     vint reply_msg = 5;
     vint msg;
-    /*for(round=0; round < 1000; round++){*/
+    for(round=0; round < 1000; round++){
         Receive( &sender_tid, &msg, sizeof(msg) );  
-        debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);
+        /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
         vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
-    /*}*/
+    }
     Exit();
 }
 
 void time_send(){
     int round;
-    vint four_bytes = 5;
-    vint reply_four_bytes;
-    debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");
-    /*for(round=0; round < 1000; round++){*/
+    /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
+    for(round=0; round < 1000; round++){
+        vint four_bytes = 5;
+        vint reply_four_bytes;
         vint send_result = Send(1, &four_bytes, sizeof(four_bytes), &reply_four_bytes, sizeof(reply_four_bytes));
-    /*}    */
-    debug(DEBUG_TIME, "enter %s", "time task2");
-    debug(DEBUG_TIME, "replied=%d", reply_four_bytes);
+        Pass();
+    }    
+    /*debug(DEBUG_TIME, "enter %s", "time task2");*/
+    /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
     Exit();
 }
 
