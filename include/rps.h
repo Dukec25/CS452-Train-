@@ -5,7 +5,7 @@
 #include <debug.h>
 #include <kernel.h>
 
-#define NUM_ROUNDS	1
+#define NUM_ROUNDS	2
 
 typedef enum RPS_choice {
 	ROCK,
@@ -28,7 +28,6 @@ typedef enum RPS_message_type {
 	RPS_MSG_SERVER_DOWN,
 	RPS_MSG_OUTCOME,
 	RPS_MSG_GOODBYE,
-	RPS_MSG_FORCE_TO_QUIT,
 	RPS_MSG_GAME_OVER,
 	// client
 	RPS_MSG_SIGN_IN,
@@ -49,6 +48,7 @@ typedef struct RPS_server {
 	int is_server_running;
 
 	// active players
+	int num_players;
 	int player1_tid;
 	RPS_choice player1_choice;
 	int player2_tid;
@@ -61,7 +61,6 @@ typedef struct RPS_server {
 
 typedef struct RPS_client {
 	int tid;
-	uint32 choice_seed;
 } RPS_client;
 
 // server
@@ -80,7 +79,7 @@ uint32 rand(uint32 state[static 1]);
 void rps_client_initialize();
 void rps_client_start();
 int rps_client_sign_in(int sever_tid, RPS_client *rps_client);
-int rps_client_play(int sever_tid, RPS_client *rps_client);
+int rps_client_play(int sever_tid, RPS_client *rps_client, int round);
 int rps_client_quit(int sever_tid, RPS_client *rps_client);
 
 #endif // __RPS_H__

@@ -2,7 +2,7 @@
 #include <debug.h>
 #include <string.h>
 
-static uint8 is_task_created(int tid, Kernel_state *ks)
+static uint32 is_task_created(int tid, Kernel_state *ks)
 {
 	return (ks->free_list & (0x1 << tid));
 }
@@ -61,6 +61,7 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
         tid, msg->content, send_length, reply_msg->content, replylen);
     int result = is_task_created(tid, ks);
 
+	debug(DEBUG_MESSAGE, "!!!!tid = %d is_task_created result = %d", tid, result);
     if(result){
         // if the receiver task has already been created
         Task_descriptor *receive_td =  &(ks->tasks[tid]);
@@ -132,7 +133,7 @@ void k_receive(vint *receive_tid, void *receive_message, int receive_length, Tas
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks){
     Message *reply_msg = (Message*)reply;
     debug(DEBUG_MESSAGE, "enter kernel_reply %s", "this is kernel reply");
-    debug(DEBUG_MESSAGE, "want to reply to tid = %d, message is %s", reply_tid, reply_msg->content);
+    debug(DEBUG_MESSAGE, "want to reply to tid = %d, message is %s", reply_tid, reply_msg->content, is_task_created(reply_tid, ks));
     int task_created = is_task_created(reply_tid, ks);
     if(task_created){
         Task_descriptor *reply_to_td = &ks->tasks[reply_tid];

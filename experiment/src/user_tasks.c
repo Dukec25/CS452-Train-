@@ -183,21 +183,19 @@ void first_task()
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
     int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue
     debug(DEBUG_TASK, "created taskId = %d", tid);
-/*	
 	tid = Create(PRIOR_HIGH, rps_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 	
 	int i = 0;
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 6; i++) {
 		tid = Create(PRIOR_HIGH, rps_client_task);
 		debug(DEBUG_TASK, "created taskId = %d", tid);
 	}
-*/
-   	tid = Create(PRIOR_HIGH, name_client_task1);
+/*   	tid = Create(PRIOR_HIGH, name_client_task1);
    	debug(DEBUG_TASK, "created taskId = %d", tid);
     tid = Create(PRIOR_HIGH, name_client_task2);
     debug(DEBUG_TASK, "created taskId = %d", tid);
-	
+*/	
     /* int tid = Create(PRIOR_HIGH, send_task); */  // comment out for now to test generalized priority queue
     /* debug(DEBUG_TRACE, "created taskId = %d", tid); */
     /* tid = Create(PRIOR_HIGH, receive_task); */
