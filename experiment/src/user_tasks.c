@@ -159,8 +159,10 @@ void time_receive(){
     int round;
     /*debug(DEBUG_TIME, "enter %s", "time receive");*/
     int sender_tid;   
-    vint reply_msg = 5;
-    vint msg;
+    /*vint reply_msg = 5;*/
+    /*vint msg;*/
+    char reply_msg[64];
+    char msg[64];
     for(round=0; round < 1000; round++){
         Receive( &sender_tid, &msg, sizeof(msg) );  
         /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
@@ -171,13 +173,13 @@ void time_receive(){
 
 void time_send(){
     int round;
-    vint msg = 5;
-    vint reply_four_bytes;
+    /*vint msg = 5;*/
+    /*vint reply_msg;*/
     char msg[64];
-    char replyMsg[64];
+    char reply_msg[64];
     /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
     for(round=0; round < 1000; round++){
-        vint send_result = Send(1, &msg, sizeof(msg), &reply_four_bytes, sizeof(reply_four_bytes));
+        vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
     }    
     /*debug(DEBUG_TIME, "enter %s", "time task2");*/
     /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
