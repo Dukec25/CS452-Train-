@@ -4,6 +4,8 @@
 #include <string.h>
 #include <name_server.h>
 
+#define TIMER_MAX	0xFFFFFFFF
+
 void general_task()
 {
 	debug(DEBUG_TASK, "In user task %s", "general_task");
@@ -174,7 +176,7 @@ void time_send(){
         vint four_bytes = 5;
         vint reply_four_bytes;
         vint send_result = Send(1, &four_bytes, sizeof(four_bytes), &reply_four_bytes, sizeof(reply_four_bytes));
-        Pass();
+        Pass(); // let receive go first
     }    
     /*debug(DEBUG_TIME, "enter %s", "time task2");*/
     /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
@@ -206,6 +208,10 @@ void first_task()
     /*debug(KERNEL1, "created taskId = %d", tid);*/
     /*tid = Create(PRIOR_HIGH, general_task);*/
     /*debug(KERNEL1, "created taskId = %d", tid);*/
+
+	vint *ptimer = timer();
+	uint32 timer_output = TIMER_MAX - *ptimer;
+    debug(DEBUG_TIME, "time = %d", timer_output);
 	debug(KERNEL1, "%s", "FirstUserTask: exiting");
 	Exit();
 }

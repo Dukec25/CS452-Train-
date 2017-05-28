@@ -220,6 +220,7 @@ int main()
 {
     bwsetfifo(COM2, OFF);
 
+    timer_start();
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", swi_handle_entry);
@@ -302,5 +303,6 @@ int main()
                     break;
 			}
 	}
+    timer_stop();
 	return 0;
 }
