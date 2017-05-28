@@ -191,10 +191,10 @@ void time_send(){
 
 void first_task()
 {
-	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_LOW);
-    int tid = Create(PRIOR_HIGH, time_receive); 
+	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_HIGH);
+    int tid = Create(PRIOR_MEDIUM, time_receive); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
-    tid = Create(PRIOR_MEDIUM, time_send);
+    tid = Create(PRIOR_HIGH, time_send);
     debug(DEBUG_TASK, "created taskId = %d", tid);
     /*int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
