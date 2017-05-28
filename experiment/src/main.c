@@ -1,6 +1,7 @@
 #include <debug.h>
 #include <kernel.h>
 #include <math.h>
+#include <time.h>
 
 extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
@@ -219,6 +220,7 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 int main()
 {
     bwsetfifo(COM2, OFF);
+	timer_start();
 
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;
