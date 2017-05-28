@@ -171,24 +171,28 @@ void time_receive(){
 
 void time_send(){
     int round;
+    vint msg = 5;
+    vint reply_four_bytes;
+    char msg[64];
+    char replyMsg[64];
     /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
     for(round=0; round < 1000; round++){
-        vint four_bytes = 5;
-        vint reply_four_bytes;
-        vint send_result = Send(1, &four_bytes, sizeof(four_bytes), &reply_four_bytes, sizeof(reply_four_bytes));
-        Pass(); // let receive go first
+        vint send_result = Send(1, &msg, sizeof(msg), &reply_four_bytes, sizeof(reply_four_bytes));
     }    
     /*debug(DEBUG_TIME, "enter %s", "time task2");*/
     /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
+	vint *ptimer = timer();
+	uint32 timer_output = TIMER_MAX - *ptimer;
+    debug(DEBUG_TIME, "time = %d", timer_output);
     Exit();
 }
 
 void first_task()
 {
-	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
+	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_LOW);
     int tid = Create(PRIOR_HIGH, time_receive); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, time_send);
+    tid = Create(PRIOR_MEDIUM, time_send);
     debug(DEBUG_TASK, "created taskId = %d", tid);
     /*int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
@@ -209,9 +213,6 @@ void first_task()
     /*tid = Create(PRIOR_HIGH, general_task);*/
     /*debug(KERNEL1, "created taskId = %d", tid);*/
 
-	vint *ptimer = timer();
-	uint32 timer_output = TIMER_MAX - *ptimer;
-    debug(DEBUG_TIME, "time = %d", timer_output);
-	debug(KERNEL1, "%s", "FirstUserTask: exiting");
+	/*debug(KERNEL1, "%s", "FirstUserTask: exiting");*/
 	Exit();
 }
