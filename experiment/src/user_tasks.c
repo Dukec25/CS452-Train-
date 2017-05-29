@@ -157,15 +157,16 @@ void name_client_task2()
 
 void time_receive(){
     int round;
-    /*debug(DEBUG_TIME, "enter %s", "time receive");*/
+    debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");
     int sender_tid;   
     /*vint reply_msg = 5;*/
     /*vint msg;*/
     char reply_msg[64];
     char msg[64];
     for(round=0; round < 1000; round++){
+        debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive");
         Receive( &sender_tid, &msg, sizeof(msg) );  
-        /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
+        debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);
         vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
     }
     Exit();
@@ -177,8 +178,9 @@ void time_send(){
     /*vint reply_msg;*/
     char msg[64];
     char reply_msg[64];
-    /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
+    debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");
     for(round=0; round < 1000; round++){
+        debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");
         vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
     }    
     /*debug(DEBUG_TIME, "enter %s", "time task2");*/
@@ -191,7 +193,7 @@ void time_send(){
 
 void first_task()
 {
-	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_HIGH);
+	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
     int tid = Create(PRIOR_MEDIUM, time_receive); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
     tid = Create(PRIOR_HIGH, time_send);
