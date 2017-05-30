@@ -48,6 +48,8 @@ void receive_task()
 	debug(DEBUG_TRACE, "sender_tid=%d, received_message=%s", sender_tid, msg.content);
 	debug(DEBUG_TRACE, "receive task id= %d, prepare to reply task id= %d", tid, sender_tid);
     char message[] = "I am great, wanna have sashimi together???";
+    /*char message[128];*/
+    /*char* first_aligned = &message + 8 - (&message % 8);*/
     Message reply_msg;
     memcpy(&reply_msg.content, message, sizeof(message));
     vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
@@ -157,16 +159,16 @@ void name_client_task2()
 
 void time_receive(){
     int round;
-    debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");
+    /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");*/
     int sender_tid;   
     /*vint reply_msg = 5;*/
     /*vint msg;*/
     char reply_msg[64];
     char msg[64];
     for(round=0; round < 1000; round++){
-        debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive");
+        /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive");*/
         Receive( &sender_tid, &msg, sizeof(msg) );  
-        debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);
+        /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
         vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
     }
     Exit();
@@ -178,9 +180,9 @@ void time_send(){
     /*vint reply_msg;*/
     char msg[64];
     char reply_msg[64];
-    debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");
+    /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
     for(round=0; round < 1000; round++){
-        debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");
+        /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");*/
         vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
     }    
     /*debug(DEBUG_TIME, "enter %s", "time task2");*/
@@ -194,9 +196,9 @@ void time_send(){
 void first_task()
 {
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-    int tid = Create(PRIOR_MEDIUM, time_receive); 
+    int tid = Create(PRIOR_HIGH, time_receive); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, time_send);
+    tid = Create(PRIOR_MEDIUM, time_send);
     debug(DEBUG_TASK, "created taskId = %d", tid);
     /*int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/

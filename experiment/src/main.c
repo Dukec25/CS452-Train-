@@ -110,7 +110,13 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 	debug(DEBUG_PRIOR_FIFO, "In remove_task, start removing td %d from fifo %d, mask = 0x%x",
 			td->tid, priority, ppriority_queue->mask);
 	uint8 is_found = 0;
+    if((ppriority_queue->mask & (0x1 << priority)) == 0){
+        debug(DEBUG_PRIOR_FIFO, "!!!!!!!!!!!!!!!!!!! %s", "priority queue is empty");
+        return -1;
+    }
+	debug(DEBUG_PRIOR_FIFO, "!!!!!!!!!!!!!!!!!!!before *head %s", "in remove_task");
 	Task_descriptor *head = ppriority_queue->fifos[priority].head;
+	debug(DEBUG_PRIOR_FIFO, "!!!!!!!!!!!!!!!!!!!after *head= %d", head);
 	if (td->next_task == NULL) {
 		if (td == head) {
 			// td is the only task on the fifo, empty the fifo
@@ -254,23 +260,16 @@ int main()
 			debug(DEBUG_TRACE, "get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
 
 			// retrieve spsr
-			asm volatile("mrs ip, spsr"); // assign spsr to ip
-			register uint32 temp_spsr asm("ip");
-			uint32 cur_spsr = temp_spsr;
+			vint cur_spsr = asm_get_spsr();
 
 			// retrieve sp and arg0 and arg1
-			asm volatile("msr CPSR, %0" :: "I" (SYS)); // enter system mode
-			asm volatile("mov ip, sp");
-			register vint temp_sp asm("ip"); // extremly dangerous!!!, modify its value after the second read, holy cow waste so much time on this
-			vint cur_sp = temp_sp;
-			register vint temp_fp asm("fp");
-			vint cur_fp = temp_fp;
+			vint cur_sp = asm_get_sp();
+			vint cur_fp = asm_get_fp();
 			vint arg0 = *((vint*) (cur_sp + 0));
 			uint32 arg1 = *((vint*) (cur_sp + 4));
             uint32 arg2 = *((vint*) (cur_sp + 8));
             uint32 arg3 = *((vint*) (cur_sp + 12 )); 
             uint32 arg4 = *((vint*) (cur_fp + 4));
-			asm volatile("msr CPSR, %0" :: "I" (SVC)); // get back to svc mode 
 			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
 					cur_sp, cur_lr, cur_fp, arg0, arg1);
 
