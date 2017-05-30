@@ -61,6 +61,7 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
     debug(DEBUG_MESSAGE, "tid = 0x%x, message = %s, length = 0x%x, reply = %s, replylen = 0x%x",
         tid, msg->content, send_length, reply_msg->content, replylen);
     int result = is_task_created(tid, ks);
+    debug(DEBUG_MESSAGE, "after is_task_created, tid=%d", td->tid);
 
 	debug(DEBUG_MESSAGE, "!!!!tid = %d is_task_created result = %d", tid, result);
     if(result){
@@ -68,13 +69,14 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
         Task_descriptor *receive_td =  &(ks->tasks[tid]);
         int task_exist = remove_task(receive_td, &(ks->receive_block));
         if(task_exist == -1){
+            debug(DEBUG_MESSAGE, "task being send_blocked, tid=%d", td->tid);
             // if the task not existed in the receive_block queue 
             // block the task in the send_block 
             td->state = STATE_SEND_BLK; 
-            debug(DEBUG_MESSAGE, "task being send_blocked, tid=%d", td->tid);
             insert_task(td, &(ks->send_block));
             remove_task(td, &(ks->ready_queue));
         } else{
+            debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", td->tid);
             // pass tid, message to receive task
             // put the received blocked task into the ready queue
             vint receive_task_sp = receive_td->sp; // get the task sp
@@ -89,7 +91,6 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
             receive_td->state = STATE_READY;
             insert_task(receive_td, &(ks->ready_queue)); 
             td->state = STATE_REPLY_BLK;
-            debug(DEBUG_MESSAGE, "task being reply_blocked, tid=%d", td->tid);
             insert_task(td, &(ks->reply_block));
             remove_task(td, &(ks->ready_queue));
         }
@@ -97,6 +98,7 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
         td->retval = 0; // currently didn't consider situation of trunction
     } else {
         // if the receiver task has not been created
+        debug(DEBUG_MESSAGE, "task has not been created, tid=%d", td->tid);
         reschedule(td, ks);
         td->retval = -2;
     }
@@ -154,7 +156,7 @@ void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kern
             Message *output = (Message*)send_reply_message;
             debug(DEBUG_MESSAGE, "!!!!!!!!!!! value of send_reply_message%s", output->content);
             reply_to_td->state = STATE_READY;
-            insert_task(reply_to_td, &(ks->ready_queue));
+            insert_task(reply_to_td, &(ks->ready_queue)); // send get inserted before reply
             td->retval = 0; // currently didn't consider truncation
         }
     } else{

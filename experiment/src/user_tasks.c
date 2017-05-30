@@ -5,6 +5,8 @@
 #include <name_server.h>
 #include <rps.h>
 
+#define TIMER_MAX	0xFFFFFFFF
+
 void general_task()
 {
 	debug(DEBUG_TASK, "In user task %s", "general_task");
@@ -43,9 +45,12 @@ void receive_task()
 	uint32 tid = MyTid();
 	debug(DEBUG_TASK, "this receive_task tid = %d", tid);
     msg.tid = tid;
-    Receive(&sender_tid, &msg, sizeof(msg)); // should return value here later
-	debug(DEBUG_TASK, "sender_tid=%d, received_message=%s", sender_tid, msg.content);
-	debug(DEBUG_TASK, "receive task id= %d, prepare to reply task id= %d", tid, sender_tid);
+    Receive( &sender_tid, &msg, sizeof(msg) ); // should return value here later
+	debug(DEBUG_TRACE, "sender_tid=%d, received_message=%s", sender_tid, msg.content);
+	debug(DEBUG_TRACE, "receive task id= %d, prepare to reply task id= %d", tid, sender_tid);
+    char message[] = "I am great, wanna have sashimi together???";
+    /*char message[128];*/
+    /*char* first_aligned = &message + 8 - (&message % 8);*/
     Message reply_msg;
     memcpy(&reply_msg.content, "I am great, wanna have sashimi together???", sizeof("I am great, wanna have sashimi together???"));
     vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
@@ -153,6 +158,42 @@ void name_client_task2()
     Exit();
 }
 
+void time_receive(){
+    int round;
+    /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");*/
+    int sender_tid;   
+    /*vint reply_msg = 5;*/
+    /*vint msg;*/
+    char reply_msg[64];
+    char msg[64];
+    for(round=0; round < 1000; round++){
+        /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive");*/
+        Receive( &sender_tid, &msg, sizeof(msg) );  
+        /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
+        vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+    }
+    Exit();
+}
+
+void time_send(){
+    int round;
+    /*vint msg = 5;*/
+    /*vint reply_msg;*/
+    char msg[64];
+    char reply_msg[64];
+    /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
+    for(round=0; round < 1000; round++){
+        /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");*/
+        vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
+    }    
+    /*debug(DEBUG_TIME, "enter %s", "time task2");*/
+    /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
+	vint *ptimer = timer();
+	uint32 timer_output = TIMER_MAX - *ptimer;
+    debug(DEBUG_TIME, "time = %d", timer_output);
+    Exit();
+}
+
 void rps_server_task()
 {
 	debug(DEBUG_TASK, "enter %s", "rps_server_task");
@@ -212,6 +253,7 @@ void first_task()
     /*debug(KERNEL1, "created taskId = %d", tid);*/
     /*tid = Create(PRIOR_HIGH, general_task);*/
     /*debug(KERNEL1, "created taskId = %d", tid);*/
-	debug(KERNEL1, "%s", "FirstUserTask: exiting");
+
+	/*debug(KERNEL1, "%s", "FirstUserTask: exiting");*/
 	Exit();
 }

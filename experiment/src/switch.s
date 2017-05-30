@@ -26,6 +26,9 @@
     .global asm_kernel_send
     .global asm_kernel_receive
     .global asm_kernel_reply
+    .global asm_get_spsr
+    .global asm_get_sp
+    .global asm_get_fp
 
 asm_print_sp:
 	mov		ip, sp
@@ -37,6 +40,33 @@ asm_print_sp:
 	mov		r0, r3
 	ldmfd	sp, {fp, sp, pc}
 
+asm_get_spsr:
+	mov		ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub		fp, ip, #4
+    mrs     ip, spsr
+    mov     r0, ip
+	ldmfd	sp, {fp, sp, pc}
+
+asm_get_sp:
+	mov		ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub		fp, ip, #4
+    msr     CPSR, #SYS_MODE
+    mov     ip, sp
+    mov     r0, ip
+    msr     CPSR, #SVC_MODE 
+	ldmfd	sp, {fp, sp, pc}
+
+asm_get_fp:
+	mov		ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub		fp, ip, #4
+    msr     CPSR, #SYS_MODE
+    mov     ip, fp
+    mov     r0, ip
+    msr     CPSR, #SVC_MODE 
+	ldmfd	sp, {fp, sp, pc}
 
 /*load this function after swi instruction*/
 asm_kernel_swiEntry:
