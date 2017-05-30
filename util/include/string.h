@@ -12,5 +12,5 @@ void i2a(int num, char *bf);
 char toupper(char c);
 int strcmp(char *str1, char *str2, size_t num);
 int strlen(char *str);
-void *memcpy(void *destination, const void *source, size_t num);
+void Memcpy(void *destination, const void *source, size_t num);
 #endif // __STRING_H__
