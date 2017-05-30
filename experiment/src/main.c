@@ -1,6 +1,7 @@
 #include <debug.h>
 #include <kernel.h>
 #include <math.h>
+#include <time.h>
 
 extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
@@ -14,6 +15,7 @@ static void ks_initialize(Kernel_state *ks)
 	ks->ready_queue.mask = 0;
 	ks->send_block.mask = 0;
 	ks->reply_block.mask = 0;
+	ks->receive_block.mask = 0;
 	int i = 0;
 	for (i = PRIOR_LOWEST; i <= PRIOR_HIGH; i++) {
 		ks->ready_queue.fifos[i].head = NULL;
@@ -21,7 +23,9 @@ static void ks_initialize(Kernel_state *ks)
 		ks->send_block.fifos[i].head = NULL;	
 		ks->send_block.fifos[i].tail = NULL;
 		ks->reply_block.fifos[i].head = NULL;	
-		ks->reply_block.fifos[i].tail = NULL;	
+		ks->reply_block.fifos[i].tail = NULL;
+		ks->receive_block.fifos[i].head = NULL;
+		ks->receive_block.fifos[i].tail = NULL;
 	}
 }
 
@@ -109,6 +113,10 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 	Task_priority priority = td->priority;
 	debug(DEBUG_PRIOR_FIFO, "In remove_task, start removing td %d from fifo %d, mask = 0x%x",
 			td->tid, priority, ppriority_queue->mask);
+	if ((ppriority_queue->mask & (0x1 << priority)) == 0) {
+		debug(DEBUG_PRIOR_FIFO, "fifo %d is empty", priority);
+		return -1;
+	}
 	uint8 is_found = 0;
     if((ppriority_queue->mask & (0x1 << priority)) == 0){
         debug(DEBUG_PRIOR_FIFO, "!!!!!!!!!!!!!!!!!!! %s", "priority queue is empty");
@@ -225,6 +233,7 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 int main()
 {
     bwsetfifo(COM2, OFF);
+	timer_start();
 
     timer_start();
     asm volatile("MRC p15, 0, r2, c1, c0, 0");

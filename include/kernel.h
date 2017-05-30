@@ -16,11 +16,9 @@
 
 /* inter-tasks communication */
 typedef struct Message {
+    char                content[MAX_MSG_LEN];
     vint                tid; 
 	uint8				content_len;
-    char                content[MAX_MSG_LEN];
-	//uint8				reply_content_len;
-	//char				reply_content[MAX_MSG_LEN]; To be determined
 } Message;
 
 /* task descriptor */

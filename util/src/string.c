@@ -96,13 +96,13 @@ int strlen(char *str)
 	return i;
 }
 
-void *memcpy(void *destination, const void *source, size_t num)
+void Memcpy(void *destination, const void *source, size_t num)
 {
 	void *dest_pos = (void *)destination;
 	void *src_pos = (void *)source;
 	debug(DEBUG_ALL, "memcpy dest_pos = 0x%x, src_pos = 0x%x, num = %x, src = %s", dest_pos, src_pos, num, src_pos);
 	while(num > 0) {
-	/*	if (num >= sizeof(uint64)) {
+		if (num >= sizeof(uint64)) {
 			*((uint64 *)dest_pos) = *((uint64 *)src_pos);
 			debug(DEBUG_ALL, "memcpy strlen %d using uint64, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint64 *)dest_pos), dest_pos);
 			dest_pos += sizeof(uint64);	
@@ -110,6 +110,13 @@ void *memcpy(void *destination, const void *source, size_t num)
 			num -= sizeof(uint64);
 		}
 		else if (num >= sizeof(uint32)) {
+			uint32 *src = (uint32 *) src_pos;
+			uint32 *dest = (uint32 *) dest_pos;
+			debug(DEBUG_ALL, "memcpy strlen %d using uint32", num);
+			debug(DEBUG_ALL, "dest = 0x%x", dest);
+			debug(DEBUG_ALL, "*src = %d", *src);
+			debug(DEBUG_ALL, "src = 0x%x", src);
+			debug(DEBUG_ALL, "*dest = %d", *dest);
 			*((uint32 *)dest_pos) = *((uint32 *)src_pos);
 			debug(DEBUG_ALL, "memcpy strlen %d using uint32, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint32 *)dest_pos), dest_pos);
 			dest_pos += sizeof(uint32);	
@@ -123,7 +130,7 @@ void *memcpy(void *destination, const void *source, size_t num)
 			src_pos += sizeof(uint16);
 			num -= sizeof(uint16);
 		}
-		else */ {
+		else {
 			*((uint8 *)dest_pos) = *((uint8 *)src_pos);
 			debug(DEBUG_ALL, "memcpy strlen %d using uint8, *dest_pos = 0x%x, dest_pos = 0x%x", num, *((uint8 *)dest_pos), dest_pos);
 			dest_pos += sizeof(uint8);
@@ -131,5 +138,4 @@ void *memcpy(void *destination, const void *source, size_t num)
 			num -= sizeof(uint8);
 		}
 	}
-	return destination;
 }

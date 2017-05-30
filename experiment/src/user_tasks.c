@@ -3,6 +3,7 @@
 #include <debug.h>
 #include <string.h>
 #include <name_server.h>
+#include <rps.h>
 
 #define TIMER_MAX	0xFFFFFFFF
 
@@ -19,30 +20,30 @@ void general_task()
 
 void send_task()
 {
-	debug(DEBUG_TRACE, "enter %s", "send task");
+	debug(DEBUG_TASK, "enter %s", "send task");
     Message send_msg;
     Message reply_msg;
     uint32 tid = MyTid();
-    debug(DEBUG_TRACE, "this send task tid = %d", tid);
+    debug(DEBUG_TASK, "this send task tid = %d", tid);
     send_msg.tid = tid;
-    char message[] = "hello"; 
-    memcpy(&send_msg.content, message, sizeof(message));
-    debug(DEBUG_TRACE, "entering send %s", "yes!!!");
+    memcpy(&send_msg.content, "hello", sizeof("hello"));
+	debug(DEBUG_TASK, "send_msg.content = %s", send_msg.content);
+    debug(DEBUG_TASK, "entering send %s", "yes!!!");
     vint send_result = Send(1, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
-    debug(DEBUG_TRACE, "unblock from reply_block, result = %d", send_result);
-	debug(DEBUG_TRACE, "replied_message=%s", reply_msg.content);
+    debug(DEBUG_TASK, "unblock from reply_block, result = %d", send_result);
+	debug(DEBUG_TASK, "replied_message=%s", reply_msg.content);
 
-	debug(DEBUG_TRACE, "tid =%d exiting", tid);
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
     Exit();
 }
 
 void receive_task()
 {
-	debug(DEBUG_TRACE, "enter %s", "receive task");
+	debug(DEBUG_TASK, "enter %s", "receive task");
     int sender_tid; // why, why, why????????? Compare with previous version 
     Message msg;
 	uint32 tid = MyTid();
-	debug(DEBUG_TRACE, "this receive_task tid = %d", tid);
+	debug(DEBUG_TASK, "this receive_task tid = %d", tid);
     msg.tid = tid;
     Receive( &sender_tid, &msg, sizeof(msg) ); // should return value here later
 	debug(DEBUG_TRACE, "sender_tid=%d, received_message=%s", sender_tid, msg.content);
@@ -51,7 +52,7 @@ void receive_task()
     /*char message[128];*/
     /*char* first_aligned = &message + 8 - (&message % 8);*/
     Message reply_msg;
-    memcpy(&reply_msg.content, message, sizeof(message));
+    memcpy(&reply_msg.content, "I am great, wanna have sashimi together???", sizeof("I am great, wanna have sashimi together???"));
     vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
     Exit();
 }
@@ -193,23 +194,57 @@ void time_send(){
     Exit();
 }
 
+void rps_server_task()
+{
+	debug(DEBUG_TASK, "enter %s", "rps_server_task");
+    uint32 tid = MyTid();
+
+    debug(DEBUG_TASK, "starting rps_server_start %d", tid); 
+	rps_server_start();
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
+void rps_client_task()
+{
+	debug(DEBUG_TASK, "enter %s", "rps_client_task");
+    uint32 tid = MyTid();
+
+    debug(DEBUG_TASK, "starting rps_client_start %d", tid); 
+	rps_client_start();
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
 void first_task()
 {
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-    int tid = Create(PRIOR_HIGH, time_receive); 
+/*
+    int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue
     debug(DEBUG_TASK, "created taskId = %d", tid);
-    tid = Create(PRIOR_MEDIUM, time_send);
+	tid = Create(PRIOR_HIGH, rps_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
-    /*int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-    /*tid = Create(PRIOR_HIGH, name_client_task1);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-    /*tid = Create(PRIOR_HIGH, name_client_task2);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-    /* int tid = Create(PRIOR_HIGH, send_task); */  // comment out for now to test generalized priority queue
-    /* debug(DEBUG_TRACE, "created taskId = %d", tid); */
-    /* tid = Create(PRIOR_HIGH, receive_task); */
-    /* debug(DEBUG_TRACE, "created taskId = %d", tid); */
+	
+	int i = 0;
+	for (i = 0; i < 6; i++) {
+		tid = Create(PRIOR_HIGH, rps_client_task);
+		debug(DEBUG_TASK, "created taskId = %d", tid);
+	}
+*/
+/*   	tid = Create(PRIOR_HIGH, name_client_task1);
+   	debug(DEBUG_TASK, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, name_client_task2);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+*/	
+
+
+    int tid = Create(PRIOR_HIGH, receive_task);
+    debug(DEBUG_TRACE, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
+	debug(DEBUG_TRACE, "created taskId = %d", tid);
+
 	/*int tid = Create(PRIOR_LOW, general_task);*/
 	/*debug(KERNEL1, "created taskId = %d", tid);*/
 	/*tid = Create(PRIOR_LOW, general_task);*/

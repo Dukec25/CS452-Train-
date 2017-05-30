@@ -10,8 +10,8 @@ static int NAME_SERVER_TID = INVALID_TID;
 				debug(DEBUG_ALL, "!!!update NAME_SERVER_TID = %d", NAME_SERVER_TID);	\
 			} while(0)	
 
-#define READ_NAME_SERVER_TID(pval)	\
-		do {						\
+#define READ_NAME_SERVER_TID(pval)		\
+		do {							\
 			*pval = NAME_SERVER_TID;	\
 		} while(0)
  
