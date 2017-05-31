@@ -67,6 +67,10 @@ void name_server_task()
     Exit();
 }
 
+void clock_server_task(){
+
+}
+
 void name_client_task1()
 {
 	debug(DEBUG_TASK, "enter %s", "name_client_task1");
