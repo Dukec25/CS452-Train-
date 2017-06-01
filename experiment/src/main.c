@@ -295,7 +295,7 @@ int main()
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
-	// enable timer irq
+	// enable irq
 	irq_enable();
 
 	while(ks.ready_queue.mask != 0) {

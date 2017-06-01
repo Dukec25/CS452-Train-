@@ -32,7 +32,7 @@ void irq_disable();
 void irq_handle(Kernel_state *ks);
 void timer_enable();
 void timer_irq_enable();
-void timer_irq_soft_enable();
+void timer_irq_soft();
 void timer_irq_disable();
 void timer_irq_handle(Kernel_state *ks);
 

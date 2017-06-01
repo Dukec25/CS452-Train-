@@ -243,16 +243,16 @@ void first_task()
     debug(DEBUG_TASK, "created taskId = %d", tid);
 */	
 
-
+/*
     int tid = Create(PRIOR_HIGH, receive_task);
     debug(DEBUG_TRACE, "created taskId = %d", tid);
     tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
 	debug(DEBUG_TRACE, "created taskId = %d", tid);
-
-	/*int tid = Create(PRIOR_LOW, general_task);*/
-	/*debug(KERNEL1, "created taskId = %d", tid);*/
-	/*tid = Create(PRIOR_LOW, general_task);*/
-	/*debug(KERNEL1, "created taskId = %d", tid);*/
+*/
+	int tid = Create(PRIOR_LOW, general_task);
+	debug(KERNEL1, "created taskId = %d", tid);
+	tid = Create(PRIOR_LOW, general_task);
+	debug(KERNEL1, "created taskId = %d", tid);
     /*tid = Create(PRIOR_HIGH, general_task);*/
     /*debug(KERNEL1, "created taskId = %d", tid);*/
     /*tid = Create(PRIOR_HIGH, general_task);*/

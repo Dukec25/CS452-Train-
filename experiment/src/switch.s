@@ -85,6 +85,8 @@ asm_kernel_hwiEntry:
  	msr 	CPSR, r0
 	@ flag to indicate entry from hwi
 	mov		r2, #ENTER_FROM_HWI
+	mov		r0, r1
+	bl		debug_asm(PLT)
 asm_kernel_swiEntry:
 	@ check entry from hwi
 	CMP		r2,	#ENTER_FROM_HWI

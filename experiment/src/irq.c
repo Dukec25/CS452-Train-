@@ -7,11 +7,11 @@ void irq_enable()
 	debug(DEBUG_IRQ, "enter %s", "irq_enable");
 	vint *vic2_int_sel = (vint *) VIC2_INT_SEL;
 	*vic2_int_sel &= 0x0;	// IRQ
-	timer_enable();
-#ifdef SOFT
-	timer_irq_soft_enable();
-#else
 	timer_irq_enable();
+#ifdef SOFT
+	timer_irq_soft();
+#else
+	timer_enable();
 #endif
 }
 
@@ -48,13 +48,15 @@ void timer_irq_enable()
 	debug(DEBUG_IRQ, "enter %s", "timer_irq_enable");
 	vint *vic2_int_enbl = (vint *) VIC2_INT_ENBL;
 	*vic2_int_enbl |= timer_irq_mask();
+//	*vic2_int_enbl |= 0xFFFFFFFF;
 }
 
-void timer_irq_soft_enable()
+void timer_irq_soft()
 {
 	debug(DEBUG_IRQ, "enter %s", "timer_irq_soft_enable");
-	vint *vic2_soft_int_enbl = (vint *) VIC2_SOFT_INT;
-	*vic2_soft_int_enbl |= timer_irq_mask();
+	vint *vic2_soft_int = (vint *) VIC2_SOFT_INT;
+	*vic2_soft_int |= timer_irq_mask();
+//	*vic2_soft_int |= 0xFFFFFFFF;
 }
 
 void timer_irq_disable()
