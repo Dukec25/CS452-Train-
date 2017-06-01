@@ -6,7 +6,7 @@ XCC     = gcc
 AS	= as
 AR	= ar
 
-CFLAGS  = -c -fPIC -Wall $(INCLUDE) -mcpu=arm920t -msoft-float --no-builtin -O2
+CFLAGS  = -c -fPIC -Wall $(INCLUDE) -mcpu=arm920t -msoft-float --no-builtin 
 ASFLAGS	= -mcpu=arm920t -mapcs-32
 ARFLAGS = rcs
 

@@ -8,7 +8,7 @@
 #define TIMER_MAX	0xFFFFFFFF
 
 void general_task()
-{
+{ 
 	debug(DEBUG_TASK, "In user task %s", "general_task");
 	uint32 tid = MyTid();
 	uint32 ptid = MyParentTid();
@@ -224,6 +224,8 @@ void rps_client_task()
 
 void first_task()
 {
+	debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);
+    timer_irq_soft();
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
 /*
     int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue

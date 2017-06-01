@@ -6,7 +6,7 @@
 #include <kernel.h>
 
 /* irq */
-#define HWI_MASK			0x8000000
+#define HWI_MASK			0x80000000
 #define VIC2_BASE			0x800C0000
 #define VIC2_INT_SEL		0x800C000C
 #define VIC2_INT_ENBL		0x800C0010

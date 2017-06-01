@@ -81,21 +81,21 @@ asm_kernel_hwiEntry:
 	ORR		r1, r1, #HWI_MASK
 	@ enter svc
 	mrs		r0, CPSR
-	BIC		r0, r0, #SVC_MODE
+	mov		r0, #SVC_MODE
  	msr 	CPSR, r0
 	@ flag to indicate entry from hwi
 	mov		r2, #ENTER_FROM_HWI
-	mov		r0, r1
-	bl		debug_asm(PLT)
 asm_kernel_swiEntry:
 	@ check entry from hwi
 	CMP		r2,	#ENTER_FROM_HWI
 	BEQ		is_entry_from_hwi
+	mov		r0, #0x10
+	bl		debug_asm(PLT)
 	mov		r0, lr
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 is_entry_from_hwi:
 	mov		r0, r1
-	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 asm_kernel_activate:
 	@ didn't store fp to sp here, might cause problems in future
