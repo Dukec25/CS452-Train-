@@ -1,8 +1,10 @@
 	.equ	USR_MODE, 					0x10
 	.equ	SYS_MODE, 					0xDF
 	.equ	SVC_MODE, 					0xD3
-	.equ	LOAD_OFFSET,				0x218000
- 	.equ	USER_STATE_STORE_OFFSET, 	0x9000000
+	.equ	IRQ_MASK,					0x80
+
+	.equ	HWI_MASK,					0x80000000
+	.equ	ENTER_FROM_HWI,				0xAA
 
 	.equ	INIT_KEREL,					0x0
 	.equ	CREATE,						0x2001
@@ -13,9 +15,11 @@
 	.equ	SEND,						0x5006
 	.equ	RECEIVE,					0x3007
 	.equ	REPLY,						0x3008
+	.equ	AWAIT_EVENT,				0x1009
 
 	.global	asm_print_sp
 	.global asm_kernel_swiEntry
+	.global asm_kernel_hwiEntry
 	.global asm_init_kernel
 	.global asm_kernel_create
 	.global asm_kernel_activate
@@ -26,6 +30,7 @@
     .global asm_kernel_send
     .global asm_kernel_receive
     .global asm_kernel_reply
+	.global asm_kernel_await_event
     .global asm_get_spsr
     .global asm_get_sp
     .global asm_get_fp
@@ -69,9 +74,26 @@ asm_get_fp:
 	ldmfd	sp, {fp, sp, pc}
 
 /*load this function after swi instruction*/
+asm_kernel_hwiEntry:
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	@ set the most significant bit of lr to 1 and mov to r1
+	mov		r1, lr
+	ORR		r1, r1, #HWI_MASK
+	@ enter svc
+	mrs		r0, CPSR
+	BIC		r0, r0, #SVC_MODE
+ 	msr 	CPSR, r0
+	@ flag to indicate entry from hwi
+	mov		r2, #ENTER_FROM_HWI
 asm_kernel_swiEntry:
+	@ check entry from hwi
+	CMP		r2,	#ENTER_FROM_HWI
+	BEQ		is_entry_from_hwi
 	mov		r0, lr
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
+is_entry_from_hwi:
+	mov		r0, r1
+	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 
 asm_kernel_activate:
 	@ didn't store fp to sp here, might cause problems in future
@@ -88,12 +110,11 @@ asm_kernel_activate:
 	bl		debug_asm(PLT)
 	@r5 = td->lr
 	ldr		r5, [r8, #4]
-	@@@@
 	@r6 = td->spsr
 	ldr		r6, [r8, #8]
+	bic		r6, r6, #IRQ_MASK
 	mov		r0, r6
 	bl		debug_asm(PLT)
-	@@@@
 
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
@@ -102,14 +123,9 @@ asm_kernel_activate:
 	@get back to svc mode 
 	msr 	CPSR, #SVC_MODE
 	@spsr = user mode
-	@@@mov 	r0, #USR_MODE
-	@@@msr 	SPSR, r0
-	@@@@
 	msr		SPSR, r6
-	@@@@
 
 	@ return value = r0 = td->retval
-	@@@ldr		r0, [r8, #8]
 	ldr		r0, [r8, #12]
 
 	mov		lr, r5
@@ -196,4 +212,13 @@ asm_kernel_reply:
 	mov		ip, r0
 	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
     mov     r0, ip
+	mov 	pc, lr
+
+asm_kernel_await_event:
+	mov 	ip, sp 
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	SWI 	#AWAIT_EVENT
+	mov		ip, r0
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov		r0, ip
 	mov 	pc, lr

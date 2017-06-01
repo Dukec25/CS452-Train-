@@ -7,6 +7,7 @@ extern void asm_kernel_pass();
 extern void asm_kernel_exit();
 extern int asm_kernel_my_tid();
 extern int asm_kernel_my_parent_tid();
+extern int asm_kernel_await_event(int eventType);
 
 void init_kernel()
 {
@@ -68,4 +69,11 @@ int Reply( int tid, void *reply, int replylen )
 {
     debug(DEBUG_TRACE, "this is in %s", "user Reply");
     asm_kernel_reply(tid, reply, replylen);
+}
+
+int AwaitEvent(int eventType)
+{
+    debug(DEBUG_TRACE, "this is in %s", "user AwaitEvent");
+    int data = asm_kernel_await_event(eventType);
+	return data;
 }

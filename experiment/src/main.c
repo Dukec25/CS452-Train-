@@ -2,11 +2,16 @@
 #include <kernel.h>
 #include <math.h>
 #include <time.h>
+#include <irq.h>
 
 extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
+extern void asm_kernel_hwiEntry();
 extern void asm_init_kernel();
 extern int asm_kernel_activate(Task_descriptor *td);
+extern int asm_get_spsr();
+extern int asm_get_sp();
+extern int asm_get_fp();
 
 /* Initialze kernel state by setting task priority queue to be empty */
 static void ks_initialize(Kernel_state *ks)
@@ -16,6 +21,11 @@ static void ks_initialize(Kernel_state *ks)
 	ks->send_block.mask = 0;
 	ks->reply_block.mask = 0;
 	ks->receive_block.mask = 0;
+	int e = 0;
+	for (e = 0; e < NUM_EVENTS; e++) {
+		ks->event_blocks[e].mask = 0;
+		ks->blocked_on_event[e] = 0;
+	}
 	int i = 0;
 	for (i = PRIOR_LOWEST; i <= PRIOR_HIGH; i++) {
 		ks->ready_queue.fifos[i].head = NULL;
@@ -26,6 +36,10 @@ static void ks_initialize(Kernel_state *ks)
 		ks->reply_block.fifos[i].tail = NULL;
 		ks->receive_block.fifos[i].head = NULL;
 		ks->receive_block.fifos[i].tail = NULL;
+		for (e = 0; e < NUM_EVENTS; e++) {
+			ks->event_blocks[e].fifos[i].head = NULL;
+			ks->event_blocks[e].fifos[i].tail = NULL;
+		}
 	}
 }
 
@@ -230,16 +244,37 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 	return (is_found == 1 ? 0 : -1);
 }
 
+/*
+ * Update lr, sp, spsr in the td
+ */
+static void update_td(Task_descriptor *td, vint cur_lr)
+{
+	// retrieve spsr
+	vint cur_spsr = asm_get_spsr();
+
+	// retrieve sp and arg0 and arg1
+	vint cur_sp = asm_get_sp();
+	vint cur_fp = asm_get_fp();
+
+	// update td: sp, lr, spsr
+	td->sp = (vint *)cur_sp;
+	td->lr = (vint *)cur_lr;
+    td->fp = (vint *)cur_fp; // pay attention, confirm with Alicia  
+	td->spsr = cur_spsr;
+	debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x", cur_sp, cur_lr, cur_fp);
+}
+
 int main()
 {
     bwsetfifo(COM2, OFF);
-	timer_start();
+/*	timer_start();
 
     timer_start();
     asm volatile("MRC p15, 0, r2, c1, c0, 0");
     asm volatile("ORR r2, r2, #1<<12");
     asm volatile("ORR r2, r2, #1<<2");
     asm volatile("MCR p15, 0, r2, c1, c0, 0");
+*/
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", swi_handle_entry);
@@ -247,11 +282,21 @@ int main()
 	*swi_handle_entry = (vint) (asm_kernel_swiEntry + 0x218000);
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", *swi_handle_entry);
 
+	// set up hwi jump table
+	vint *hwi_handle_entry = (vint*) 0x38;
+	debug(DEBUG_IRQ, "hwi_handle_entry = 0x%x", hwi_handle_entry);
+	debug(DEBUG_IRQ, "asm_kernel_hwiEntry = 0x%x", asm_kernel_hwiEntry);
+	*hwi_handle_entry = (vint) (asm_kernel_hwiEntry + 0x218000);
+	debug(DEBUG_IRQ, "hwi_handle_entry = 0x%x", *hwi_handle_entry);
+
 	Kernel_state ks;
 	ks_initialize(&ks);
 
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
+
+	// enable timer irq
+	irq_enable();
 
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_SCHEDULER, "mask =%d", ks.ready_queue.mask);
@@ -263,30 +308,34 @@ int main()
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
-			uint32 immed_24 = *((vint *)(cur_lr - 4)) & ~(0xff000000);
+			debug(DEBUG_IRQ, "irq get back into kernel again, cur_lr = 0x%x", cur_lr);
+			int is_entry_from_hwi = 0;
+			if (cur_lr & HWI_MASK) {
+				// hwi entry bit is set, entered from hwi
+				cur_lr = cur_lr & ~(HWI_MASK);
+				is_entry_from_hwi = 1;
+				debug(DEBUG_IRQ, "irq get back into kernel again, cur_lr = 0x%x, is_entry_from_hwi = %d", cur_lr, is_entry_from_hwi);
+			}
+
+			update_td(td, cur_lr);
+			
+			if (is_entry_from_hwi) {
+				debug(DEBUG_IRQ, "is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
+				irq_handle(&ks);
+				continue;
+			}
+ 
+			uint32 immed_24 = *((vint *)((int) td->lr - 4)) & ~(0xff000000);
 			uint32 req = immed_24 & 0xfff;
 			uint32 argc = (immed_24 >> 12) & 0xfff;
-			debug(DEBUG_TRACE, "get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
+			debug(DEBUG_TRACE, "swi get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
 
-			// retrieve spsr
-			vint cur_spsr = asm_get_spsr();
-
-			// retrieve sp and arg0 and arg1
-			vint cur_sp = asm_get_sp();
-			vint cur_fp = asm_get_fp();
-			vint arg0 = *((vint*) (cur_sp + 0));
-			uint32 arg1 = *((vint*) (cur_sp + 4));
-            uint32 arg2 = *((vint*) (cur_sp + 8));
-            uint32 arg3 = *((vint*) (cur_sp + 12 )); 
-            uint32 arg4 = *((vint*) (cur_fp + 4));
-			debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x, cur_arg0 = 0x%x, cur_arg1 = 0x%x",
-					cur_sp, cur_lr, cur_fp, arg0, arg1);
-
-			// update td: sp, lr, spsr
-			td->sp = (vint *)cur_sp;
-			td->lr = (vint *)cur_lr;
-            td->fp = (vint *)cur_fp; // pay attention, confirm with Alicia  
-			td->spsr = cur_spsr;
+			vint arg0 = *((vint*) ((int) td->sp + 0));
+			uint32 arg1 = *((vint*) ((int) td->sp + 4));
+            uint32 arg2 = *((vint*) ((int) td->sp + 8));
+            uint32 arg3 = *((vint*) ((int) td->sp + 12 )); 
+            uint32 arg4 = *((vint*) ((int) td->sp + 4));
+			debug(DEBUG_TRACE, "arg0 = %d, arg1 = %d", arg0, arg1);
 
 			switch(req){
 				case 1:		
@@ -313,8 +362,11 @@ int main()
                 case 8:
                     k_reply(arg0, arg1, arg2, td, &ks);
                     break;
+				case 9:
+					k_await_event(arg0, td, &ks);
+					break;
 			}
 	}
-    timer_stop();
+/*    timer_stop(); */
 	return 0;
 }

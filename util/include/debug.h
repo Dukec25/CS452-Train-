@@ -14,6 +14,7 @@ typedef enum debug_level
 	DEBUG_SYSCALL,
     DEBUG_MESSAGE,
 	DEBUG_TASK,
+	DEBUG_IRQ,
     KERNEL2,
 	KERNEL1,
     DEBUG_TIME,

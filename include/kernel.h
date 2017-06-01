@@ -14,6 +14,9 @@
 /* inter-tasks communication */
 #define MAX_MSG_LEN		64 + 1
 
+/* events */
+#define NUM_EVENTS		2
+
 /* inter-tasks communication */
 typedef struct Message {
     char                content[MAX_MSG_LEN];
@@ -28,7 +31,8 @@ typedef enum Task_state {
 	STATE_READY,
     STATE_SEND_BLK,
 	STATE_RECEIVE_BLK,
-    STATE_REPLY_BLK
+    STATE_REPLY_BLK,
+	STATE_EVENT_BLK
 } Task_state;
 typedef enum Task_priority {
 	PRIOR_LOWEST,
@@ -52,7 +56,6 @@ typedef struct Task_descriptor {
 	Task_priority 			priority;
 	struct Task_descriptor *next_task;
     vint                    *fp;
-	//Message					msg; to be determined 
 } Task_descriptor;
 
 /* Priority queue with fifo ordering */
@@ -73,6 +76,9 @@ typedef struct Kernel_state {
 	Priority_fifo 	reply_block;
 	Task_descriptor tasks[MAX_NUM_TASKS];
 	uint64			free_list;
+	/* event blocked, one priority fifo for each event */
+	uint8			blocked_on_event[NUM_EVENTS];
+	Priority_fifo	event_blocks[NUM_EVENTS];
 } Kernel_state;
 
 /* task descriptor */
@@ -136,7 +142,7 @@ void k_exit(Task_descriptor *td, Kernel_state *ks);
 void k_send(int tid, void *msg, int msglen, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
 void k_receive(vint *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks);
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
- 
+void k_await_event(int event_type, Task_descriptor *td, Kernel_state *ks); 
 /* User tasks */
 void init_kernel();
 void first_task();
