@@ -168,9 +168,10 @@ void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kern
 
 void k_await_event(int event_type, Task_descriptor *td, Kernel_state *ks)
 {
-	debug(DEBUG_SYSCALL, "In kernel mode k_await_event, event_type = %d", event_type);
+	debug(DEBUG_SYSCALL, ">>>>>>>>>>>>>>>>>In kernel mode k_await_event, event_type = %d", event_type);
 	td->state = STATE_EVENT_BLK;
-	ks->blocked_on_event[event_type]++;	
-    insert_task(td, &(ks->event_blocks[event_type]));
+	ks->blocked_on_event[event_type]++;
+	debug(DEBUG_SYSCALL, ">>>>>>>>>>>>>>>blocked_on_event[0] = %d", ks->blocked_on_event[event_type]);	
     remove_task(td, &(ks->ready_queue));
+    insert_task(td, &(ks->event_blocks[event_type]));
 }

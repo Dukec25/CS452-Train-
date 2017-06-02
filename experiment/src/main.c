@@ -310,13 +310,13 @@ int main()
 				// hwi entry bit is set, entered from hwi
 				cur_lr = cur_lr & ~(HWI_MASK);
 				is_entry_from_hwi = 1;
-				debug(DEBUG_IRQ, "irq get back into kernel again, cur_lr = 0x%x, is_entry_from_hwi = %d", cur_lr, is_entry_from_hwi);
+				debug(DEBUG_IRQ, ">>>>>>>>>>>>>irq get back into kernel again, cur_lr = 0x%x, is_entry_from_hwi = %d", cur_lr, is_entry_from_hwi);
 			}
 
 			update_td(td, cur_lr);
 			
 			if (is_entry_from_hwi) {
-				debug(DEBUG_IRQ, "is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
+				debug(DEBUG_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
 				irq_handle(&ks);
 				continue;
 			}

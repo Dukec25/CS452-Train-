@@ -230,9 +230,25 @@ void event_task()
     debug(DEBUG_TASK, "starting event_task %d", tid); 
 	int value = AwaitEvent(0);
 
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
+	debug(DEBUG_TASK, "value = %d, tid =%d exiting", value, tid);
     Exit();
 }
+
+void idle_task()
+{
+	debug(DEBUG_TASK, "enter %s", "idle_task");
+    uint32 tid = MyTid();
+
+	int i = 0;
+	unsigned long long j = 0;
+	for (i = 0; i < 10000; i++) {
+	//	debug(DEBUG_TASK, "i = %d", i);
+		j += 2;
+	}
+	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
+    Exit();
+}
+
 
 void first_task()
 {
@@ -242,13 +258,7 @@ void first_task()
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
 	int tid = Create(PRIOR_HIGH, event_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
-	tid = Create(PRIOR_HIGH, event_task);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
-	tid = Create(PRIOR_HIGH, event_task);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
-	tid = Create(PRIOR_HIGH, event_task);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
-	tid = Create(PRIOR_HIGH, event_task);
+	tid = Create(PRIOR_LOW, idle_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
 /*
