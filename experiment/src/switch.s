@@ -110,6 +110,7 @@ asm_kernel_activate:
 	@@r0 = task_descriptor *td
 	@ save kernel state
 	mov 	ip, sp 
+	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	@ install active task state
 	@@r8 = r0
 	mov 	r8, r0

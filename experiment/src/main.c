@@ -200,8 +200,8 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-//	debug(DEBUG_TASK, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
-//					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
+	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
+					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
 	return asm_kernel_activate(td);
 }
 
@@ -291,7 +291,7 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    //irq_enable();
+    irq_enable();
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
