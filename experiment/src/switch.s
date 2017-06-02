@@ -2,6 +2,7 @@
 	.equ	SYS_MODE, 					0xDF
 	.equ	SVC_MODE, 					0xD3
 	.equ	IRQ_MASK,					0x80
+	.equ	IRQ_MODE,					0xD2
 
 	.equ	HWI_MASK,					0x80000000
 	.equ	ENTER_FROM_HWI,				0xAA
@@ -75,12 +76,17 @@ asm_get_fp:
 
 /*load this function after swi instruction*/
 asm_kernel_hwiEntry:
+	msr		CPSR, #SYS_MODE
+	mov		ip, sp
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	msr		CPSR, #IRQ_MODE
 	@ set the most significant bit of lr to 1 and mov to r1
 	sub		lr, lr, #4
 	mov		r1, lr
 	@ step back one instruction to compensate the instruction abandoned
 	ORR		r1, r1, #HWI_MASK
+	@ save user spsr
+	mrs     r3, spsr
 	@ enter svc
 	mrs		r0, CPSR
 	mov		r0, #SVC_MODE
@@ -94,6 +100,7 @@ asm_kernel_swiEntry:
 	mov		r0, lr
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 is_entry_from_hwi:
+	msr		spsr, r3
 	mov		r0, r1
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
@@ -102,7 +109,6 @@ asm_kernel_activate:
 	@@r0 = task_descriptor *td
 	@ save kernel state
 	mov 	ip, sp 
-	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	@ install active task state
 	@@r8 = r0
 	mov 	r8, r0
@@ -112,8 +118,11 @@ asm_kernel_activate:
 	ldr		r5, [r8, #4]
 	@r6 = td->spsr
 	ldr		r6, [r8, #8]
-	bic		r6, r6, #IRQ_MASK
-
+	@r7 = td->is_entry_from_hwi
+	ldr		r7, [r8, #12]
+	mov		r0, #0
+	str		r0, [r8, #12]
+	
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
 	mov 	sp, r4
@@ -126,9 +135,14 @@ asm_kernel_activate:
 	@ return value = r0 = td->retval
 	ldr		r0, [r8, #12]
 
+@@@need to consider
+	CMP		r7, #1
+	BNE		install_lr
 	mov		lr, r5
+install_lr:
 	@ install user task state and start the task executing
 	movs 	pc, lr
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 
 asm_set_usr_state:
 	mov 	r5, #0x9000000

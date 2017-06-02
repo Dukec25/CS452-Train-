@@ -50,6 +50,7 @@ typedef struct Task_descriptor {
 	vint 					*lr;
 	uint32					spsr;
 	uint32 					retval;
+	int						is_entry_from_hwi;
 	uint32 					tid;
 	int 					ptid;
 	Task_state 				state;
@@ -70,7 +71,6 @@ typedef struct Priority_fifo {
 
 /* kernel state */
 typedef struct Kernel_state {
-	vint			*rb_lr;
 	Priority_fifo 	ready_queue;
 	Priority_fifo 	send_block;
 	Priority_fifo	receive_block;

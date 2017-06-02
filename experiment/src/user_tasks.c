@@ -239,10 +239,9 @@ void idle_task()
 	debug(DEBUG_TASK, "enter %s", "idle_task");
     uint32 tid = MyTid();
 
-	int i = 0;
-	unsigned long long j = 0;
+	int i, j = 0;
 	for (i = 0; i < 10000; i++) {
-	//	debug(DEBUG_TASK, "i = %d", i);
+		//debug(DEBUG_TASK, "i = %d", i);
 		j += 2;
 	}
 	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);

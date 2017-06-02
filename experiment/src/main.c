@@ -257,7 +257,7 @@ static void update_td(Task_descriptor *td, vint cur_lr)
 	td->lr = (vint *)cur_lr;
     td->fp = (vint *)cur_fp; // pay attention, confirm with Alicia  
 	td->spsr = cur_spsr;
-	debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x", cur_sp, cur_lr, cur_fp);
+	debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x, spsr = 0x%x", cur_sp, cur_lr, cur_fp, cur_spsr);
 }
 
 int main()
@@ -310,7 +310,9 @@ int main()
 				// hwi entry bit is set, entered from hwi
 				cur_lr = cur_lr & ~(HWI_MASK);
 				is_entry_from_hwi = 1;
-				debug(DEBUG_IRQ, ">>>>>>>>>>>>>irq get back into kernel again, cur_lr = 0x%x, is_entry_from_hwi = %d", cur_lr, is_entry_from_hwi);
+				td->is_entry_from_hwi = 1;
+				debug(DEBUG_IRQ, ">>>>>td->is_entry_from_hwi = %d", td->is_entry_from_hwi);
+				debug(DEBUG_IRQ, ">>>>>irq get back into kernel again, cur_lr = 0x%x, is_entry_from_hwi = %d", cur_lr, is_entry_from_hwi);
 			}
 
 			update_td(td, cur_lr);
