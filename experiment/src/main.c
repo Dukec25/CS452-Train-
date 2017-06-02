@@ -47,12 +47,13 @@ static void ks_initialize(Kernel_state *ks)
 void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Task_priority priority)
 {
 	Task_descriptor *td = &(ks->tasks[tid]);
-	// initialize tid, ptid, state, priority, and spsr
+	// initialize tid, ptid, state, priority, spsr, and is_entry_from_hwi
 	td->tid = tid;
 	td->ptid = ptid;
 	td->state = STATE_READY;
 	td->priority = priority;
 	td->spsr = USR; // hardcoded to user mode, not flag bit set
+	td->is_entry_from_hwi = 0;
 	// assign memory to the first task
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
@@ -74,12 +75,12 @@ void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Tas
 /* scheduler */
 Task_descriptor *schedule(Kernel_state *ks)
 {
-	debug(DEBUG_SCHEDULER, "In %s", "schedule");
+	debug(DEBUG_TRACE, "In %s", "schedule");
 	return pull_highest_priority_task(&(ks->ready_queue));
 }
 
 void reschedule(Task_descriptor *td, Kernel_state *ks){
-	debug(DEBUG_SYSCALL, "In %s", "k_reschedule");
+	debug(DEBUG_PRIOR_FIFO, "In %s", "k_reschedule");
 	remove_task(td, &(ks->ready_queue));
 	td->state = STATE_READY;
 	insert_task(td, &(ks->ready_queue));
@@ -199,17 +200,16 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x",
-					td->tid, td->state, td->priority, td->sp, td->lr, td->retval);
+//	debug(DEBUG_TASK, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
+//					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
 	return asm_kernel_activate(td);
 }
 
 int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender)
 {
-    debug(DEBUG_MESSAGE, "within %s", "find_sender");
+    debug(DEBUG_PRIOR_FIFO, "within %s", "find_sender");
 	uint8 lz = clz(blocked_queue->mask);
 	uint8 highest_priority = PRIOR_HIGH - (lz - (32 - PRIOR_HIGH - 1));
-	/*debug(DEBUG_ITC, "start with highest non-empty fifo %d", highest_priority);*/
 
 	uint8 is_found = 0;
 	int priority = 0;
@@ -223,11 +223,11 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 		for (iter = blocked_queue->fifos[priority].head; iter != NULL; iter = iter->next_task) {
             vint iter_sp = iter->sp;
             int receiver =  *((vint*) (iter_sp + 0));
-            debug(DEBUG_MESSAGE, "receiver value is = %d", receiver);
-            debug(DEBUG_MESSAGE, "tid is = %d", tid);
+            debug(DEBUG_PRIOR_FIFO, "receiver value is = %d", receiver);
+            debug(DEBUG_PRIOR_FIFO, "tid is = %d", tid);
 
 			if (tid == receiver) {
-                debug(DEBUG_MESSAGE, "there is a match %d", 100);
+                debug(DEBUG_PRIOR_FIFO, "there is a match %d", 100);
 				is_found = 1;
 				*psender = iter;
 				break;
@@ -263,14 +263,13 @@ static void update_td(Task_descriptor *td, vint cur_lr)
 int main()
 {
     bwsetfifo(COM2, OFF);
-/*	timer_start();
 
-    timer_start();
+//    timer_start();
     asm volatile("MRC p15, 0, r2, c1, c0, 0");
     asm volatile("ORR r2, r2, #1<<12");
     asm volatile("ORR r2, r2, #1<<2");
     asm volatile("MCR p15, 0, r2, c1, c0, 0");
-*/
+
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;
 	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", swi_handle_entry);
@@ -292,11 +291,18 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    irq_enable();
+    //irq_enable();
 
+	volatile Task_descriptor *td = NULL;
+	vint is_entry_from_hwi = 0;
 	while(ks.ready_queue.mask != 0) {
-			debug(DEBUG_SCHEDULER, "mask =%d", ks.ready_queue.mask);
-			Task_descriptor *td = schedule(&ks);
+			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
+			if (!is_entry_from_hwi) {
+				td = schedule(&ks);
+			}
+			else {
+				is_entry_from_hwi = 0;
+			}
 
 			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
@@ -304,15 +310,14 @@ int main()
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
-			debug(DEBUG_IRQ, "get back into kernel again, cur_lr = 0x%x", cur_lr);
-			int is_entry_from_hwi = 0;
+			debug(DEBUG_TRACE, "td %d get back into kernel again, cur_lr = 0x%x", td->tid, cur_lr);
 			if (cur_lr & HWI_MASK) {
 				// hwi entry bit is set, entered from hwi
 				cur_lr = cur_lr & ~(HWI_MASK);
 				is_entry_from_hwi = 1;
-				td->is_entry_from_hwi = 1;
-				debug(DEBUG_IRQ, ">>>>>td->is_entry_from_hwi = %d", td->is_entry_from_hwi);
-				debug(DEBUG_IRQ, ">>>>>irq get back into kernel again, cur_lr = 0x%x, is_entry_from_hwi = %d", cur_lr, is_entry_from_hwi);
+				td->is_entry_from_hwi = ENTER_FROM_HWI;
+				debug(DEBUG_IRQ, ">>>>>td->is_entry_from_hwi = 0x%x", td->is_entry_from_hwi);
+				debug(DEBUG_IRQ, ">>>>>irq get back into kernel again, cur_lr = 0x%x", cur_lr);
 			}
 
 			update_td(td, cur_lr);

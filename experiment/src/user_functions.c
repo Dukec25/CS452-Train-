@@ -54,26 +54,26 @@ int MyParentTid()
 
 int Send( int tid, void *msg, int msglen, void *reply, int replylen )
 {
-    debug(DEBUG_TRACE, "this is in %s", "user Send");
+    debug(DEBUG_SYSCALL, "this is in %s", "user Send");
     vint errorCode = asm_kernel_send(tid, msg, msglen, reply, replylen);
     return errorCode;
 }
 
 int Receive( int *tid, void *msg, int msglen )
 {
-    debug(DEBUG_TRACE, "this is in %s", "user Receive");
+    debug(DEBUG_SYSCALL, "this is in %s", "user Receive");
     asm_kernel_receive(tid, msg, msglen);
 }
 
 int Reply( int tid, void *reply, int replylen )
 {
-    debug(DEBUG_TRACE, "this is in %s", "user Reply");
+    debug(DEBUG_SYSCALL, "this is in %s", "user Reply");
     asm_kernel_reply(tid, reply, replylen);
 }
 
 int AwaitEvent(int eventType)
 {
-    debug(DEBUG_TRACE, "this is in %s", "user AwaitEvent");
+    debug(DEBUG_SYSCALL, "this is in %s", "user AwaitEvent");
     int data = asm_kernel_await_event(eventType);
 	return data;
 }

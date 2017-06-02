@@ -76,6 +76,7 @@ asm_get_fp:
 
 /*load this function after swi instruction*/
 asm_kernel_hwiEntry:
+	@ store user registers on user stack
 	msr		CPSR, #SYS_MODE
 	mov		ip, sp
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
@@ -119,9 +120,9 @@ asm_kernel_activate:
 	@r6 = td->spsr
 	ldr		r6, [r8, #8]
 	@r7 = td->is_entry_from_hwi
-	ldr		r7, [r8, #12]
-	mov		r0, #0
-	str		r0, [r8, #12]
+	ldr		r7, [r8, #16]
+	mov		r1, #0
+	str		r1, [r8, #16]
 	
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
@@ -135,19 +136,34 @@ asm_kernel_activate:
 	@ return value = r0 = td->retval
 	ldr		r0, [r8, #12]
 
-@@@need to consider
-	CMP		r7, #1
-	BNE		install_lr
-	mov		lr, r5
-install_lr:
-	@ install user task state and start the task executing
-	movs 	pc, lr
-	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	mov		r0, r7
+	bl 		debug_asm(PLT)
 
-asm_set_usr_state:
-	mov 	r5, #0x9000000
-	str 	r0, [r5]
-	str 	r1, [r5, #4]
+	@ check whether ENTER_FROM_HWI, if not, branch to not_entry_from_hwi
+	CMP		r7, #ENTER_FROM_HWI
+	BNE		entry_from_swi
+	BEQ		entry_from_hwi
+entry_from_hwi:
+	@ install user task state and start the task executing, then branch to reinstall registers
+	mov		r0, #0x77
+	bl		debug_asm(PLT)
+	@@lr = r5	
+	mov		lr, r5
+	b		asm_hwi_reinstall
+entry_from_swi:
+	@ install user task state and start the task executing
+	@@lr = r5
+	mov		lr, r5
+	movs 	pc, lr
+
+asm_hwi_reinstall:
+	msr 	CPSR, #SYS_MODE
+	mov		r0, #0x66
+	bl		debug_asm(PLT)
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	msr 	CPSR, #SVC_MODE
+	movs 	pc, lr
+	mov		pc, lr
 
 asm_init_kernel:
 	mov 	ip, sp 

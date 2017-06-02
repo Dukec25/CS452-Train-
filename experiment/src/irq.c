@@ -6,7 +6,7 @@ void irq_enable()
 {
 	debug(DEBUG_IRQ, "enter %s", "irq_enable");
 	vint *vic2_int_sel = (vint *) VIC2_INT_SEL;
-	*vic2_int_sel &= 0x0;	// IRQ
+	*vic2_int_sel &= 0x0;	// interrupt type = IRQ
 	timer_irq_enable();
 	timer_enable();
 }
@@ -81,7 +81,7 @@ void timer_irq_handle(Kernel_state *ks)
 	timer_clear();
 	if (ks->blocked_on_event[0]) {
 		// notify events await on timer
-		Task_descriptor *td = pull_highest_priority_task(&ks->event_blocks[0]);
+		volatile Task_descriptor *td = pull_highest_priority_task(&ks->event_blocks[0]);
 		td->retval = 999;
 		ks->blocked_on_event[0]--;
 		debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up task %d, ks->blocked_on_event[0] = %d", td->tid, ks->blocked_on_event[0]);

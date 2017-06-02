@@ -9,24 +9,20 @@ typedef enum debug_level
 	DEBUG_PRIOR_FIFO,
 	DEBUG_ASM,
 	DEBUG_TRACE,
-	DEBUG_INFO,
-	DEBUG_SCHEDULER,
 	DEBUG_SYSCALL,
-    DEBUG_MESSAGE,
-	DEBUG_TASK,
 	DEBUG_IRQ,
-    KERNEL2,
-	KERNEL1,
+	DEBUG_TASK,
+    DEBUG_SERVER,
     DEBUG_TIME,
-    DEBUG_CLOCK
+    SUBMISSION,
 } debug_level;
 
 /* debug */
 #define debug(level, fmt, ...) 												 			\
 		do {																			\
-			if (level >= DEBUG && level < KERNEL1)										\
+			if (level >= DEBUG && level < SUBMISSION)									\
 				bwprintf(COM2, "%s:%d " fmt "\r\n", __FILE__, __LINE__, __VA_ARGS__);	\
-			else if (level >= KERNEL1)													\
+			else if (level >= SUBMISSION)												\
 				bwprintf(COM2, fmt "\r\n", __VA_ARGS__);								\
 			}																			\
 		while (0)

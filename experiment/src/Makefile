@@ -8,6 +8,7 @@ all: build $(ASM_OBJ) $(TARGET_ELF) copy
 include ../../common/common.mk
 
 INCLUDE += -I../../include
+#CFLAGS += -O2
 
 $(ASM_OBJ): $(ASM_SRC)
 	$(AS) $(ASFLAGS) $< -o $@

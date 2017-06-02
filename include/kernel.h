@@ -14,7 +14,8 @@
 /* inter-tasks communication */
 #define MAX_MSG_LEN		64 + 1
 
-/* events */
+/* HWI */
+#define ENTER_FROM_HWI	0xAA
 #define NUM_EVENTS		2
 
 /* inter-tasks communication */

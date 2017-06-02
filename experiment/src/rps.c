@@ -38,10 +38,10 @@ void rps_server_start()
 	debug(DEBUG_TASK, "RegisterAs result = %d", register_result);
 
 	if (register_result) {
-		debug(KERNEL2, "RPS server RegisterAs failed, error code = %d, Exiting %d", register_result, rps_server.tid);
+		debug(SUBMISSION, "RPS server RegisterAs failed, error code = %d, Exiting %d", register_result, rps_server.tid);
 		Exit();
 	}
-	debug(KERNEL2, "Successfully registered rps server as %s", "rps_server");
+	debug(SUBMISSION, "Successfully registered rps server as %s", "rps_server");
 
 	int continue_pressed = 0;
 	while(rps_server.is_server_running) {
@@ -72,7 +72,7 @@ void rps_server_start()
 			// No player in queue
 			debug(DEBUG_TASK, "No player in queue, and player is playing, %s", "stop");
 			if (!continue_pressed) {
-				debug(KERNEL2, "%s", "End one game, press 'q' to quit, ANY other key to continue");
+				debug(SUBMISSION, "%s", "End one game, press 'q' to quit, ANY other key to continue");
 				char c = bwgetc(COM2);
 				if (c == 'q') {
 					rps_server.is_server_running = 0;
@@ -348,12 +348,12 @@ void rps_client_start()
 	int server_tid = WhoIs("RPS_SERVER_NAME");
 	debug(DEBUG_TASK, "server_tid = %d", server_tid);	
 	if (server_tid >= MAX_NUM_TASKS) {
-		debug(KERNEL2, "WhoIs failed, invalid server tid %d", server_tid);
+		debug(SUBMISSION, "WhoIs failed, invalid server tid %d", server_tid);
 	}
 
 	result = rps_client_sign_in(server_tid, &rps_client);
 	if (result == -1) {
-		debug(KERNEL2, "player %d failed to sign in, Exiting", rps_client.tid);
+		debug(SUBMISSION, "player %d failed to sign in, Exiting", rps_client.tid);
 		Exit();
 	}
 
@@ -361,13 +361,13 @@ void rps_client_start()
 	for (i = 0; i < NUM_ROUNDS; i++) {
 		result = rps_client_play(server_tid, &rps_client, i);
 		if (result == -1) {
-			debug(KERNEL2, "player %d failed to play", rps_client.tid);
+			debug(SUBMISSION, "player %d failed to play", rps_client.tid);
 		}
 	}
 
 	result = rps_client_quit(server_tid, &rps_client);
 	if (result == -1) {
-		debug(KERNEL2, "player %d failed to quit, Exiting", rps_client.tid);
+		debug(SUBMISSION, "player %d failed to quit, Exiting", rps_client.tid);
 		Exit();
 	}
 	Exit();
@@ -388,7 +388,7 @@ int rps_client_sign_in(int server_tid, RPS_client *rps_client)
 	if (reply.type != RPS_MSG_SUCCESS) {
 		return -1;
 	}
-	debug(KERNEL2, "player %d successfully signed in", rps_client->tid);
+	debug(SUBMISSION, "player %d successfully signed in", rps_client->tid);
 	return 0;
 }
 
@@ -408,31 +408,31 @@ int rps_client_play(int server_tid, RPS_client *rps_client, int round)
 	Send(server_tid, request, sizeof(request), &reply, sizeof(reply));
 	
 	if (reply.type == RPS_MSG_SERVER_DOWN) {
-		debug(KERNEL2, "server is down, Exiting", rps_client->tid);
+		debug(SUBMISSION, "server is down, Exiting", rps_client->tid);
 		Exit();
 	}
 	if (choice == ROCK) {
-		debug(KERNEL2, "player %d choose ROCK for round #%d", rps_client->tid, round + 1);
+		debug(SUBMISSION, "player %d choose ROCK for round #%d", rps_client->tid, round + 1);
 	}
 	else if (choice == PAPER) {
-		debug(KERNEL2, "player %d choose PAPER for round #%d", rps_client->tid, round + 1);
+		debug(SUBMISSION, "player %d choose PAPER for round #%d", rps_client->tid, round + 1);
 	}
 	else if (choice == SCISSOR) {
-		debug(KERNEL2, "player %d choose SCISSOR for round #%d", rps_client->tid, round + 1);
+		debug(SUBMISSION, "player %d choose SCISSOR for round #%d", rps_client->tid, round + 1);
 	}
 
 	if (reply.type == RPS_MSG_OUTCOME) {
-		debug(KERNEL2, "press any KEY to display round #%d result for player %d", round + 1, rps_client->tid);
+		debug(SUBMISSION, "press any KEY to display round #%d result for player %d", round + 1, rps_client->tid);
 		char c = bwgetc(COM2);
 		RPS_outcome outcome = reply.content[0];
 		if (outcome == WIN) {
-			debug(KERNEL2, "result of this round #%d for player %d is WIN", round + 1, rps_client->tid);
+			debug(SUBMISSION, "result of this round #%d for player %d is WIN", round + 1, rps_client->tid);
 		}
 		else if (outcome == TIE) {
-			debug(KERNEL2, "result of this round #%d for player %d is TIE", round + 1, rps_client->tid);
+			debug(SUBMISSION, "result of this round #%d for player %d is TIE", round + 1, rps_client->tid);
 		}
 		else if (outcome == LOSE) {
-			debug(KERNEL2, "result of this round #%d for player %d is LOSE", round + 1, rps_client->tid);
+			debug(SUBMISSION, "result of this round #%d for player %d is LOSE", round + 1, rps_client->tid);
 		}
 		return 0;
 	}
@@ -453,11 +453,11 @@ int rps_client_quit(int server_tid, RPS_client *rps_client)
 	Send(server_tid, request, sizeof(request), &reply, sizeof(reply));
 	
 	if (reply.type == RPS_MSG_SERVER_DOWN) {
-		debug(KERNEL2, "server is down, Exiting %d", rps_client->tid);
+		debug(SUBMISSION, "server is down, Exiting %d", rps_client->tid);
 		Exit();
 	}
 	else if (reply.type == RPS_MSG_GOODBYE) {
-		debug(KERNEL2, "Goodbye player %d", rps_client->tid);
+		debug(SUBMISSION, "Goodbye player %d", rps_client->tid);
 		Exit();
 	}
 
