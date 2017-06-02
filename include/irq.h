@@ -21,9 +21,9 @@
 #define TIMER_VAL 					(TIMER3_BASE + VAL_OFFSET)
 #define TIMER_CTRL					(TIMER3_BASE + CRTL_OFFSET)
 #define TIMER_CLR					(TIMER3_BASE + CLR_OFFSET)
-#define	TIMER_REQUENCY				50800
+#define	TIMER_REQUENCY				508000
 #define	SEC							1000
-#define	TICK						10
+#define	TICK						1000
 
 #define SOFT
 
@@ -33,6 +33,7 @@ void irq_handle(Kernel_state *ks);
 void timer_enable();
 void timer_irq_enable();
 void timer_irq_soft();
+void timer_irq_soft_clear();
 void timer_irq_disable();
 void timer_irq_handle(Kernel_state *ks);
 

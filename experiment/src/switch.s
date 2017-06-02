@@ -78,6 +78,8 @@ asm_kernel_hwiEntry:
 	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	@ set the most significant bit of lr to 1 and mov to r1
 	mov		r1, lr
+	@ step back one instruction to compensate the instruction abandoned
+	sub		r1, r1, #4
 	ORR		r1, r1, #HWI_MASK
 	@ enter svc
 	mrs		r0, CPSR
@@ -89,8 +91,6 @@ asm_kernel_swiEntry:
 	@ check entry from hwi
 	CMP		r2,	#ENTER_FROM_HWI
 	BEQ		is_entry_from_hwi
-	mov		r0, #0x10
-	bl		debug_asm(PLT)
 	mov		r0, lr
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 is_entry_from_hwi:
@@ -112,6 +112,8 @@ asm_kernel_activate:
 	bl		debug_asm(PLT)
 	@r5 = td->lr
 	ldr		r5, [r8, #4]
+	mov		r0, r5
+	bl		debug_asm(PLT)
 	@r6 = td->spsr
 	ldr		r6, [r8, #8]
 	bic		r6, r6, #IRQ_MASK
@@ -129,6 +131,7 @@ asm_kernel_activate:
 
 	@ return value = r0 = td->retval
 	ldr		r0, [r8, #12]
+	bl		debug_asm(PLT)
 
 	mov		lr, r5
 	@ install user task state and start the task executing

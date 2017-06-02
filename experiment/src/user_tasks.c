@@ -225,7 +225,8 @@ void rps_client_task()
 void first_task()
 {
 	debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);
-    timer_irq_soft();
+//    timer_irq_soft();
+//	timer_irq_soft_clear();
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
 /*
     int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue

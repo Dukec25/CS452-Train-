@@ -14,8 +14,9 @@ extern int asm_get_sp();
 extern int asm_get_fp();
 
 /* Initialze kernel state by setting task priority queue to be empty */
-static void ks_initialize(Kernel_state *ks)
+static void ks_initialize(Kernel_state *ks, vint rb_lr)
 {
+	ks->rb_lr = (vint *) rb_lr;
 	ks->free_list = 0;
 	ks->ready_queue.mask = 0;
 	ks->send_block.mask = 0;
@@ -63,10 +64,6 @@ void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Tas
 	*(td->sp - 11) = TASK_START_LOCATION + (tid + 1) * TASK_SIZE;
 	// set next_task
 	td->next_task = NULL;
-	// initialze msg
-	/*td->msg.content_len = 0;*/
-	/*td->msg.reply_content_len = 0;*/
-	// insert td into the ready_queue
 	insert_task(td, &(ks->ready_queue));
 	// update free_list
 	ks->free_list |= (0x1 << tid);
@@ -266,6 +263,10 @@ static void update_td(Task_descriptor *td, vint cur_lr)
 
 int main()
 {
+	vint *rb_lr = NULL;
+	asm volatile("STR lr, %[rb_lr]" : [rb_lr] "=r"(rb_lr));
+	debug(DEBUG_TRACE, "!!!!!! rb_lr = 0x%x", rb_lr);
+
     bwsetfifo(COM2, OFF);
 /*	timer_start();
 
@@ -290,13 +291,13 @@ int main()
 	debug(DEBUG_IRQ, "hwi_handle_entry = 0x%x", *hwi_handle_entry);
 
 	Kernel_state ks;
-	ks_initialize(&ks);
+	ks_initialize(&ks, rb_lr);
 
 	uint8 tid = 0;
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    irq_enable();
+//    irq_enable();
 
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_SCHEDULER, "mask =%d", ks.ready_queue.mask);
@@ -368,5 +369,8 @@ int main()
 			}
 	}
 /*    timer_stop(); */
+	debug(DEBUG_TRACE, "rb_lr = 0x%x", ks.rb_lr);
+	asm volatile("MOV PC, %0" : "=r" (ks.rb_lr));
+	// should not reached here
 	return 0;
 }

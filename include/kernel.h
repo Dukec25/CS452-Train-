@@ -70,6 +70,7 @@ typedef struct Priority_fifo {
 
 /* kernel state */
 typedef struct Kernel_state {
+	vint			*rb_lr;
 	Priority_fifo 	ready_queue;
 	Priority_fifo 	send_block;
 	Priority_fifo	receive_block;
