@@ -23,7 +23,7 @@
 #define TIMER_CLR					(TIMER3_BASE + CLR_OFFSET)
 #define	TIMER_REQUENCY				508000
 #define	SEC							1000
-#define	TICK						1000
+#define	TICK						500
 
 #define SOFT
 

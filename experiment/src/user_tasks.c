@@ -222,12 +222,35 @@ void rps_client_task()
     Exit();
 }
 
+void event_task()
+{
+	debug(DEBUG_TASK, "enter %s", "event_task");
+    uint32 tid = MyTid();
+
+    debug(DEBUG_TASK, "starting event_task %d", tid); 
+	int value = AwaitEvent(0);
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
 void first_task()
 {
 	debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);
 //    timer_irq_soft();
 //	timer_irq_soft_clear();
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
+	int tid = Create(PRIOR_HIGH, event_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+	tid = Create(PRIOR_HIGH, event_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+	tid = Create(PRIOR_HIGH, event_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+	tid = Create(PRIOR_HIGH, event_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+	tid = Create(PRIOR_HIGH, event_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+
 /*
     int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue
     debug(DEBUG_TASK, "created taskId = %d", tid);
@@ -252,15 +275,16 @@ void first_task()
     tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
 	debug(DEBUG_TRACE, "created taskId = %d", tid);
 */
-	int tid = Create(PRIOR_LOW, general_task);
+/*	int tid = Create(PRIOR_LOW, general_task);
 	debug(KERNEL1, "created taskId = %d", tid);
 	tid = Create(PRIOR_LOW, general_task);
 	debug(KERNEL1, "created taskId = %d", tid);
-    /*tid = Create(PRIOR_HIGH, general_task);*/
-    /*debug(KERNEL1, "created taskId = %d", tid);*/
-    /*tid = Create(PRIOR_HIGH, general_task);*/
-    /*debug(KERNEL1, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, general_task);
+    debug(KERNEL1, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, general_task);
+    debug(KERNEL1, "created taskId = %d", tid);
+*/
 
-	/*debug(KERNEL1, "%s", "FirstUserTask: exiting");*/
+	debug(KERNEL1, "%s", "FirstUserTask: exiting");
 	Exit();
 }

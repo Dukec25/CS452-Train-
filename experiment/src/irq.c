@@ -83,6 +83,7 @@ void timer_irq_handle(Kernel_state *ks)
 		// notify events await on timer
 		Task_descriptor *td = pull_highest_priority_task(&ks->event_blocks[0]);
 		ks->blocked_on_event[0]--;
+		debug(DEBUG_IRQ, "Wake up task %d", td->tid);
         insert_task(td, &(ks->ready_queue));
 	}
 }
