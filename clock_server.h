@@ -5,6 +5,8 @@
 #include <kernel.h>
 #include <define.h>
 
+#define MAX_DELAYED_TASKS	50
+
 typedef enum Clock_message_type {
     CLOCK_NOTIFIER,
     TIME_REQUEST,
@@ -21,7 +23,7 @@ typedef struct Clock_server_message {
 
 typedef struct Clock_server {
 	vint ticks;
-	fifo_t delayed_task_queue; // should here really be fifo, the heap structured priority queue maybe better
+	//node_t delayed_tasks[MAX_DELAYED_TASKS];
 } Name_server;
 
 typedef struct Delayed_task {

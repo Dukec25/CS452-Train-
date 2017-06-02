@@ -1,10 +1,10 @@
 #include <name_server.h>
 #include <clock_server.h>
+#include <heap.h>
 
 static void initialize(Clock_server *cs){
 	debug(DEBUG_CLOCK, "Enter %s", "clock_server_initialize");
     cs->ticks = 0;
-	fifo_init(&(cs->delayed_task_queue)); // not sure about this
 }
 
 int DelayUntil( int ticks ){
@@ -56,6 +56,10 @@ void clock_server_start()
 	Clock_server cs;
 	initialize(&cs);
 
+    // initialize heap to store delayed task 
+	node_t delayed_tasks[MAX_DELAYED_TASKS];
+	heap_t delay_h = heap_init(delayed_tasks, MAX_DELAYED_TASKS);
+
 	while(1) {
 		int requester;
 		Delivery request;
@@ -82,19 +86,21 @@ void clock_server_start()
                 Delayed_task delayed_task;
                 delayed_task.tid = requester;
                 delayed_task.ticks = cs.ticks + request.ticks;
-                // add the delay task to the structure
+
+                heap_insert(&delay_h, delayed_task.ticks, &delayed_task);
 		 		break;
             case DELAY_REQUEST_UNTIL:
                 debug(DEBUG_CLOCK, "Enter %s", "DELAY_REQUESTER_UNTIL");
                 Delayed_task delayed_task;
                 delayed_task.tid = requester;
                 delayed_task.ticks = request.ticks;
-                // add the delay task to the structure
+
+                heap_insert(&delay_h, delayed_task.ticks, &delayed_task);
 		 		break;
 
 		}
-        // Reply to any timed-out tasks
-        // confirm whether to use heap prior queue here
+        // need to make the heap from maxium to minimum
+
 	}
 }
 
