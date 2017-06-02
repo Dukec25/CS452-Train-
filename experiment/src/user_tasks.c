@@ -240,7 +240,7 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 10000; i++) {
 		debug(DEBUG_TASK, "i = %d", i);
 		j += 2;
 	}
