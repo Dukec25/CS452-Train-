@@ -14,7 +14,9 @@ typedef enum debug_level
 	DEBUG_TASK,
     DEBUG_SERVER,
     DEBUG_TIME,
-    SUBMISSION,
+    DEBUG_CLOCK,
+    DEBUG_INFO,
+    SUBMISSION
 } debug_level;
 
 /* debug */

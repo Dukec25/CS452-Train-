@@ -137,8 +137,6 @@ asm_kernel_activate:
 	@ return value = r0 = td->retval
 	ldr		r0, [r8, #12]
 
-	mov		r0, r7
-	bl 		debug_asm(PLT)
 
 	@ check whether ENTER_FROM_HWI, if not, branch to not_entry_from_hwi
 	CMP		r7, #ENTER_FROM_HWI
@@ -146,8 +144,6 @@ asm_kernel_activate:
 	BEQ		entry_from_hwi
 entry_from_hwi:
 	@ install user task state and start the task executing, then branch to reinstall registers
-	mov		r0, #0x77
-	bl		debug_asm(PLT)
 	@@lr = r5	
 	mov		lr, r5
 	b		asm_hwi_reinstall
@@ -159,8 +155,6 @@ entry_from_swi:
 
 asm_hwi_reinstall:
 	msr 	CPSR, #SYS_MODE
-	mov		r0, #0x66
-	bl		debug_asm(PLT)
 	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
 	msr 	CPSR, #SVC_MODE
 	movs 	pc, lr

@@ -1,6 +1,4 @@
-#include <name_server.h>
 #include <clock_server.h>
-#include <heap.h>
 
 static void initialize(Clock_server *cs){
 	debug(DEBUG_CLOCK, "Enter %s", "clock_server_initialize");
@@ -35,7 +33,7 @@ int Delay( int ticks ){
     return 0;
 }
 
-int Time( ){
+int Time(){
 	debug(DEBUG_CLOCK, "Enter %s", "Primitive TIME");
     int clock_server_tid = WhoIs("CLOCK_SERVER");
     Clock_server_message send_msg;
@@ -70,6 +68,7 @@ void clock_server_start()
 
 		Server_err result = SERVER_ERR_FAILURE;
 		Name_server_message reply;
+        Delayed_task delayed_task;
 		switch(request.type) {
             case CLOCK_NOTIFIER:
                 debug(DEBUG_CLOCK, "Enter %s", "CLOCK_NOTIFIER");
@@ -83,34 +82,46 @@ void clock_server_start()
 		 		break;
 			case DELAY_REQUEST:
                 debug(DEBUG_CLOCK, "Enter %s", "DELAY_REQUESTER");
-                Delayed_task delayed_task;
                 delayed_task.tid = requester;
-                delayed_task.ticks = cs.ticks + request.ticks;
+                delayed_task.freedom_tick = cs.ticks + request.data;
 
-                heap_insert(&delay_h, delayed_task.ticks, &delayed_task);
+                heap_insert(&delay_h, delayed_task.freedom_tick, &delayed_task);
 		 		break;
             case DELAY_REQUEST_UNTIL:
                 debug(DEBUG_CLOCK, "Enter %s", "DELAY_REQUESTER_UNTIL");
-                Delayed_task delayed_task;
                 delayed_task.tid = requester;
-                delayed_task.ticks = request.ticks;
+                delayed_task.freedom_tick = request.data;
 
-                heap_insert(&delay_h, delayed_task.ticks, &delayed_task);
+                heap_insert(&delay_h, delayed_task.freedom_tick, &delayed_task);
 		 		break;
 
 		}
-        // need to make the heap from maxium to minimum
-
+        if(is_heap_empty(&delay_h)){
+            continue; 
+        }
+        node_t root, del;
+		root = heap_root(&delay_h);
+        while(root.priority <= cs.ticks)
+        {
+            Clock_server_message reply_msg;
+            Delayed_task* task = (Delayed_task*)root.data;
+            Reply(task->tid, &reply_msg, sizeof(reply_msg));
+            int isEmpty = heap_delete(&delay_h, &del);
+            if(isEmpty == -1){
+                break;
+            }
+            root = heap_root(&delay_h);
+        }
 	}
 }
 
-void clock_server_notifier(){
-    Delivery request; 
-    Clock_server_message reply_message;
-    int clock_server_tid = WhoIs("CLOCK_SERVER");
-    while(1){
-        request.data = AwaitEvent( evtType  ); // evtType = here should be clock update event;
-        request.type = NOTIFIER;
-        Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
-    }
-}
+/*void clock_server_notifier(){*/
+    /*Delivery request; */
+    /*Clock_server_message reply_message;*/
+    /*int clock_server_tid = WhoIs("CLOCK_SERVER");*/
+    /*while(1){*/
+        /*request.data = AwaitEvent( evtType  ); // evtType = here should be clock update event;*/
+        /*request.type = NOTIFIER;*/
+        /*Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );*/
+    /*}*/
+/*}*/

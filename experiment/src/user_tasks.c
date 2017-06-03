@@ -4,6 +4,7 @@
 #include <string.h>
 #include <name_server.h>
 #include <rps.h>
+#include <clock_server.h>
 
 #define TIMER_MAX	0xFFFFFFFF
 
@@ -68,7 +69,27 @@ void name_server_task()
 }
 
 void clock_server_task(){
+	debug(DEBUG_TASK, "enter %s", "clock_server_task");
+    uint32 tid = MyTid();
+    debug(DEBUG_TASK, "starting clock_server_task tid = %d", tid); 
+	clock_server_start();
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
 
+void clock_server_notifier(){
+	debug(DEBUG_TASK, "enter %s", "clock_server_notifier");
+    Delivery request; 
+    Clock_server_message reply_message;
+    int clock_server_tid = WhoIs("CLOCK_SERVER");
+    while(1){
+        debug(DEBUG_TASK, "before enter %s", "awaitEvent");
+        request.data = AwaitEvent(0); // evtType = here should be clock update event;
+        debug(DEBUG_TASK, "after enter %s", "awaitEvent");
+        request.type = CLOCK_NOTIFIER;
+        Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
+        debug(DEBUG_SUBMISSION, "after enter %s", "clock notify");
+    }
 }
 
 void name_client_task1()
@@ -240,7 +261,7 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < 100; i++) {
 		debug(DEBUG_TASK, "i = %d", i);
 		j += 2;
 	}
@@ -251,48 +272,21 @@ void idle_task()
 
 void first_task()
 {
-	debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);
-//    timer_irq_soft();
-//	timer_irq_soft_clear();
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-	int tid = Create(PRIOR_HIGH, event_task);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
-	tid = Create(PRIOR_LOW, idle_task);
+	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
+    /*timer_irq_soft();*/
+	/*timer_irq_soft_clear();*/
+    int tid = Create(PRIOR_HIGH, name_server_task); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-/*
-    int tid = Create(PRIOR_HIGH, name_server_task);  // comment out for now to test generalized priority queue
+	tid = Create(PRIOR_HIGH, clock_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
-	tid = Create(PRIOR_HIGH, rps_server_task);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
-	
-	int i = 0;
-	for (i = 0; i < 6; i++) {
-		tid = Create(PRIOR_HIGH, rps_client_task);
-		debug(DEBUG_TASK, "created taskId = %d", tid);
-	}
-*/
-/*   	tid = Create(PRIOR_HIGH, name_client_task1);
-   	debug(DEBUG_TASK, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, name_client_task2);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
-*/	
 
-/*
-    int tid = Create(PRIOR_HIGH, receive_task);
+	tid = Create(PRIOR_HIGH, clock_server_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
-	debug(DEBUG_TASK, "created taskId = %d", tid);
-*/
-/*	int tid = Create(PRIOR_LOW, general_task);
-	debug(SUBMISSION, "created taskId = %d", tid);
-	tid = Create(PRIOR_LOW, general_task);
-	debug(SUBMISSION, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, general_task);
-    debug(SUBMISSION, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, general_task);
-    debug(SUBMISSION, "created taskId = %d", tid);
-*/
+
+	tid = Create(PRIOR_LOWEST, idle_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
 	debug(SUBMISSION, "%s", "FirstUserTask: exiting");
 	Exit();
