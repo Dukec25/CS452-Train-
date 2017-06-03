@@ -33,7 +33,7 @@ int heap_insert(heap_t *ph, int priority, void *data)
 	n.data = data; 
 	int i = ph->len + 1;
 	int j = i / 2;
-	while (i > 1 && ph->nodes[j].priority < priority) {
+	while (i > 1 && ph->nodes[j].priority > priority) {
 		ph->nodes[i] = ph->nodes[j];
 		i = j;
 		j = j / 2;
@@ -49,25 +49,38 @@ int heap_delete(heap_t *ph, node_t *proot)
 
 	*proot = ph->nodes[1];
 	ph->nodes[1] = ph->nodes[ph->len];
+    debug(DEBUG_INFO, "new node idx=%d", ph->nodes[1].priority);
 	ph->len--;
 
-	int i, j, k;
-	i = 1;
+	int parent_idx, children_idx, k;
+	parent_idx = 1;
 	while (1) {
-		k = i;
-		j = 2 * i;
-		if (j <= ph->len && ph->nodes[j].priority > ph->nodes[k].priority) {
-			k = j;
+		k = parent_idx;
+		children_idx = 2 * parent_idx;
+        /*debug(DEBUG_INFO, "left child priority idx=%d", ph->nodes[children_idx].priority);*/
+        /*debug(DEBUG_INFO, "parent node priority idx=%d", ph->nodes[k].priority);*/
+		if (children_idx <= ph->len && ph->nodes[children_idx].priority < ph->nodes[k].priority) {
+			k = children_idx;
 		}
-		if (j + 1 <= ph->len && ph->nodes[j + 1].priority > ph->nodes[k].priority) {
-			k = j + 1;
+        /*debug(DEBUG_INFO, "right child priority idx=%d", ph->nodes[children_idx+1].priority);*/
+		if (children_idx + 1 <= ph->len && ph->nodes[children_idx + 1].priority < ph->nodes[k].priority) {
+			k = children_idx + 1;
 		}
-		if (k == i) {
+		if (k == parent_idx) {
 			break;
 		}
-		ph->nodes[i] = ph->nodes[k];
-		i = k;
+        /*debug(DEBUG_INFO, "exchanged i prior idx=%d", ph->nodes[i].priority);*/
+        /*debug(DEBUG_INFO, "exchanged k prior idx=%d", ph->nodes[k].priority);*/
+
+        node_t temp = ph->nodes[parent_idx]; 
+		ph->nodes[parent_idx] = ph->nodes[k];
+        ph->nodes[k] = temp;
+
+		parent_idx = k;
+        /*debug(DEBUG_INFO, "i idx=%d", i);*/
+        /*debug(DEBUG_INFO, "ph len =%d", ph->len);*/
+        
 	}
-	ph->nodes[i] = ph->nodes[ph->len + 1];
+	ph->nodes[parent_idx] = ph->nodes[ph->len + 1];
 	return 0;
 }

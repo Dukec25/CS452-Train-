@@ -114,59 +114,69 @@ int main()
 	node_t data[heap_size];
 	heap_t h = heap_init(data, heap_size);
 	assert_str(0 == heap_insert(&h, 1, "test1"), "heap insert test 1 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 8, "test8"), "heap insert test 8 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 2, "test2"), "heap insert test 2 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 4, "test4"), "heap insert test 4 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 9, "test9dup"), "heap insert test 9dup failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 6, "test6"), "heap insert test 6 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 3, "test3dup"), "heap insert test 3dup failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 5, "test5"), "heap insert test 5 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 9, "test9"), "heap insert test 9 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 3, "test3"), "heap insert test 3 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
 	assert_str(0 == heap_insert(&h, 7, "test7"), "heap insert test 7 failed");
-	heap_print(&h, 0);
-	bwputstr(COM2, "\r\n");
+	/*heap_print(&h, 0);*/
+	/*bwputstr(COM2, "\r\n");*/
+    int n;
+    for(n=1; n<=h.len; n++){
+        debug(DEBUG_INFO, "heap is currently like idx=%d", h.nodes[n].priority);
+    }
 
 	node_t root, del;
 
 	// heap duplicate priority fifo test
 	root = heap_root(&h);
-	assert(!strcmp("test9dup", root.data, 8), "heap root duplicate test 9 failed, root.data = %s", root.data);
+	assert(strcmp("test1", root.data, 6), "heap root duplicate test 9 failed, root.data = %s", root.data);
 	assert(0 == heap_delete(&h, &del), "heap delete duplicate test 9(A) failed, del.data = %s", del.data); 
-	assert(strcmp("test9dup", del.data, 8), "heap delete duplicate test 9(B) failed, del.data = %s", del.data); 
-	heap_print(&h, 0);
+	assert(strcmp("test1", del.data, 6), "heap delete duplicate test 9(B) failed, del.data = %s", del.data); 
+    /*for(n=1; n<=h.len; n++){*/
+        /*debug(DEBUG_INFO, "heap is currently like idx=%d", h.nodes[n].priority);*/
+    /*}*/
+	/*heap_print(&h, 0);*/
 	bwputstr(COM2, "\r\n");
 
 	int heap_idx;
 	char test[6];
-	test[0] = 't'; test[1] = 'e'; test[2] = 's'; test[3] = 't';
-	for (heap_idx = 9; heap_idx >= 4; heap_idx--) {
+	test[0] = 'q'; test[1] = 'a'; test[2] = 's'; test[3] = 't';
+	for (heap_idx = 11; heap_idx >= 2; heap_idx--) {
 		test[4] = c2x(heap_idx);
 		test[5] = '\0';
 		root = heap_root(&h);
 		assert(!strcmp(test, root.data, 6), "heap root test %d failed, root.data = %s", heap_idx, root.data);
 		assert(0 == heap_delete(&h, &del), "heap delete test %d(A) failed", heap_idx); 
 		assert(!strcmp(test, del.data, 6), "heap delete test %d(B) failed, del.data = %s", heap_idx, del.data); 
+        /*for(n=1; n<=h.len; n++){*/
+            /*debug(DEBUG_INFO, "heap is currently like idx=%d", h.nodes[n].priority);*/
+        /*}*/
 	}
 /*
 	root = heap_root(&h);

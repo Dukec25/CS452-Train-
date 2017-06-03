@@ -1,9 +1,12 @@
 #ifndef __HEAP_H__
 #define __HEAP_H__
 #include <define.h>
+#include <debug.h>
+
+/* heap priority queue that return the least priority */
 
 /*
- * Max heap node
+ * min heap node
  */
 typedef struct {
 	int priority;
@@ -11,7 +14,7 @@ typedef struct {
 } node_t;
 
 /*
- * Max heap
+ * min heap
  */
 typedef struct {
 	node_t *nodes;
@@ -20,35 +23,36 @@ typedef struct {
 } heap_t; 
 
 /*
- * Predicate to check whether max heap is full
+ * Predicate to check whether min heap is full
  */
 int is_heap_full(heap_t *ph);
 
 /*
- * Predicate to check whether max heap is empty
+ * Predicate to check whether min heap is empty
  */
 int is_heap_empty(heap_t *ph);
 
 /*
- * Returns an max heap initialized nodes and size
+ * Returns an min heap initialized nodes and size
  */
 heap_t heap_init(node_t *nodes, int size);
 
 /*
- * Returns the max node of the max heap
+ * Returns the min node of the min heap
  */
 node_t heap_root(heap_t *ph);
 
 /*
- * Returns -1 if max heap is full.
- * Returns 0 otherwise, and inserts the node with priority and data into the max heap.
+ * Returns -1 if min heap is full.
+ * Returns 0 otherwise, and inserts the node with priority and data into the min heap.
  */
 int heap_insert(heap_t *ph, int priority, void *data);
 
 /*
- * Returns -1 if max heap is empty.
- * Returns 0 otherwise, and deletes the max node and stores it into proot.
+ * Returns -1 if min heap is empty.
+ * Returns 0 otherwise, and deletes the min node and stores it into proot.
  */
 int heap_delete(heap_t *ph, node_t *proot);
 
+void heap_print(heap_t *ph);
 #endif // __HEAP_H__
