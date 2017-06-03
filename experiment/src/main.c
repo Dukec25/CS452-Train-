@@ -370,6 +370,7 @@ int main()
 					break;
 			}
 	}
+    irq_disable();
 /*    timer_stop(); */
 	return 0;
 }

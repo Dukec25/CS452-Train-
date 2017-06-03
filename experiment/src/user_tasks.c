@@ -88,7 +88,7 @@ void clock_server_notifier(){
         debug(DEBUG_TASK, "after enter %s", "awaitEvent");
         request.type = CLOCK_NOTIFIER;
         Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
-        debug(DEBUG_SUBMISSION, "after enter %s", "clock notify");
+        debug(SUBMISSION, "after enter %s", "clock notify");
     }
 }
 
@@ -183,42 +183,6 @@ void name_client_task2()
     Exit();
 }
 
-void time_receive(){
-    int round;
-    /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");*/
-    int sender_tid;   
-    /*vint reply_msg = 5;*/
-    /*vint msg;*/
-    char reply_msg[64];
-    char msg[64];
-    for(round=0; round < 1000; round++){
-        /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive");*/
-        Receive( &sender_tid, &msg, sizeof(msg) );  
-        /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
-        vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
-    }
-    Exit();
-}
-
-void time_send(){
-    int round;
-    /*vint msg = 5;*/
-    /*vint reply_msg;*/
-    char msg[64];
-    char reply_msg[64];
-    /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
-    for(round=0; round < 1000; round++){
-        /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");*/
-        vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
-    }    
-    /*debug(DEBUG_TIME, "enter %s", "time task2");*/
-    /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
-	vint *ptimer = timer();
-	uint32 timer_output = TIMER_MAX - *ptimer;
-    debug(DEBUG_TIME, "time = %d", timer_output);
-    Exit();
-}
-
 void rps_server_task()
 {
 	debug(DEBUG_TASK, "enter %s", "rps_server_task");
@@ -261,7 +225,7 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 1000; i++) {
 		debug(DEBUG_TASK, "i = %d", i);
 		j += 2;
 	}
@@ -276,10 +240,10 @@ void first_task()
 	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
     /*timer_irq_soft();*/
 	/*timer_irq_soft_clear();*/
-    int tid = Create(PRIOR_HIGH, name_server_task); 
+    int tid = Create(PRIOR_MEDIUM, name_server_task); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-	tid = Create(PRIOR_HIGH, clock_server_task);
+	tid = Create(PRIOR_MEDIUM, clock_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
 	tid = Create(PRIOR_HIGH, clock_server_notifier);
