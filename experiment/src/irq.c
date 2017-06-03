@@ -78,11 +78,12 @@ void timer_irq_soft_clear()
 void timer_irq_handle(Kernel_state *ks)
 {
 	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer_irq_handle");
-	timer_clear();
+	timer_clear(); // is this needed to clear the timer manually
 	if (ks->blocked_on_event[0]) {
 		// notify events await on timer
 		volatile Task_descriptor *td = pull_highest_priority_task(&ks->event_blocks[0]);
-		td->retval = 999;
+        td->state = STATE_READY;
+		/*td->retval = 999;*/
 		ks->blocked_on_event[0]--;
 		debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up task %d, ks->blocked_on_event[0] = %d", td->tid, ks->blocked_on_event[0]);
         insert_task(td, &(ks->ready_queue));

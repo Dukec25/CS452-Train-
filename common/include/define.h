@@ -17,5 +17,5 @@ typedef unsigned int size_t;
 #define NULL	0
 
 /* debug */
-#define DEBUG   4
+#define DEBUG   0
 #endif //__DEFINE_H__

@@ -81,7 +81,7 @@ void clock_server_notifier(){
 	debug(DEBUG_TASK, "enter %s", "clock_server_notifier");
     Delivery request; 
     Clock_server_message reply_message;
-    int clock_server_tid = WhoIs("CLOCK_SERVER");
+    vint clock_server_tid = WhoIs("CLOCK_SERVER");
     while(1){
         debug(DEBUG_TASK, "before enter %s", "awaitEvent");
         request.data = AwaitEvent(0); // evtType = here should be clock update event;
@@ -226,13 +226,30 @@ void idle_task()
 
 	int i, j = 0;
 	for (i = 0; i < 1000; i++) {
-		debug(DEBUG_TASK, "i = %d", i);
+		debug(DEBUG_TASK, "***********************************i = %d", i);
 		j += 2;
 	}
 	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
     Exit();
 }
 
+void kernel3_client_task(){
+    vint parent_tid = MyParentTid();
+    vint my_tid = MyTid();
+    Message send_msg;
+    IntIntMessage reply_msg;
+    Send(parent_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
+    vint delay_time_interval = reply_msg.content1;
+    vint num_delays = reply_msg.content2;
+    vint clock_server_tid = WhoIs("CLOCK_SERVER");
+    int n;
+    for(n=0; n < num_delays; n++){
+        Delay(delay_time_interval); 
+        debug(SUBMISSION, "my tid = %d", my_tid);
+        debug(SUBMISSION, "delayed_interval = %d", delayed_time_interval);
+        debug(SUBMISSION, "number of delayed has completed = %d", n);
+    }
+}
 
 void first_task()
 {

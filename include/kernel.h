@@ -25,6 +25,12 @@ typedef struct Message {
 	uint8				content_len;
 } Message;
 
+typedef struct IntIntMessage {
+    vint                tid; 
+	vint 				content1;
+    vint                content2;
+} IntIntMessage;
+
 /* task descriptor */
 typedef enum Task_state {
 	STATE_ACTIVE, 
