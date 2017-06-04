@@ -92,4 +92,5 @@ void timer3_irq_handle(Kernel_state *ks)
 		debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up task %d, ks->blocked_on_event[0] = %d", td->tid, ks->blocked_on_event[0]);
         insert_task(td, &(ks->ready_queue));
 	}
+	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
 }

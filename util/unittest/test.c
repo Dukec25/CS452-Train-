@@ -147,11 +147,22 @@ int main()
 	/*heap_print(&h, 0);*/
 	/*bwputstr(COM2, "\r\n");*/
     int n;
-    for(n=1; n<=h.len; n++){
-        debug(DEBUG_INFO, "heap is currently like idx=%d", h.nodes[n].priority);
-    }
+    /*for(n=1; n<=h.len; n++){*/
+        /*debug(DEBUG_INFO, "heap is currently like idx=%d", h.nodes[n].priority);*/
+    /*}*/
 
-	node_t root, del;
+    node_t root, del;
+    root = heap_root(&h);
+    while(root.priority <= 100)
+    {
+        /*debug(SUBMISSION, "about to unblock task tid = %d", tid);*/
+        int isEmpty = heap_delete(&h, &del);
+        debug(DEBUG_INFO, "heap is currently like idx=%d", del.priority);
+        if(is_heap_empty(&h)){
+            break;
+        }
+        root = heap_root(&h);
+    }
 
 	// heap duplicate priority fifo test
 	root = heap_root(&h);

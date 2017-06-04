@@ -196,7 +196,7 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
+	debug(DEBUG_IRQ, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
 	return asm_kernel_activate(td);
 }
@@ -295,9 +295,8 @@ int main()
 			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
 			td = schedule(&ks);
 
-			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
-					td->tid, td->state, td->priority, td->sp, td->lr,
-					td->next_task ? td->next_task->tid : INVALID_TID);
+            debug(DEBUG_IRQ, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
+                    td->tid, td->state, td->priority, td->sp, td->lr, td->next_task ? td->next_task->tid : INVALID_TID);
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
