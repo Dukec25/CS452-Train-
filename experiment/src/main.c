@@ -287,7 +287,7 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    /*irq_enable();*/
+    irq_enable();
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
@@ -362,7 +362,7 @@ int main()
 					break;
 			}
 	}
-    /*irq_disable();*/
+    irq_disable();
 /*    timer_stop(); */
 	return 0;
 }
