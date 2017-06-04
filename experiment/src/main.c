@@ -4,6 +4,8 @@
 #include <time.h>
 #include <irq.h>
 
+#define IDLE_TASK	4
+
 extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_kernel_hwiEntry();
@@ -196,6 +198,7 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
+
 	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
 	return asm_kernel_activate(td);
@@ -258,9 +261,14 @@ static void update_td(Task_descriptor *td, vint cur_lr)
 
 int main()
 {
+	// idle task measurement
+	long long elapsed_time = 0;
+	long long idle_task_time = 0;
+	timer4_start();
+	elapsed_time = timer4_read();
+
     bwsetfifo(COM2, OFF);
 
-//    timer_start();
     asm volatile("MRC p15, 0, r2, c1, c0, 0");
     asm volatile("ORR r2, r2, #1<<12");
     asm volatile("ORR r2, r2, #1<<2");
@@ -294,14 +302,24 @@ int main()
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
 			td = schedule(&ks);
-
 			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
 					td->next_task ? td->next_task->tid : INVALID_TID);
 
+			// idle task time measurement before exit kernel
+			if (td->tid == IDLE_TASK) {
+				idle_task_time -= timer4_read();
+			}
+
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
 			debug(DEBUG_IRQ, "td %d get back into kernel again, cur_lr = 0x%x", td->tid, cur_lr);
+
+			// idle task time measurement after enter kernel
+			if (td->tid == IDLE_TASK) {
+				idle_task_time += timer4_read();
+			}
+
 			if (cur_lr & HWI_MASK) {
 				// hwi entry bit is set, entered from hwi
 				cur_lr = cur_lr & ~(HWI_MASK);
@@ -363,6 +381,12 @@ int main()
 			}
 	}
     irq_disable();
-/*    timer_stop(); */
+	
+	// idle task measurement
+	elapsed_time = timer4_read() - elapsed_time;
+	timer4_stop();
+	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
+	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
+	debug(SUBMISSION, "idle task took %d percent of total running time", idle_task_time / elapsed_time);
 	return 0;
 }

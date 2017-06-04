@@ -3,40 +3,25 @@
 
 #include <define.h>
 
-#define CLOCK_FREQ 	508000
-#define TIMER_MAX	0xFFFFFFFF
-
-typedef struct {
-	uint32 prev_tenth_sec;	/* last tenth_sec */
-	uint32 tenth_sec;	/* elapsed time measured in tenth of seconds */
-	uint32 sec;		/* elapsed time measured in seconds */
-	uint32 min;		/* elapsed time measured in minutes */
-} Time;
+#define TIMER4_MAX			0x7FFFFFFFFF
+#define	TIMER4_REQUENCY		983000
+#define TIMER4_LOW			0x80810060
+#define TIMER4_HIGH			0x80810064
+#define TIMER4_ENABLE		(0x1 << 8) 
 
 /*
- * Returns pointer to the count down timer value
+ * Read the count up timer4 value
  */
-vint *timer();
+uint64 timer4_read();
 
 /*
- * Start the count down timer with TIMER_MAX as the preload value
+ * Start the count up timer with TIMER4_MAX as the preload value
  */
-void timer_start();
+void timer4_start();
 
 /*
- * Stop the count down timer
+ * Stop the count up timer4
  */
-void timer_stop();
-
-/*
- * Return an initialized time
- */
-Time time_init();
-
-/*
- * Update the time pt every tenth of second.
- * Return 1 if pt is updated, 0 otherwise.
- */
-int time_update(Time *pt);
+void timer4_stop();
 
 #endif // __TIME_H__

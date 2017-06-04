@@ -2,57 +2,22 @@
 #include <define.h>
 #include <time.h>
 
-vint *timer()
+uint64 timer4_read()
 {
-	vint *timer = (vint *) (TIMER3_BASE + VAL_OFFSET);;
-	return timer;
+	vint *timer4_low = (vint *) TIMER4_LOW;
+	vint *timer4_high = (vint *) TIMER4_HIGH;
+	uint64 timer4 = ((uint64) *timer4_high << 32) | ((uint64) *timer4_low);
+	return timer4;
 }
 
-void timer_start()
+void timer4_start()
 {
-	vint *load, *control;
-
-	// Load the pre-load value into the 32-bit timer
-	load = (vint *) (TIMER3_BASE + LDR_OFFSET);
-	*load = TIMER_MAX;
-	
-	// Enable the 32-bit timer
-	control = (vint *) (TIMER3_BASE + CRTL_OFFSET);
-	*control |= MODE_MASK;
-	*control |= CLKSEL_MASK;
-	*control |= ENABLE_MASK; 
+	vint *timer4_high = (vint *) TIMER4_HIGH;
+	*timer4_high |= TIMER4_ENABLE;
 }
 
-void timer_stop()
+void timer4_stop()
 {
-	vint *control;
-
-	control = (vint *) (TIMER3_BASE + CRTL_OFFSET);
-	*control = 0x0;
-}
-
-Time time_init()
-{
-	Time t;
-	t.prev_tenth_sec = 0;
-	t.tenth_sec = 0;
-	t.sec = 0;
-	t.min = 0;
-	return t;
-}
-
-int time_update(Time *pt)
-{
-	vint *ptimer = timer();
-	uint32 timer_output = TIMER_MAX - *ptimer;
-
-	pt->tenth_sec = timer_output / (CLOCK_FREQ / 10);
-	pt->sec = timer_output / CLOCK_FREQ;
-	pt->min = pt->sec / 60;
-	
-	if ( pt->prev_tenth_sec < pt->tenth_sec ) {
-		pt->prev_tenth_sec = pt->tenth_sec;
-		return 1;
-	}
-	return 0;
+	vint *timer4_high = (vint *) TIMER4_HIGH;
+	*timer4_high &= ~TIMER4_ENABLE;
 }
