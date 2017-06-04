@@ -88,6 +88,8 @@ asm_kernel_hwiEntry:
 	ORR		r1, r1, #HWI_MASK
 	@ save user spsr
 	mrs     r3, spsr
+	mov		r0, sp
+	bl		debug_asm(PLT)
 	@ enter svc
 	mrs		r0, CPSR
 	mov		r0, #SVC_MODE

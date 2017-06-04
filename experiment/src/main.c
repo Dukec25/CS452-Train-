@@ -287,7 +287,7 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    irq_enable();
+    /*irq_enable();*/
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
@@ -301,7 +301,7 @@ int main()
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
-			debug(DEBUG_TRACE, "td %d get back into kernel again, cur_lr = 0x%x", td->tid, cur_lr);
+			debug(DEBUG_IRQ, "td %d get back into kernel again, cur_lr = 0x%x", td->tid, cur_lr);
 			if (cur_lr & HWI_MASK) {
 				// hwi entry bit is set, entered from hwi
 				cur_lr = cur_lr & ~(HWI_MASK);
@@ -362,7 +362,7 @@ int main()
 					break;
 			}
 	}
-    irq_disable();
+    /*irq_disable();*/
 /*    timer_stop(); */
 	return 0;
 }
