@@ -103,9 +103,8 @@ void clock_server_start()
         {
             Clock_server_message reply_msg;
             vint tid = (vint)root.data;
-            debug(SUBMISSION, "about to unblock task tid = %d", tid);
             Reply(tid, &reply_msg, sizeof(reply_msg));
-            int isEmpty = heap_delete(&delay_h, &del);
+            heap_delete(&delay_h, &del);
             /*int n;*/
             /*for(n=1; n<=delay_h.len; n++){*/
                 /*debug(SUBMISSION, "heap is idx=%d", delay_h.nodes[n].priority);*/
