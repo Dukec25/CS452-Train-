@@ -16,7 +16,7 @@
 
 /* HWI */
 #define ENTER_FROM_HWI	0xAA
-#define NUM_EVENTS		2
+#define NUM_EVENTS		4
 
 /* inter-tasks communication */
 typedef struct Message {
@@ -78,15 +78,17 @@ typedef struct Priority_fifo {
 
 /* kernel state */
 typedef struct Kernel_state {
-	Priority_fifo 	ready_queue;
-	Priority_fifo 	send_block;
-	Priority_fifo	receive_block;
-	Priority_fifo 	reply_block;
-	Task_descriptor tasks[MAX_NUM_TASKS];
-	uint64			free_list;
-	/* event blocked, one priority fifo for each event */
-	uint8			blocked_on_event[NUM_EVENTS];
-	Priority_fifo	event_blocks[NUM_EVENTS];
+	Priority_fifo 		ready_queue;
+	Priority_fifo 		send_block;
+	Priority_fifo		receive_block;
+	Priority_fifo 		reply_block;
+	Task_descriptor 	tasks[MAX_NUM_TASKS];
+	uint64				free_list;
+	/* event blocked, there can only have one task wait on each type of event */
+	// indicate whether there is task await on particular type of event;
+	uint8				blocked_on_event[NUM_EVENTS];
+	// stores the event blocked tasks, one task for each event type
+	Task_descriptor		*event_blocks[NUM_EVENTS];
 } Kernel_state;
 
 /* task descriptor */

@@ -226,7 +226,7 @@ void idle_task()
 
 	int i, j = 0;
 	for (i = 0; i < 1000; i++) {
-		debug(DEBUG_TASK, "***********************************i = %d", i);
+		debug(SUBMISSION, "***********************************i = %d", i);
 		j += 2;
 	}
 	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);

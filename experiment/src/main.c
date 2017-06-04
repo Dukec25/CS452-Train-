@@ -23,7 +23,7 @@ static void ks_initialize(Kernel_state *ks)
 	ks->receive_block.mask = 0;
 	int e = 0;
 	for (e = 0; e < NUM_EVENTS; e++) {
-		ks->event_blocks[e].mask = 0;
+		ks->event_blocks[e] = NULL;
 		ks->blocked_on_event[e] = 0;
 	}
 	int i = 0;
@@ -36,10 +36,6 @@ static void ks_initialize(Kernel_state *ks)
 		ks->reply_block.fifos[i].tail = NULL;
 		ks->receive_block.fifos[i].head = NULL;
 		ks->receive_block.fifos[i].tail = NULL;
-		for (e = 0; e < NUM_EVENTS; e++) {
-			ks->event_blocks[e].fifos[i].head = NULL;
-			ks->event_blocks[e].fifos[i].tail = NULL;
-		}
 	}
 }
 
