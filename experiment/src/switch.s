@@ -74,7 +74,7 @@ asm_get_fp:
     msr     CPSR, #SVC_MODE 
 	ldmfd	sp, {fp, sp, pc}
 
-/*load this function after swi instruction*/
+/*load this function after hwi instruction*/
 asm_kernel_hwiEntry:
 	@ store user registers on user stack
 	msr		CPSR, #SYS_MODE

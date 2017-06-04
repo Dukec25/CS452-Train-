@@ -233,23 +233,23 @@ void idle_task()
     Exit();
 }
 
-void kernel3_client_task(){
-    vint parent_tid = MyParentTid();
-    vint my_tid = MyTid();
-    Message send_msg;
-    IntIntMessage reply_msg;
-    Send(parent_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
-    vint delay_time_interval = reply_msg.content1;
-    vint num_delays = reply_msg.content2;
-    vint clock_server_tid = WhoIs("CLOCK_SERVER");
-    int n;
-    for(n=0; n < num_delays; n++){
-        Delay(delay_time_interval); 
-        debug(SUBMISSION, "my tid = %d", my_tid);
-        debug(SUBMISSION, "delayed_interval = %d", delayed_time_interval);
-        debug(SUBMISSION, "number of delayed has completed = %d", n);
-    }
-}
+/*void kernel3_client_task(){*/
+    /*vint parent_tid = MyParentTid();*/
+    /*vint my_tid = MyTid();*/
+    /*Message send_msg;*/
+    /*IntIntMessage reply_msg;*/
+    /*Send(parent_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));*/
+    /*vint delay_time_interval = reply_msg.content1;*/
+    /*vint num_delays = reply_msg.content2;*/
+    /*vint clock_server_tid = WhoIs("CLOCK_SERVER");*/
+    /*int n;*/
+    /*for(n=0; n < num_delays; n++){*/
+        /*Delay(delay_time_interval); */
+        /*debug(SUBMISSION, "my tid = %d", my_tid);*/
+        /*debug(SUBMISSION, "delayed_interval = %d", delayed_time_interval);*/
+        /*debug(SUBMISSION, "number of delayed has completed = %d", n);*/
+    /*}*/
+/*}*/
 
 void first_task()
 {
