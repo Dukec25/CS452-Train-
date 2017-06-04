@@ -225,7 +225,7 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 100000; i++) {
 		debug(SUBMISSION, "***********************************i = %d", i);
 		j += 2;
 	}
