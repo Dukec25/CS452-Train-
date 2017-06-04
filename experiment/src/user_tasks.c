@@ -225,9 +225,9 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
-	for (i = 0; i < 100000; i++) {
-		debug(SUBMISSION, "***********************************i = %d", i);
-		j += 2;
+	for (i = 0; i < 10000; i++) {
+		/*debug(SUBMISSION, "***********************************i = %d", i);*/
+        Pass();
 	}
 	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
     Exit();
@@ -257,10 +257,10 @@ void first_task()
 	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
     /*timer_irq_soft();*/
 	/*timer_irq_soft_clear();*/
-    int tid = Create(PRIOR_MEDIUM, name_server_task); 
+    int tid = Create(PRIOR_HIGH, name_server_task); 
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-	tid = Create(PRIOR_MEDIUM, clock_server_task);
+	tid = Create(PRIOR_HIGH, clock_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
 	tid = Create(PRIOR_HIGH, clock_server_notifier);

@@ -73,7 +73,7 @@ void clock_server_start()
             case CLOCK_NOTIFIER:
                 debug(DEBUG_CLOCK, "Enter %s", "CLOCK_NOTIFIER");
                 cs.ticks++;
-                debug(DEBUG_CLOCK, "increment ticks = %d", cs.ticks);
+                debug(SUBMISSION, "increment ticks = %d", cs.ticks);
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 break;
 			case TIME_REQUEST:

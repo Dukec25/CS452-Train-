@@ -253,7 +253,7 @@ static void update_td(Task_descriptor *td, vint cur_lr)
 	td->lr = (vint *)cur_lr;
     td->fp = (vint *)cur_fp; // pay attention, confirm with Alicia  
 	td->spsr = cur_spsr;
-	debug(DEBUG_TRACE, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x, spsr = 0x%x", cur_sp, cur_lr, cur_fp, cur_spsr);
+	debug(DEBUG_IRQ, "cur_sp = 0x%x, cur_lr = 0x%x, cur_fp = 0x%x, spsr = 0x%x", cur_sp, cur_lr, cur_fp, cur_spsr);
 }
 
 int main()
@@ -323,7 +323,7 @@ int main()
 			uint32 immed_24 = *((vint *)((int) td->lr - 4)) & ~(0xff000000);
 			uint32 req = immed_24 & 0xfff;
 			uint32 argc = (immed_24 >> 12) & 0xfff;
-			debug(DEBUG_TRACE, "swi get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
+			debug(DEBUG_IRQ, "swi get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
 
 			vint arg0 = *((vint*) ((int) td->sp + 0));
 			uint32 arg1 = *((vint*) ((int) td->sp + 4));
