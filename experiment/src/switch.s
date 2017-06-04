@@ -107,8 +107,9 @@ asm_kernel_activate:
 	mov 	ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
 	@ install active task state
-	@@r8 = r0
+	@@r8 = r0, r7 = r1
 	mov 	r8, r0
+	mov		r7, r1
 	@@r4 = td->sp
 	ldr		r4, [r8, #0]
 	@r5 = td->lr
@@ -129,7 +130,7 @@ asm_kernel_activate:
 	ldr		r0, [r8, #12]
 
 	@ check whether ENTER_FROM_HWI, if not, branch to not_entry_from_hwi
-	CMP		r1, #ENTER_FROM_HWI
+	CMP		r7, #ENTER_FROM_HWI
 	BNE		entry_from_swi
 	BEQ		entry_from_hwi
 entry_from_hwi:

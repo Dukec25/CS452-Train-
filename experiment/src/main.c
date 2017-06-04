@@ -203,8 +203,8 @@ int activate(Task_descriptor *td)
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
 		is_entry_from_hwi = td->is_entry_from_hwi;
-		td->is_entry_from_hwi = 0;
 	}
+	td->is_entry_from_hwi = 0;
 	return asm_kernel_activate(td, is_entry_from_hwi);
 }
 
