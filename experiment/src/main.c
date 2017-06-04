@@ -10,7 +10,7 @@ extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
 extern void asm_kernel_hwiEntry();
 extern void asm_init_kernel();
-extern int asm_kernel_activate(Task_descriptor *td);
+extern int asm_kernel_activate(Task_descriptor *td, int is_entry_from_hwi);
 extern int asm_get_spsr();
 extern int asm_get_sp();
 extern int asm_get_fp();
@@ -200,7 +200,12 @@ int activate(Task_descriptor *td)
 	td->state = STATE_ACTIVE;
 	debug(DEBUG_IRQ, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
-	return asm_kernel_activate(td);
+	int is_entry_from_hwi = 0;
+	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
+		is_entry_from_hwi = td->is_entry_from_hwi;
+		td->is_entry_from_hwi = 0;
+	}
+	return asm_kernel_activate(td, is_entry_from_hwi);
 }
 
 int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender)
@@ -386,6 +391,7 @@ int main()
 	timer4_stop();
 	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
 	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
-	debug(SUBMISSION, "idle task took %d percent of total running time", idle_task_time / elapsed_time);
+	long long fraction = (idle_task_time * 100) / elapsed_time;
+	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
 	return 0;
 }
