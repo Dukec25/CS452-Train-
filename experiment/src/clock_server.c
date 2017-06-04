@@ -20,22 +20,22 @@ int DelayUntil( int ticks ){
 }
 
 int Delay( int ticks ){
-	debug(DEBUG_CLOCK, "Enter %s", "Primitive Delay");
+	debug(SUBMISSION, "Enter %s", "Primitive Delay");
     if (ticks <= 0){
         return -2;
     }
-    int clock_server_tid = WhoIs("CLOCK_SERVER");
-    Clock_server_message send_msg;
+    vint clock_server_tid = WhoIs("CLOCK_SERVER");
+    Delivery send_msg;
     Clock_server_message reply_msg;
-    send_msg.ticks = ticks;
+    send_msg.data = ticks;
     send_msg.type = DELAY_REQUEST;
     Send(clock_server_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
     return 0;
 }
 
 int Time(){
-	debug(DEBUG_CLOCK, "Enter %s", "Primitive TIME");
-    int clock_server_tid = WhoIs("CLOCK_SERVER");
+	debug(SUBMISSION, "Enter %s", "Primitive TIME");
+    vint clock_server_tid = WhoIs("CLOCK_SERVER");
     Clock_server_message send_msg;
     Clock_server_message reply_msg;
     send_msg.type = TIME_REQUEST;
@@ -48,9 +48,7 @@ void clock_server_start()
 {
 	debug(DEBUG_CLOCK, "Enter %s", "clock_server_start");
 
-	int register_result = RegisterAs("CLOCK_SERVER");
-	debug(DEBUG_CLOCK, "RegisterAs result = %d", register_result);
-
+	vint register_result = RegisterAs("CLOCK_SERVER");
 	Clock_server cs;
 	initialize(&cs);
 
@@ -64,35 +62,33 @@ void clock_server_start()
         Clock_server_message reply_msg;
 		Receive(&requester, &request, sizeof(request));
 
-		debug(DEBUG_CLOCK, "request type= %d", request.type);
+		debug(SUBMISSION, "request type= %d", request.type);
 
-		Server_err result = SERVER_ERR_FAILURE;
-		Name_server_message reply;
         Delayed_task delayed_task;
 		switch(request.type) {
             case CLOCK_NOTIFIER:
-                debug(DEBUG_CLOCK, "Enter %s", "CLOCK_NOTIFIER");
+                Reply(requester, &reply_msg, sizeof(reply_msg));
+                debug(SUBMISSION, "Enter %s", "CLOCK_NOTIFIER");
                 cs.ticks++;
                 debug(DEBUG_CLOCK, "increment ticks = %d", cs.ticks);
-                Reply(requester, &reply_msg, sizeof(reply_msg));
                 break;
 			case TIME_REQUEST:
-                debug(DEBUG_CLOCK, "Enter %s", "TIME_REQUESTER");
+                debug(SUBMISSION, "Enter %s", "TIME_REQUESTER");
                 reply_msg.ticks = cs.ticks;
+                debug(SUBMISSION, "current ticks= %d", cs.ticks);
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 		 		break;
 			case DELAY_REQUEST:
-                debug(DEBUG_CLOCK, "Enter %s", "DELAY_REQUESTER");
+                debug(SUBMISSION, "Enter %s", "DELAY_REQUESTER");
                 delayed_task.tid = requester;
                 delayed_task.freedom_tick = cs.ticks + request.data;
-
+                debug(SUBMISSION, "freedom_tick=%d", delayed_task.freedom_tick);
                 heap_insert(&delay_h, delayed_task.freedom_tick, &delayed_task);
 		 		break;
             case DELAY_REQUEST_UNTIL:
-                debug(DEBUG_CLOCK, "Enter %s", "DELAY_REQUESTER_UNTIL");
+                debug(SUBMISSION, "Enter %s", "DELAY_REQUESTER_UNTIL");
                 delayed_task.tid = requester;
                 delayed_task.freedom_tick = request.data;
-
                 heap_insert(&delay_h, delayed_task.freedom_tick, &delayed_task);
 		 		break;
 
@@ -100,6 +96,7 @@ void clock_server_start()
         if(is_heap_empty(&delay_h)){
             continue; 
         }
+        
         node_t root, del;
 		root = heap_root(&delay_h);
         while(root.priority <= cs.ticks)
