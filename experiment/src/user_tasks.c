@@ -1,4 +1,3 @@
-#include <kernel.h>
 #include <user_functions.h>
 #include <debug.h>
 #include <string.h>
@@ -257,16 +256,16 @@ void first_task()
 	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
     /*timer_irq_soft();*/
 	/*timer_irq_soft_clear();*/
-    /*int tid = Create(PRIOR_HIGH, name_server_task); */
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+    int tid = Create(PRIOR_HIGH, name_server_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
-	/*tid = Create(PRIOR_HIGH, clock_server_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+	tid = Create(PRIOR_HIGH, clock_server_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
-	/*tid = Create(PRIOR_HIGH, clock_server_notifier);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+	tid = Create(PRIOR_HIGH, clock_server_notifier);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
-	int tid = Create(PRIOR_LOWEST, idle_task);
+	tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
 	debug(SUBMISSION, "%s", "FirstUserTask: exiting");
