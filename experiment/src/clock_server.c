@@ -80,10 +80,10 @@ void clock_server_start()
 			case DELAY_REQUEST:
                 tid = requester;
                 vint freedom_tick = cs.ticks + request.data;
-                Clock_server_message reply_msg;
-                Reply(tid, &reply_msg, sizeof(reply_msg));
+                /*Clock_server_message reply_msg;*/
+                /*Reply(tid, &reply_msg, sizeof(reply_msg));*/
                 /*debug(SUBMISSION, "request_tick=%d", request.data);*/
-                /*heap_insert(&delay_h, freedom_tick, (void*)tid);*/
+                heap_insert(&delay_h, freedom_tick, (void*)tid);
 		 		break;
             case DELAY_REQUEST_UNTIL:
                 debug(SUBMISSION, "Enter %s", "DELAY_REQUESTER_UNTIL");
