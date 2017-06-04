@@ -297,12 +297,7 @@ int main()
 	vint is_entry_from_hwi = 0;
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
-			if (!is_entry_from_hwi) {
-				td = schedule(&ks);
-			}
-			else {
-				is_entry_from_hwi = 0;
-			}
+			td = schedule(&ks);
 
 			debug(DEBUG_TRACE, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
@@ -325,6 +320,7 @@ int main()
 			if (is_entry_from_hwi) {
 				debug(DEBUG_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
 				irq_handle(&ks);
+				is_entry_from_hwi = 0;
 				continue;
 			}
  
