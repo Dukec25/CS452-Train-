@@ -104,7 +104,7 @@ asm_kernel_swiEntry:
 
 asm_kernel_activate:
 	@ didn't store fp to sp here, might cause problems in future
-	@@r0 = task_descriptor *td
+	@@r0 = task_descriptor *td, r1 = is_entry_from_hwi
 	@ save kernel state
 	mov 	ip, sp 
 	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
@@ -117,10 +117,6 @@ asm_kernel_activate:
 	ldr		r5, [r8, #4]
 	@r6 = td->spsr
 	ldr		r6, [r8, #8]
-	@r7 = td->is_entry_from_hwi
-	ldr		r7, [r8, #16]
-	mov		r1, #0
-	str		r1, [r8, #16]
 	
 	@enter system mode 
 	msr 	CPSR, #SYS_MODE
@@ -134,9 +130,8 @@ asm_kernel_activate:
 	@ return value = r0 = td->retval
 	ldr		r0, [r8, #12]
 
-
 	@ check whether ENTER_FROM_HWI, if not, branch to not_entry_from_hwi
-	CMP		r7, #ENTER_FROM_HWI
+	CMP		r1, #ENTER_FROM_HWI
 	BNE		entry_from_swi
 	BEQ		entry_from_hwi
 entry_from_hwi:
