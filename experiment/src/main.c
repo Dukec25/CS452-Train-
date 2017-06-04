@@ -306,14 +306,14 @@ int main()
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
 			td = schedule(&ks);
-
-            debug(DEBUG_IRQ, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
-                    td->tid, td->state, td->priority, td->sp, td->lr, td->next_task ? td->next_task->tid : INVALID_TID);
-
+		
 			// idle task time measurement before exit kernel
 			if (td->tid == IDLE_TASK) {
 				idle_task_time -= timer4_read();
 			}
+			debug(DEBUG_IRQ, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
+					td->tid, td->state, td->priority, td->sp, td->lr,
+					td->next_task ? td->next_task->tid : INVALID_TID);
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
