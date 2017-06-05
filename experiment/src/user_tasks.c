@@ -190,31 +190,7 @@ void time_send(){
     /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
 	vint *ptimer = timer();
 	uint32 timer_output = TIMER_MAX - *ptimer;
-    debug(DEBUG_TIME, "time = %d", timer_output);
-    Exit();
-}
-
-void rps_server_task()
-{
-	debug(DEBUG_TASK, "enter %s", "rps_server_task");
-    uint32 tid = MyTid();
-
-    debug(DEBUG_TASK, "starting rps_server_start %d", tid); 
-	rps_server_start();
-
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
-    Exit();
-}
-
-void rps_client_task()
-{
-	debug(DEBUG_TASK, "enter %s", "rps_client_task");
-    uint32 tid = MyTid();
-
-    debug(DEBUG_TASK, "starting rps_client_start %d", tid); 
-	rps_client_start();
-
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    debug(DEBUG_TIME, "********************* = %d", timer_output);
     Exit();
 }
 
@@ -240,9 +216,9 @@ void first_task()
 */	
 
 
-    int tid = Create(PRIOR_HIGH, receive_task);
+    int tid = Create(PRIOR_HIGH, time_receive);
     debug(DEBUG_TRACE, "created taskId = %d", tid);
-    tid = Create(PRIOR_HIGH, send_task);  // comment out for now to test generalized priority queue
+    tid = Create(PRIOR_HIGH, time_send);  // comment out for now to test generalized priority queue
 	debug(DEBUG_TRACE, "created taskId = %d", tid);
 
 	/*int tid = Create(PRIOR_LOW, general_task);*/

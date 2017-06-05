@@ -233,7 +233,6 @@ int find_sender(Priority_fifo *blocked_queue, int tid, Task_descriptor **psender
 int main()
 {
     bwsetfifo(COM2, OFF);
-	timer_start();
 
     timer_start();
     asm volatile("MRC p15, 0, r2, c1, c0, 0");
