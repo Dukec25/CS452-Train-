@@ -198,8 +198,9 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(DEBUG_IRQ, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
-					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
+	/*debug(SUBMISSION, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",*/
+					/*td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);*/
+	debug(SUBMISSION, "0x%x", td->lr);
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
 		is_entry_from_hwi = td->is_entry_from_hwi;
