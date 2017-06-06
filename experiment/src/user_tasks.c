@@ -223,9 +223,9 @@ void idle_task()
 	debug(DEBUG_TASK, "enter %s", "idle_task");
     uint32 tid = MyTid();
 
-	int i, j = 0;
-	for (i = 0; i < 300000; i++) {
-        debug(SUBMISSION, "%d", i);
+	uint32 i;
+	for (i = 0; i < 13000000; i++) {
+    //    debug(SUBMISSION, "%d", i);
         /*Pass();*/
 		/*j += 2;*/
 	}
@@ -259,52 +259,50 @@ void first_task()
 {
     int tid;
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
-    /*timer_irq_soft();*/
-	/*timer_irq_soft_clear();*/
-    /*tid = Create(PRIOR_HIGH, name_server_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    /*tid = Create(PRIOR_HIGH, clock_server_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, name_server_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_HIGH, clock_server_notifier);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, clock_server_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_HIGH, clock_server_notifier);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_MEDIUM, kernel3_client_task); */
-    /*debug(SUBMISSION, "created taskId = %d", tid);*/
-    /*int sender_tid;*/
-    /*Message receive_msg;*/
-    /*Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later*/
-    /*IntIntMessage reply_msg;*/
-    /*reply_msg.content1 = 10;*/
-    /*reply_msg.content2 = 20;*/
-    /*debug(SUBMISSION, "reply to taskId = %d", sender_tid);*/
-    /*Reply(sender_tid, &reply_msg, sizeof(reply_msg));*/
+    tid = Create(PRIOR_MEDIUM, kernel3_client_task); 
+    debug(SUBMISSION, "created taskId = %d", tid);
+    int sender_tid;
+    Message receive_msg;
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    IntIntMessage reply_msg;
+    reply_msg.content1 = 10;
+    reply_msg.content2 = 20;
+    debug(SUBMISSION, "reply to taskId = %d", sender_tid);
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
 
-    /*tid = Create(PRIOR_MEDIUM, kernel3_client_task);*/
-    /*debug(SUBMISSION, "created taskId = %d", tid);*/
-    /*Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later*/
-    /*reply_msg.content1 = 23;*/
-    /*reply_msg.content2 = 9;*/
-    /*Reply(sender_tid, &reply_msg, sizeof(reply_msg));*/
+    tid = Create(PRIOR_MEDIUM, kernel3_client_task);
+    debug(SUBMISSION, "created taskId = %d", tid);
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    reply_msg.content1 = 23;
+    reply_msg.content2 = 9;
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
 
-    /*tid = Create(PRIOR_MEDIUM, kernel3_client_task);*/
-    /*debug(SUBMISSION, "created taskId = %d", tid);*/
-    /*Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later*/
-    /*reply_msg.content1 = 33;*/
-    /*reply_msg.content2 = 6;*/
-    /*Reply(sender_tid, &reply_msg, sizeof(reply_msg));*/
+    tid = Create(PRIOR_MEDIUM, kernel3_client_task);
+    debug(SUBMISSION, "created taskId = %d", tid);
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    reply_msg.content1 = 33;
+    reply_msg.content2 = 6;
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
 
-    /*tid = Create(PRIOR_MEDIUM, kernel3_client_task);*/
-    /*debug(SUBMISSION, "created taskId = %d", tid);*/
-    /*Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later*/
-    /*reply_msg.content1 = 71;*/
-    /*reply_msg.content2 = 3;*/
-    /*Reply(sender_tid, &reply_msg, sizeof(reply_msg));*/
-    /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
+    tid = Create(PRIOR_MEDIUM, kernel3_client_task);
+    debug(SUBMISSION, "created taskId = %d", tid);
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    reply_msg.content1 = 71;
+    reply_msg.content2 = 3;
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+    debug(SUBMISSION, "%s", "FirstUserTask: exiting");
 	Exit();
 }

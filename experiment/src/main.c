@@ -4,7 +4,7 @@
 #include <time.h>
 #include <irq.h>
 
-#define IDLE_TASK	1
+#define IDLE_TASK	4
 
 extern void asm_print_sp();
 extern void asm_kernel_swiEntry();
@@ -391,7 +391,5 @@ int main()
 	timer4_stop();
 	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
 	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
-	long long fraction = (idle_task_time * 100) / elapsed_time;
-	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
 	return 0;
 }
