@@ -14,9 +14,9 @@ typedef enum debug_level
 	DEBUG_SYSCALL,
     DEBUG_MESSAGE,
 	DEBUG_TASK,
+	KERNEL1,
     KERNEL2,
     DEBUG_TIME,
-	KERNEL1
 } debug_level;
 
 /* debug */
