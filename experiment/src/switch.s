@@ -78,22 +78,21 @@ asm_get_fp:
 asm_kernel_hwiEntry:
 	@ store user registers on user stack
 	msr		CPSR, #SYS_MODE
-	mov		ip, sp
-	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, sp, lr}
 	msr		CPSR, #IRQ_MODE
 	@ set the most significant bit of lr to 1 and mov to r1
 	sub		lr, lr, #4
-	mov		r1, lr
+	mov		r5, lr
 	@ step back one instruction to compensate the instruction abandoned
-	ORR		r1, r1, #HWI_MASK
+	ORR		r5, r5, #HWI_MASK
 	@ save user spsr
-	mrs     r3, spsr
+	mrs     r6, spsr
 	@ enter svc
-	mrs		r0, CPSR
-	mov		r0, #SVC_MODE
- 	msr 	CPSR, r0
-	msr		spsr, r3
-	mov		r0, r1
+	mrs		r4, CPSR
+	mov		r4, #SVC_MODE
+ 	msr 	CPSR, r4
+	msr		spsr, r6
+	mov		r0, r5
 	ldmia   sp, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, pc}
 
 asm_kernel_swiEntry:
@@ -128,25 +127,27 @@ asm_kernel_activate:
 
 	@ return value = r0 = td->retval
 	ldr		r0, [r8, #12]
-
+	
 	@ check whether ENTER_FROM_HWI, if not, branch to not_entry_from_hwi
 	CMP		r7, #ENTER_FROM_HWI
 	BNE		entry_from_swi
 	BEQ		entry_from_hwi
-entry_from_hwi:
-	@ install user task state and start the task executing, then branch to reinstall registers
-	@@lr = r5	
-	mov		lr, r5
-	b		asm_hwi_reinstall
+
 entry_from_swi:
 	@ install user task state and start the task executing
 	@@lr = r5
 	mov		lr, r5
 	movs 	pc, lr
 
+entry_from_hwi:
+	@ install user task state and start the task executing, then branch to reinstall registers
+	@@lr = r5	
+	mov		lr, r5
+	b		asm_hwi_reinstall
+
 asm_hwi_reinstall:
 	msr 	CPSR, #SYS_MODE
-	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, sp, lr}
 	msr 	CPSR, #SVC_MODE
 	movs 	pc, lr
 

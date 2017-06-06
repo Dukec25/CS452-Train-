@@ -198,8 +198,8 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(DEBUG_IRQ, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
-					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
+	/*debug(SUBMISSION, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",*/
+					/*td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);*/
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
 		is_entry_from_hwi = td->is_entry_from_hwi;
@@ -273,10 +273,10 @@ int main()
 
     bwsetfifo(COM2, OFF);
 
-    asm volatile("MRC p15, 0, r2, c1, c0, 0");
-    asm volatile("ORR r2, r2, #1<<12");
-    asm volatile("ORR r2, r2, #1<<2");
-    asm volatile("MCR p15, 0, r2, c1, c0, 0");
+    /*asm volatile("MRC p15, 0, r2, c1, c0, 0");*/
+    /*asm volatile("ORR r2, r2, #1<<12");*/
+    /*asm volatile("ORR r2, r2, #1<<2");*/
+    /*asm volatile("MCR p15, 0, r2, c1, c0, 0");*/
 
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;
@@ -391,7 +391,5 @@ int main()
 	timer4_stop();
 	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
 	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
-	long long fraction = (idle_task_time * 100) / elapsed_time;
-	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
 	return 0;
 }

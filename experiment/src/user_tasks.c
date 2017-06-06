@@ -223,10 +223,10 @@ void idle_task()
 	debug(DEBUG_TASK, "enter %s", "idle_task");
     uint32 tid = MyTid();
 
-	int i, j = 0;
-	for (i = 0; i < 300000; i++) {
-        /*debug(SUBMISSION, "i = %d", i);*/
-        Pass();
+	uint32 i;
+	for (i = 0; i < 13000000; i++) {
+    //    debug(SUBMISSION, "%d", i);
+        /*Pass();*/
 		/*j += 2;*/
 	}
 	/*debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);*/
@@ -246,7 +246,6 @@ void kernel3_client_task(){
     /*debug(SUBMISSION, "clock_servertid =%d, delayed_time_interval=%d", clock_server_tid, delayed_time_interval);*/
     int n;
     for(n=0; n < num_delays; n++){
-        debug(SUBMISSION, "enter %s", "user task delay");
         Delay(delayed_time_interval); 
         debug(SUBMISSION, "my tid = %d", my_tid);
         debug(SUBMISSION, "delayed_interval = %d", delayed_time_interval);
@@ -258,11 +257,10 @@ void kernel3_client_task(){
 
 void first_task()
 {
+    int tid;
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
-    /*timer_irq_soft();*/
-	/*timer_irq_soft_clear();*/
-    int tid = Create(PRIOR_HIGH, name_server_task);
+
+    tid = Create(PRIOR_HIGH, name_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
     tid = Create(PRIOR_HIGH, clock_server_task);
