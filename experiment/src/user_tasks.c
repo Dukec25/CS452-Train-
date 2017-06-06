@@ -166,12 +166,20 @@ void time_receive(){
     /*vint msg;*/
     char reply_msg[64];
     char msg[64];
-    for(round=0; round < 1000; round++){
-        /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive");*/
+	vint *ptimer = timer();
+	int receive_time = 0;
+	int reply_time = 0;
+    for(round=0; round < 1000000; round++){
+        /* debug(DEBUG_TIME, "!!!!!!!!!enter %s", "about to receive"); */
+		receive_time += *ptimer;
         Receive( &sender_tid, &msg, sizeof(msg) );  
+		receive_time -= *ptimer;
         /*debug(DEBUG_TIME, "sender_tid=%d, received_message=%d", sender_tid, msg);*/
+		reply_time += *ptimer;
         vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+		reply_time -= *ptimer;
     }
+    debug(DEBUG_TIME, "receive time = %d, reply time = %d", receive_time, reply_time);
     Exit();
 }
 
@@ -182,7 +190,7 @@ void time_send(){
     char msg[64];
     char reply_msg[64];
     /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
-    for(round=0; round < 1000; round++){
+    for(round=0; round < 1000000; round++){
         /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");*/
         vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
     }    
@@ -190,7 +198,31 @@ void time_send(){
     /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
 	vint *ptimer = timer();
 	uint32 timer_output = TIMER_MAX - *ptimer;
-    debug(DEBUG_TIME, "********************* = %d", timer_output);
+    debug(DEBUG_TIME, "send time = %d", timer_output);
+    Exit();
+}
+
+void rps_server_task()
+{
+	debug(DEBUG_TASK, "enter %s", "rps_server_task");
+    uint32 tid = MyTid();
+
+    debug(DEBUG_TASK, "starting rps_server_start %d", tid); 
+	rps_server_start();
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
+void rps_client_task()
+{
+	debug(DEBUG_TASK, "enter %s", "rps_client_task");
+    uint32 tid = MyTid();
+
+    debug(DEBUG_TASK, "starting rps_client_start %d", tid); 
+	rps_client_start();
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
     Exit();
 }
 
@@ -215,11 +247,11 @@ void first_task()
     debug(DEBUG_TASK, "created taskId = %d", tid);
 */	
 
-
-    int tid = Create(PRIOR_HIGH, time_receive);
-    debug(DEBUG_TRACE, "created taskId = %d", tid);
+	int tid;
+    tid = Create(PRIOR_HIGH, time_receive);
+	debug(DEBUG_TASK, "created taskId = %d", tid);
     tid = Create(PRIOR_HIGH, time_send);  // comment out for now to test generalized priority queue
-	debug(DEBUG_TRACE, "created taskId = %d", tid);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
 	/*int tid = Create(PRIOR_LOW, general_task);*/
 	/*debug(KERNEL1, "created taskId = %d", tid);*/

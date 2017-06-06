@@ -99,7 +99,10 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
     } else {
         // if the receiver task has not been created
         debug(DEBUG_MESSAGE, "task has not been created, tid=%d", td->tid);
-        reschedule(td, ks);
+       // reschedule(td, ks);
+	    td->state = STATE_SEND_BLK; 
+        insert_task(td, &(ks->send_block));
+        remove_task(td, &(ks->ready_queue));
         td->retval = -2;
     }
 }
