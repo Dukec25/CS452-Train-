@@ -1,11 +1,33 @@
 #include <irq.h>
 #include <debug.h>
 #include <kernel.h>
+#include <uart_irq.h>
 
 static uint32 timer3_irq_mask()
 {
 	return 0x1 << (TIMER3_UNDER_FLOW_INTERRUPT - 33);
 }
+
+static uint32 uart2_irq_mask()
+{
+	return 0x1 << (UART2_GENERAL_INTERRUPT - 33);
+}
+
+static uint32 uart_modem_irq_mask()
+{
+    return 0x1;
+}
+
+static uint32 uart_receive_irq_mask()
+{
+    return 0x1 << 1;
+}
+
+static uint32 uart_transmit_irq_mask()
+{
+    return 0x1 << 2;
+}
+
 
 void irq_enable()
 {
@@ -28,7 +50,9 @@ void irq_handle(Kernel_state *ks)
 	debug(DEBUG_IRQ, "*vic2_irq_status = 0x%x", *vic2_irq_status);
 	if (*vic2_irq_status & timer3_irq_mask()) {
 		timer3_irq_handle(ks);
-	}
+    } else if(*vic2_irq_status & uart2_irq_mask()){
+        uart2_irq_handle(ks);
+    }
 }
 
 void timer3_enable()
@@ -82,7 +106,7 @@ void timer3_irq_soft_clear()
 void timer3_irq_handle(Kernel_state *ks)
 {
 	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer3_irq_handle");
-	timer3_clear(); // is this needed to clear the timer manually
+	timer3_clear();
 	if (ks->blocked_on_event[0]) {
 		// notify events await on timer
 		volatile Task_descriptor *td = ks->event_blocks[0];
@@ -93,4 +117,14 @@ void timer3_irq_handle(Kernel_state *ks)
         insert_task(td, &(ks->ready_queue));
 	}
 	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
+}
+
+void uart2_irq_handle(Kernel_state *ks){
+    // check UART interrupt status 
+    vint *uart2_intr = (vint *)UART2_INTR;
+    if(*uart2_intr & uart_receive_irq_mask()){
+        // receive interrupt
+    } else if(*uart2_intr & uart_transmit_irq_mask()){
+        // transmit interrupt
+    }
 }
