@@ -198,7 +198,7 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(DEBUG_IRQ, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
+	debug(SUBMISSION, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
@@ -299,7 +299,9 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    irq_enable();
+    /*irq_enable();*/
+    uart2_irq_soft();
+    /*uart2_irq_enable();*/
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
@@ -354,6 +356,7 @@ int main()
             uint32 arg4 = *((vint*) ((int) td->sp + 4));
 			debug(DEBUG_TRACE, "arg0 = %d, arg1 = %d", arg0, arg1);
 
+            uart2_irq_soft_clear();
 			switch(req){
 				case 1:		
 					k_create(td, &ks, (void (*) ()) arg1, tid++, arg0);
@@ -384,7 +387,7 @@ int main()
 					break;
 			}
 	}
-    irq_disable();
+    /*irq_disable();*/
 	
 	// idle task measurement
 	elapsed_time = timer4_read() - elapsed_time;
