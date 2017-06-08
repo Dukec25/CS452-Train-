@@ -48,3 +48,16 @@ void uart2_device_enable()
     *uart2_ctrl |= TIEN_MASK;
 }
 
+int Getc(int server_tid, int channel){
+	vint *flags, *data;
+    channel_select(channel, &flags, &data);
+
+}
+
+int Putc(int server_tid, int channel, char ch){
+	vint *flags, *data;
+    channel_select(channel, &flags, &data);
+
+}
+
+

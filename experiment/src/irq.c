@@ -128,3 +128,7 @@ void uart2_irq_handle(Kernel_state *ks){
         // transmit interrupt
     }
 }
+
+void uart_receive_irq_clear(){
+
+}
