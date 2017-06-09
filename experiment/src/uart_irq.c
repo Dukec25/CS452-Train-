@@ -49,15 +49,25 @@ void uart2_device_enable()
 }
 
 int Getc(int server_tid, int channel){
-	vint *flags, *data;
-    channel_select(channel, &flags, &data);
-
+	/*vint *flags, *data;*/
+    /*channel_select(channel, &flags, &data);*/
+	int io_server_channel2_id = WhoIs("IO_SERVER_CHANNEL2");
+    Delivery request;
+    request.type = GETC;
+    Delivery reply_msg;
+    send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
+    return reply_msg.data;
 }
 
 int Putc(int server_tid, int channel, char ch){
-	vint *flags, *data;
-    channel_select(channel, &flags, &data);
-
+	/*vint *flags, *data;*/
+    /*channel_select(channel, &flags, &data);*/
+	int io_server_channel2_id = WhoIs("IO_SERVER_CHANNEL2");
+    Delivery request;
+    request.type = GETC;
+    Delivery reply_msg;
+    send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
+    return reply_msg.data;
 }
 
 

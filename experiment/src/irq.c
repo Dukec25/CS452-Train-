@@ -125,7 +125,10 @@ void uart2_irq_handle(Kernel_state *ks){
     if(*uart2_intr & uart_receive_irq_mask()){
         // receive interrupt
     } else if(*uart2_intr & uart_transmit_irq_mask()){
-        // transmit interrupt
+        // turn on the transmit interrupt
+        vint *uart2_ctrl = (vint *) UART2_CTRL;
+        *uart2_ctrl |= TIEN_MASK;
+        
     }
 }
 
