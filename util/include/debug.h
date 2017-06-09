@@ -16,6 +16,7 @@ typedef enum debug_level
     DEBUG_TIME,
     DEBUG_CLOCK,
     DEBUG_INFO,
+    DEBUG_UART_IRQ,
     SUBMISSION
 } debug_level;
 

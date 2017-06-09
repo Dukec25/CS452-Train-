@@ -4,6 +4,8 @@
 #include <name_server.h>
 #include <rps.h>
 #include <clock_server.h>
+#include <io_server.h>
+#include <uart_irq.h>
 
 #define TIMER_MAX	0xFFFFFFFF
 
@@ -224,13 +226,14 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
-	for (i = 0; i < 300000; i++) {
-        debug(SUBMISSION, "i = %d", i);
+    while(1){
+	/*for (i = 0; i < 300000; i++) {*/
+        /*debug(SUBMISSION, "i = %d", i);*/
         /*Pass();*/
 		/*j += 2;*/
 	}
 	/*debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);*/
-    Exit();
+    /*Exit();*/
 }
 
 void kernel3_client_task(){
@@ -256,25 +259,53 @@ void kernel3_client_task(){
     Exit();
 }
 
+void receive_notifier(){
+	int io_server_id = WhoIs("IO_SERVER_CHANNEL2");
+    Delivery request;
+    request.type = RECEIVE_RDY;
+    Delivery reply_msg;
+    while(1){
+        request.data = AwaitEvent(RCV_RDY); 
+        Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
+        debug(SUBMISSION, "receive_notifer get awaked= %s", "");
+    }
+}
+
+void transmit_notifier(){
+	int io_server_id = WhoIs("IO_SERVER_CHANNEL2");
+    Delivery request;
+    request.type = TRANSMIT_RDY;
+    Delivery reply_msg;
+    while(1){
+        Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
+        request.data = AwaitEvent(XMIT_RDY);
+    }
+}
+
+void io_test_task(){
+    vint val = Getc();
+    debug(SUBMISSION, "received char= %d", val);
+}
+
 void first_task()
 {
-    int tid;
 	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-	/*debug(DEBUG_TASK, "trigger timer_irq_sort(), priority=%d", PRIOR_MEDIUM);*/
-	debug(DEBUG_TASK, "!!!!!!!!!!!!!!!!!! first_task, priority=%d", PRIOR_MEDIUM);
-    /*timer_irq_soft();/
-	/*timer_irq_soft_clear();*/
-    /*int tid = Create(PRIOR_HIGH, name_server_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+    int tid = Create(PRIOR_HIGH, name_server_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
+    tid = Create(PRIOR_HIGH, receive_notifier);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_MEDIUM, io_test_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
     /*tid = Create(PRIOR_HIGH, clock_server_task);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
     /*tid = Create(PRIOR_HIGH, clock_server_notifier);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    /*tid = Create(PRIOR_LOWEST, idle_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_LOWEST, idle_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
     /*tid = Create(PRIOR_MEDIUM, kernel3_client_task); */
     /*debug(SUBMISSION, "created taskId = %d", tid);*/

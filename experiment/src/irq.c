@@ -124,14 +124,25 @@ void uart2_irq_handle(Kernel_state *ks){
     vint *uart2_intr = (vint *)UART2_INTR;
     if(*uart2_intr & uart_receive_irq_mask()){
         // receive interrupt
+        if (ks->blocked_on_event[RCV_RDY]) {
+            // notify events await on timer
+            volatile Task_descriptor *td = ks->event_blocks[RCV_RDY];
+            ks->event_blocks[RCV_RDY] = NULL;
+            ks->blocked_on_event[RCV_RDY] = 0;
+            td->state = STATE_READY;
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up getc notifier %d, ", td->tid);
+            insert_task(td, &(ks->ready_queue));
+        }
     } else if(*uart2_intr & uart_transmit_irq_mask()){
-        // turn on the transmit interrupt
-        vint *uart2_ctrl = (vint *) UART2_CTRL;
-        *uart2_ctrl |= TIEN_MASK;
-        
+        if (ks->blocked_on_event[XMIT_RDY]) {
+            // notify events await on timer
+            volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];
+            ks->event_blocks[XMIT_RDY] = NULL;
+            ks->blocked_on_event[XMIT_RDY] = 0;
+            td->state = STATE_READY;
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up getc notifier %d, ", td->tid);
+            insert_task(td, &(ks->ready_queue));
+        }
     }
 }
 
-void uart_receive_irq_clear(){
-
-}

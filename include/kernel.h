@@ -31,6 +31,12 @@ typedef struct IntIntMessage {
     vint                content2;
 } IntIntMessage;
 
+typedef enum Await_event{
+    TIMER3_RDY,
+    RCV_RDY,
+    XMIT_RDY    
+} Await_event;
+
 /* task descriptor */
 typedef enum Task_state {
 	STATE_ACTIVE, 

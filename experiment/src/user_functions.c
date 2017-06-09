@@ -62,13 +62,15 @@ int Send( int tid, void *msg, int msglen, void *reply, int replylen )
 int Receive( int *tid, void *msg, int msglen )
 {
     debug(DEBUG_SYSCALL, "this is in %s", "user Receive");
-    asm_kernel_receive(tid, msg, msglen);
+    int result = asm_kernel_receive(tid, msg, msglen);
+    return result;
 }
 
 int Reply( int tid, void *reply, int replylen )
 {
     debug(DEBUG_SYSCALL, "this is in %s", "user Reply");
-    asm_kernel_reply(tid, reply, replylen);
+    int result = asm_kernel_reply(tid, reply, replylen);
+    return result;
 }
 
 int AwaitEvent(int eventType)

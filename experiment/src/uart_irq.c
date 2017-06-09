@@ -1,7 +1,4 @@
 #include <uart_irq.h>
-#include <debug.h>
-#include <kernel.h>
-#include <irq.h>
 
 static uint32 uart2_irq_mask()
 {
@@ -55,18 +52,17 @@ int Getc(int server_tid, int channel){
     Delivery request;
     request.type = GETC;
     Delivery reply_msg;
-    send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
+    Send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
     return reply_msg.data;
 }
 
 int Putc(int server_tid, int channel, char ch){
-	/*vint *flags, *data;*/
-    /*channel_select(channel, &flags, &data);*/
 	int io_server_channel2_id = WhoIs("IO_SERVER_CHANNEL2");
     Delivery request;
-    request.type = GETC;
+    request.type = PUTC;
+    request.data = ch;
     Delivery reply_msg;
-    send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
+    Send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
     return reply_msg.data;
 }
 
