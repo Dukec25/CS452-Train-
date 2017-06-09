@@ -51,6 +51,7 @@ void irq_handle(Kernel_state *ks)
 	if (*vic2_irq_status & timer3_irq_mask()) {
 		timer3_irq_handle(ks);
     } else if(*vic2_irq_status & uart2_irq_mask()){
+        debug(DEBUG_UART_IRQ, "handle uart interupt %s", "");
         uart2_irq_handle(ks);
     }
 }
@@ -123,6 +124,7 @@ void uart2_irq_handle(Kernel_state *ks){
     // check UART interrupt status 
     vint *uart2_intr = (vint *)UART2_INTR;
     if(*uart2_intr & uart_receive_irq_mask()){
+        debug(DEBUG_UART_IRQ, "handle rcv interupt %s", "");
         // receive interrupt
         if (ks->blocked_on_event[RCV_RDY]) {
             // notify events await on timer
@@ -134,6 +136,7 @@ void uart2_irq_handle(Kernel_state *ks){
             insert_task(td, &(ks->ready_queue));
         }
     } else if(*uart2_intr & uart_transmit_irq_mask()){
+        debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
         if (ks->blocked_on_event[XMIT_RDY]) {
             // notify events await on timer
             volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];

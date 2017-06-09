@@ -198,7 +198,7 @@ int remove_task(Task_descriptor *td, Priority_fifo *ppriority_queue)
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(SUBMISSION, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
+	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
@@ -272,6 +272,7 @@ int main()
 	elapsed_time = timer4_read();
 
     bwsetfifo(COM2, OFF);
+    bwsetspeed(COM2, 115200);
 
     asm volatile("MRC p15, 0, r2, c1, c0, 0");
     asm volatile("ORR r2, r2, #1<<12");
@@ -300,8 +301,8 @@ int main()
 
 	// enable irq
     /*irq_enable();*/
-    uart2_irq_soft();
-    /*uart2_irq_enable();*/
+    /*uart2_irq_soft();*/
+    uart2_irq_enable();
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
@@ -338,7 +339,7 @@ int main()
 			update_td(td, cur_lr);
 			
 			if (is_entry_from_hwi) {
-				debug(DEBUG_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
+				debug(DEBUG_UART_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
 				irq_handle(&ks);
 				is_entry_from_hwi = 0;
 				continue;

@@ -49,10 +49,11 @@ int Getc(int server_tid, int channel){
 	/*vint *flags, *data;*/
     /*channel_select(channel, &flags, &data);*/
 	int io_server_channel2_id = WhoIs("IO_SERVER_CHANNEL2");
+    debug(DEBUG_UART_IRQ, "enter Getc, server is %d, type = %d", io_server_channel2_id, GETC);
     Delivery request;
     request.type = GETC;
     Delivery reply_msg;
-    Send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
+    Send(io_server_channel2_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
     return reply_msg.data;
 }
 
@@ -62,7 +63,7 @@ int Putc(int server_tid, int channel, char ch){
     request.type = PUTC;
     request.data = ch;
     Delivery reply_msg;
-    Send(io_server_channel2_id, request, sizeof(request), reply_msg, sizeof(reply_msg) );
+    Send(io_server_channel2_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
     return reply_msg.data;
 }
 

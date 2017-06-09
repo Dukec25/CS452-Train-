@@ -78,6 +78,15 @@ void clock_server_task(){
     Exit();
 }
 
+void io_server_task(){
+	debug(DEBUG_TASK, "enter %s", "io_server_task");
+    uint32 tid = MyTid();
+    debug(DEBUG_UART_IRQ, "starting io_server_task tid = %d", tid); 
+	io_server_start();
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
 void clock_server_notifier(){
 	debug(DEBUG_TASK, "enter %s", "clock_server_notifier");
     Delivery request; 
@@ -259,7 +268,8 @@ void kernel3_client_task(){
     Exit();
 }
 
-void receive_notifier(){
+void rcv_notifier(){
+    debug(DEBUG_UART_IRQ, "enter = %s", "rcv_notifier");
 	int io_server_id = WhoIs("IO_SERVER_CHANNEL2");
     Delivery request;
     request.type = RECEIVE_RDY;
@@ -267,7 +277,7 @@ void receive_notifier(){
     while(1){
         request.data = AwaitEvent(RCV_RDY); 
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
-        debug(SUBMISSION, "receive_notifer get awaked= %s", "");
+        debug(DEBUG_UART_IRQ, "receive_notifer get awaked= %s", "");
     }
 }
 
@@ -293,7 +303,10 @@ void first_task()
     int tid = Create(PRIOR_HIGH, name_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_HIGH, receive_notifier);
+    tid = Create(PRIOR_HIGH, io_server_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_HIGH, rcv_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
     tid = Create(PRIOR_MEDIUM, io_test_task);

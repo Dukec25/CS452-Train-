@@ -9,7 +9,7 @@ static void initialize(Io_server *io){
 
 void io_server_start()
 {
-	debug(DEBUG_UART_IRQ, "Enter %s", "clock_server_start");
+	debug(DEBUG_UART_IRQ, "Enter %s", "io_server_start");
 
 	vint register_result = RegisterAs("IO_SERVER_CHANNEL2");
 	Io_server ioServer;
@@ -24,10 +24,12 @@ void io_server_start()
 		Delivery request;
         Delivery reply_msg;
 		Receive(&requester, &request, sizeof(request));
+        debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
         vint tid;
         vint* character; 
 		switch(request.type) {
             case TRANSMIT_RDY:
+                debug(DEBUG_UART_IRQ, "io server %s", "XMIT RDY request");
                 buffer_empty = 1;
                 transmit_notifier = requester;
                 if(!is_fifo_empty(&ioServer.transmit_q)){
@@ -44,6 +46,7 @@ void io_server_start()
                 }
                 break;
             case RECEIVE_RDY:
+                debug(DEBUG_UART_IRQ, "io server %s", "RCV RDY request");
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 if(!is_fifo_empty(&ioServer.get_q)){
                     vint* client; 
@@ -60,17 +63,21 @@ void io_server_start()
                 }
                 break;
             case GETC:
+                debug(DEBUG_UART_IRQ, "enter %s", "IO SERVER, REQUEST GETC");
                 if(!is_fifo_empty(&ioServer.receive_q)){
+                    debug(DEBUG_UART_IRQ, "Fifo %s", "receive_q is not empty");
                     vint* rcv_data; 
                     vint result = fifo_get(&ioServer.transmit_q, &rcv_data); // character might cause error
                     Delivery reply_client_msg;
                     reply_client_msg.data = *rcv_data;
                     Reply(requester, &reply_client_msg, sizeof(reply_client_msg));
                 } else{
+                    debug(DEBUG_UART_IRQ, "Fifo %s", "receive_q is empty");
                     fifo_put(&ioServer.get_q, requester);
                 }
                 break;
             case PUTC:
+                debug(DEBUG_UART_IRQ, "enter %s", "IO SERVER, REQUEST PUTC");
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 if(buffer_empty){
                     vint *pdata = (vint *)(UART2_BASE + UART_DATA_OFFSET);
