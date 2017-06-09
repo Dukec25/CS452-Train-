@@ -132,7 +132,11 @@ void uart2_irq_handle(Kernel_state *ks){
             ks->event_blocks[RCV_RDY] = NULL;
             ks->blocked_on_event[RCV_RDY] = 0;
             td->state = STATE_READY;
-            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up getc notifier %d, ", td->tid);
+            // read value from uart2 data register
+            vint *uart2_ctrl = (vint *) UART2_CTRL;
+            vint *pdata = (vint *)(UART2_BASE + UART_DATA_OFFSET);
+            td->retval = *pdata;
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up rcv notifier %d, ", td->tid);
             insert_task(td, &(ks->ready_queue));
         }
     } else if(*uart2_intr & uart_transmit_irq_mask()){
@@ -143,9 +147,8 @@ void uart2_irq_handle(Kernel_state *ks){
             ks->event_blocks[XMIT_RDY] = NULL;
             ks->blocked_on_event[XMIT_RDY] = 0;
             td->state = STATE_READY;
-            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up getc notifier %d, ", td->tid);
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid);
             insert_task(td, &(ks->ready_queue));
         }
     }
 }
-

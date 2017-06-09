@@ -42,7 +42,7 @@ void uart2_device_enable()
 	/*debug(DEBUG_UART_IRQ, "enter %s", "uart_device_enable");*/
 	vint *uart2_ctrl = (vint *) UART2_CTRL;
     *uart2_ctrl |= RIEN_MASK;
-    *uart2_ctrl |= TIEN_MASK;
+    /**uart2_ctrl |= TIEN_MASK;*/
 }
 
 int Getc(int server_tid, int channel){
