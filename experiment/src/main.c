@@ -271,13 +271,15 @@ int main()
 	timer4_start();
 	elapsed_time = timer4_read();
 
-    bwsetfifo(COM2, OFF);
+    bwsetspeed(COM1, 2400);
+    bwsetfifo(COM1, OFF);
     bwsetspeed(COM2, 115200);
+    bwsetfifo(COM2, OFF);
 
-    asm volatile("MRC p15, 0, r2, c1, c0, 0");
-    asm volatile("ORR r2, r2, #1<<12");
-    asm volatile("ORR r2, r2, #1<<2");
-    asm volatile("MCR p15, 0, r2, c1, c0, 0");
+    /*asm volatile("MRC p15, 0, r2, c1, c0, 0");*/
+    /*asm volatile("ORR r2, r2, #1<<12");*/
+    /*asm volatile("ORR r2, r2, #1<<2");*/
+    /*asm volatile("MCR p15, 0, r2, c1, c0, 0");*/
 
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;

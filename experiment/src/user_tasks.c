@@ -281,7 +281,8 @@ void rcv_notifier(){
     }
 }
 
-void transmit_notifier(){
+void xmit_notifier(){
+    debug(DEBUG_UART_IRQ, "enter = %s", "xmit_notifier");
 	int io_server_id = WhoIs("IO_SERVER_CHANNEL2");
     Delivery request;
     request.type = TRANSMIT_RDY;
@@ -293,20 +294,24 @@ void transmit_notifier(){
 }
 
 void io_test_task(){
-    vint val = Getc();
-    debug(SUBMISSION, "received char= %d", val);
+    /*vint val = Getc(0);*/
+    Putc(0, 100);
+    /*debug(SUBMISSION, "received char= %d", val);*/
 }
 
 void first_task()
 {
-	debug(DEBUG_TASK, "In user task first_task, priority=%d", PRIOR_MEDIUM);
+	debug(DEBUG_UART_IRQ, "In user task first_task, priority=%d", PRIOR_MEDIUM);
     int tid = Create(PRIOR_HIGH, name_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
     tid = Create(PRIOR_HIGH, io_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_HIGH, rcv_notifier);
+    /*tid = Create(PRIOR_HIGH, rcv_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    tid = Create(PRIOR_HIGH, xmit_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
     tid = Create(PRIOR_MEDIUM, io_test_task);
