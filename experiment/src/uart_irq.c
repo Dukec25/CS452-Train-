@@ -91,7 +91,7 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	case XMIT:
 		*uart_ctrl &= ~TIEN_MASK;
 		break;
-	case RCV
+	case RCV:
 		*uart_ctrl &= ~RIEN_MASK;
 		break;
 	}
