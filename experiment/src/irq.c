@@ -134,13 +134,13 @@ void uart_irq_handle(int channel, Kernel_state *ks){
 	switch (channel) {
 	case COM1:
 		uart_intr = (vint *) UART1_INTR;
-        *pdata = (vint *) UART1_DATA;
+        pdata = (vint *) UART1_DATA;
         receive_event = RCV_UART1_RDY;
         transmit_event = XMIT_UART1_RDY;
 		break;
 	case COM2:
 		uart_intr = (vint *) UART2_INTR;
-        *pdata = (vint *) UART2_DATA;
+        pdata = (vint *) UART2_DATA;
         receive_event = RCV_UART2_RDY;
         transmit_event = XMIT_UART2_RDY;
 		break;
