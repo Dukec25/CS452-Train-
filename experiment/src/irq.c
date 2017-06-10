@@ -47,14 +47,15 @@ void irq_handle(Kernel_state *ks)
 {
 	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
-	debug(DEBUG_UART_IRQ, "*vic2_irq_status = 0x%x, uart1_irq_mask = 0x%x", *vic2_irq_status, uart1_irq_mask());
-//	if (*vic2_irq_status & timer3_irq_mask() != 0) {
-//		timer3_irq_handle(ks);
-//    }
-//	else if (*vic2_irq_status & uart1_irq_mask() != 0) {
+	debug(DEBUG_UART_IRQ, "*vic2_irq_status = 0x%x", *vic2_irq_status);
+	if ((*vic2_irq_status & timer3_irq_mask()) != 0) {
+		timer3_irq_handle(ks);
+    }
+	// else if doesn't work for some reason
+	if ((*vic2_irq_status & uart1_irq_mask()) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "");
         uart1_irq_handle(ks);
-//    }
+    }
 }
 
 void timer3_enable()
@@ -144,7 +145,7 @@ void uart1_irq_handle(Kernel_state *ks){
 	else if (*uart1_intr & uart_transmit_irq_mask()) {
 */      
 		debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
-//		uart1_irq_soft_clear();
+		uart1_irq_soft_clear();
         if (ks->blocked_on_event[XMIT_RDY]) {
             // notify events await on transmit ready
             volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];

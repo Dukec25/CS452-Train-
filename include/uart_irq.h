@@ -20,6 +20,8 @@
 #define UART2_INTR	(UART2_BASE + UART_INTR_OFFSET) // Interrupt identification and clear registers
 */
 
+#define UART1_RX_INTERRUPT		23
+#define UART1_TX_INTERRUPT		24
 #define	UART1_GENERAL_INTERRUPT	52
 #define UART1_CTRL  (UART1_BASE + UART_CTLR_OFFSET) 
 	#define UARTEN_MASK	0x1

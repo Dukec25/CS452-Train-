@@ -21,7 +21,6 @@ void uart1_irq_enable()
 {
     mode_irq();
     uart1_vic_enable();
-//    uart1_device_enable();
 }
 
 void uart1_irq_disable()
@@ -50,14 +49,12 @@ void uart1_device_enable()
 {
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_device_enable");
 	vint *uart1_ctrl = (vint *) UART1_CTRL;
-	debug(DEBUG_UART_IRQ, "uart1_ctrl = 0x%x", uart1_ctrl);
     // receive interrupt 
     /**uart1_ctrl |= RIEN_MASK;*/ 
     // transmit interrupt
     *uart1_ctrl |= TIEN_MASK;
-	debug(DEBUG_UART_IRQ, "*uart1_ctrl = 0x%x", *uart1_ctrl);
 	vint *uart1_flag = (vint *) (UART1_BASE + UART_FLAG_OFFSET);
-	debug(DEBUG_UART_IRQ, "*uart1_flag = 0x%x", *uart1_flag & TXFF_MASK);
+	debug(DEBUG_UART_IRQ, "*uart1_flag = 0x%x", *uart1_flag);
 }
 
 void uart1_device_disable()
@@ -66,7 +63,6 @@ void uart1_device_disable()
 	vint *uart1_ctrl = (vint *) UART1_CTRL;
     // transmit interrupt
     *uart1_ctrl &= ~TIEN_MASK;
-	*uart1_ctrl &= ~UARTEN_MASK;
 }
 
 int Getc(int channel){
