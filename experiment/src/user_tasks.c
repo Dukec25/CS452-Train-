@@ -52,8 +52,6 @@ void receive_task()
 	debug(DEBUG_TASK, "sender_tid=%d, received_message=%s", sender_tid, msg.content);
 	debug(DEBUG_TASK, "receive task id= %d, prepare to reply task id= %d", tid, sender_tid);
     char message[] = "I am great, wanna have sashimi together???";
-    /*char message[128];*/
-    /*char* first_aligned = &message + 8 - (&message % 8);*/
     Message reply_msg;
     memcpy(&reply_msg.content, "I am great, wanna have sashimi together???", sizeof("I am great, wanna have sashimi together???"));
     vint reply_result = Reply(sender_tid, &reply_msg, sizeof(reply_msg));
@@ -68,41 +66,6 @@ void name_server_task()
 	name_server_start();
 	debug(DEBUG_TASK, "tid =%d exiting", tid);
     Exit();
-}
-
-void clock_server_task(){
-	debug(DEBUG_TASK, "enter %s", "clock_server_task");
-    uint32 tid = MyTid();
-    debug(DEBUG_TASK, "starting clock_server_task tid = %d", tid); 
-	clock_server_start();
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
-    Exit();
-}
-
-/*
-void io_server_task(){
-	debug(DEBUG_TASK, "enter %s", "io_server_task");
-    uint32 tid = MyTid();
-    debug(DEBUG_UART_IRQ, "starting io_server_task tid = %d", tid); 
-	io_server_start();
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
-    Exit();
-}
-*/
-
-void clock_server_notifier(){
-	debug(DEBUG_TASK, "enter %s", "clock_server_notifier");
-    Delivery request; 
-    Clock_server_message reply_message;
-    vint clock_server_tid = WhoIs("CLOCK_SERVER");
-    while(1){
-        debug(DEBUG_TASK, "before enter %s", "awaitEvent");
-        request.data = AwaitEvent(TIMER3_RDY, -1); // evtType = here should be clock update event;
-        debug(DEBUG_TASK, "after enter %s", "awaitEvent");
-        request.type = CLOCK_NOTIFIER;
-        Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
-        /*debug(SUBMISSION, "after enter %s", "clock notify");*/
-    }
 }
 
 void name_client_task1()
@@ -220,16 +183,28 @@ void rps_client_task()
     Exit();
 }
 
-void event_task()
-{
-	debug(DEBUG_TASK, "enter %s", "event_task");
+void clock_server_task(){
+	debug(DEBUG_TASK, "enter %s", "clock_server_task");
     uint32 tid = MyTid();
-
-    debug(DEBUG_TASK, "starting event_task %d", tid); 
-	int value = AwaitEvent(TIMER3_RDY, -1);
-
-	debug(DEBUG_TASK, "value = %d, tid =%d exiting", value, tid);
+    debug(DEBUG_TASK, "starting clock_server_task tid = %d", tid); 
+	clock_server_start();
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
     Exit();
+}
+
+void clock_server_notifier(){
+	debug(DEBUG_TASK, "enter %s", "clock_server_notifier");
+    Delivery request; 
+    Clock_server_message reply_message;
+    vint clock_server_tid = WhoIs("CLOCK_SERVER");
+    while(1){
+        debug(DEBUG_TASK, "before enter %s", "awaitEvent");
+        request.data = AwaitEvent(TIMER3_RDY, -1); // evtType = here should be clock update event;
+        debug(DEBUG_TASK, "after enter %s", "awaitEvent");
+        request.type = CLOCK_NOTIFIER;
+        Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
+        /*debug(SUBMISSION, "after enter %s", "clock notify");*/
+    }
 }
 
 void idle_task()
@@ -270,39 +245,6 @@ void kernel3_client_task(){
     debug(SUBMISSION, "completed task ****= %d", MyTid());
     Exit();
 }
-
-/*
-void rcv_notifier(){
-    debug(DEBUG_UART_IRQ, "enter = %s", "rcv_notifier");
-	int io_server_id = WhoIs("IO_SERVER_CHANNEL");
-    Delivery request;
-    request.type = RECEIVE_RDY;
-    Delivery reply_msg;
-    while(1){
-        request.data = AwaitEvent(RCV_RDY, -1); 
-        Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
-        debug(DEBUG_UART_IRQ, "receive_notifer get awaked= %s", "");
-    }
-}
-
-void xmit_notifier(){
-    debug(DEBUG_UART_IRQ, "enter = %s", "xmit_notifier");
-	int io_server_id = WhoIs("IO_SERVER_CHANNEL");
-    Delivery request;
-    request.type = TRANSMIT_RDY;
-    Delivery reply_msg;
-    while(1) {
-        Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
-		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
-        AwaitEvent(XMIT_RDY, reply_msg.data);
-		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-		vint *pdata = (vint *) UART1_DATA;
-		debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
-		*pdata = reply_msg.data;
-		debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
-    }
-}
-*/
 
 void io_test_task(){
 	int i = 0;
@@ -390,10 +332,6 @@ void uart1_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-	//	vint *pdata = (vint *) UART1_DATA;
-	//	debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
-	//	*pdata = reply_msg.data;
-	//	debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
     }
 }
 
@@ -408,11 +346,17 @@ void uart2_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART2_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-	//	vint *pdata = (vint *) UART1_DATA;
-	//	debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
-	//	*pdata = reply_msg.data;
-	//	debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
     }
+}
+
+void io_test_task(){
+	int i = 0;
+	for (i = 0; i < 10; i++) {
+    	char val = Getc(COM1);
+		debug(DEBUG_UART_IRQ, "return from Getc, receive %d", val);
+        Putc(COM1, val);
+	}
+	Exit();
 }
 
 void first_task()
@@ -430,11 +374,11 @@ void first_task()
     //tid = Create(PRIOR_HIGH, xmit_notifier);
     //debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_HIGH, uart1_rcv_server);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-
-    tid = Create(PRIOR_HIGH, uart2_rcv_server);
+    tid = Create(PRIOR_HIGH, uart1_rcv_server);
     debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    /*tid = Create(PRIOR_HIGH, uart2_rcv_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
     tid = Create(PRIOR_HIGH, uart1_xmit_server);
     debug(DEBUG_TASK, "created taskId = %d", tid);
@@ -445,8 +389,12 @@ void first_task()
     /*tid = Create(PRIOR_HIGH, uart1_rcv_notifier);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    tid = Create(PRIOR_HIGH, uart2_rcv_notifier);
+
+    tid = Create(PRIOR_HIGH, uart1_rcv_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    /*tid = Create(PRIOR_HIGH, uart2_rcv_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
     tid = Create(PRIOR_HIGH, uart1_xmit_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
