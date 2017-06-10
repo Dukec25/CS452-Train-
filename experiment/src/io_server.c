@@ -5,8 +5,7 @@ static void initialize(Io_server *io){
     fifo_init(&io->transmit_q);
     fifo_init(&io->receive_q);
 }
-
-
+/*
 void io_server_start(int channel)
 {
 	debug(DEBUG_UART_IRQ, "Enter %s", "io_server_start");
@@ -100,7 +99,7 @@ void io_server_start(int channel)
 		}
 	}
 }
-
+*/
 void io_server_receive_start(int channel){
 	debug(DEBUG_UART_IRQ, "Enter %s", "io_server_receive_start");
 

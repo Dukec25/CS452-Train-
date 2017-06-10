@@ -58,18 +58,18 @@ void uart_device_enable(int channel, UART_IRQ_TYPE type)
 	vint *uart_ctrl;
 	uint32 mask;
 	switch (channel) {
-	case com1:
+	case COM1:
 		uart_ctrl = (vint *) UART1_CTRL;
 		break;
-	case com2:
+	case COM2:
 		uart_ctrl = (vint *) UART2_CTRL;
 		break;
 	}
 	switch (type) {
-	case xmit:
-		mask = tien_mask;
-	case rcv:
-		mask = rien_mask;
+	case XMIT:
+		mask = TIEN_MASK;
+	case RCV:
+		mask = RIEN_MASK;
 	}
     *uart_ctrl |= mask; 
 }
@@ -80,18 +80,18 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	vint *uart_ctrl;
 	uint32 mask;
 	switch (channel) {
-	case com1:
+	case COM1:
 		uart_ctrl = (vint *) UART1_CTRL;
 		break;
-	case com2:
+	case COM2:
 		uart_ctrl = (vint *) UART2_CTRL;
 		break;
 	}
 	switch (type) {
-	case xmit:
-		mask = tien_mask;
-	case rcv:
-		mask = rien_mask;
+	case XMIT:
+		mask = TIEN_MASK;
+	case RCV:
+		mask = RIEN_MASK;
 	}
     *uart_ctrl &= ~mask; 
 }
@@ -100,10 +100,10 @@ int Getc(int channel){
 	int io_server_id;
 	switch (channel) {
 	case COM1:
-		io_server_id = WhoIs("IO_SERVER_CHANNEL1");
+		io_server_id = WhoIs("IO_SERVER_UART1_RECEIVE");
 		break;
 	case COM2:
-		io_server_id = WhoIs("IO_SERVER_CHANNEL2");
+		io_server_id = WhoIs("IO_SERVER_UART2_RECEIVE");
 		break;
 	}
     debug(DEBUG_UART_IRQ, "enter Getc, server is %d, type = %d", io_server_id, GETC);
@@ -118,10 +118,10 @@ int Putc(int channel, char ch){
 	int io_server_id;
 	switch (channel) {
 	case COM1:
-		io_server_id = WhoIs("IO_SERVER_CHANNEL1");
+		io_server_id = WhoIs("IO_SERVER_UART1_TRANSMIT");
 		break;
 	case COM2:
-		io_server_id = WhoIs("IO_SERVER_CHANNEL2");
+		io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");
 		break;
 	}
     debug(DEBUG_UART_IRQ, "enter Putc, server is %d, type = %d", io_server_id, PUTC);

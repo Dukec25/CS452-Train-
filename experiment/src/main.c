@@ -302,9 +302,7 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
-    /*irq_enable();*/
-    /*uart1_irq_soft();*/
-    uart1_irq_enable();
+    irq_enable();
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
@@ -392,8 +390,7 @@ int main()
                     /*break;*/
 			}
 	}
-    /*irq_disable();*/
-	uart1_irq_disable();
+    irq_disable();
 
 	// idle task measurement
 	elapsed_time = timer4_read() - elapsed_time;

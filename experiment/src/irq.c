@@ -31,8 +31,9 @@ void irq_enable()
 //	timer3_irq_enable();
 //	timer3_enable();
 	// UART2 RCV
+//	uart_irq_enable(COM1);
 	uart_irq_enable(COM2);
-	uart1_device_enable(COM2, RCV);
+	uart_device_enable(COM2, RCV);
 }
 
 void irq_disable()
@@ -123,7 +124,7 @@ void timer3_irq_handle(Kernel_state *ks)
 	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
 }
 
-void uart_irq_handle(int channel; Kernel_state *ks){
+void uart_irq_handle(int channel, Kernel_state *ks){
     // check UART interrupt status
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_handle"); 
     vint *uart_intr, *pdata;

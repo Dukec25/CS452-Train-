@@ -9,11 +9,11 @@
 #include <clock_server.h>
 
 typedef enum UART_IRQ_TYPE {
-	XIMT,
+	XMIT,
 	RCV
 } UART_IRQ_TYPE;
 
-uint32 uart1_irq_mask();
+uint32 uart_irq_mask();
 
 #define	UART2_GENERAL_INTERRUPT	55
 #define UART2_CTRL  (UART2_BASE + UART_CTLR_OFFSET) 
@@ -24,8 +24,10 @@ uint32 uart1_irq_mask();
 	#define TIEN_MASK	0x20	// transmit int
 	#define RTIEN_MASK	0x40	// receive timeout int
 	#define LBEN_MASK	0x80	// loopback 
-#define UART2_INTR	(UART2_BASE + UART_INTR_OFFSET) // Interrupt identification and clear registers
 */
+#define UART2_INTR	(UART2_BASE + UART_INTR_OFFSET) // Interrupt identification and clear registers
+#define UART2_DATA	(UART2_BASE + UART_DATA_OFFSET)
+
 
 #define	UART1_GENERAL_INTERRUPT	53
 #define UART1_CTRL  (UART1_BASE + UART_CTLR_OFFSET) 
