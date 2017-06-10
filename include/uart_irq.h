@@ -8,6 +8,11 @@
 #include <io_server.h>
 #include <clock_server.h>
 
+typedef enum UART_IRQ_TYPE {
+	XIMT,
+	RCV
+} UART_IRQ_TYPE;
+
 uint32 uart1_irq_mask();
 
 #define	UART2_GENERAL_INTERRUPT	55

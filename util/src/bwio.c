@@ -208,7 +208,7 @@ void bwprintf(int channel, char *fmt, ...)
         bwformat(channel, fmt, va);
         va_end(va);
 }
-
+/*
 void bwassert(bool condition, int channel, char *fmt, ...){
     if(condition){
         va_list va;
@@ -222,4 +222,4 @@ void bwassert(bool condition, int channel, char *fmt, ...){
     while(1){
         
     }
-}
+}*/

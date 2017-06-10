@@ -7,11 +7,19 @@ static void initialize(Io_server *io){
 }
 
 
-void io_server_start()
+void io_server_start(int channel)
 {
 	debug(DEBUG_UART_IRQ, "Enter %s", "io_server_start");
 
-	vint register_result = RegisterAs("IO_SERVER_CHANNEL2");
+	vint register_result;
+	switch (channel) {
+	case COM1:
+		register_result = RegisterAs("IO_SERVER_CHANNEL1");
+		break;
+	case COM2:
+		register_result = RegisterAs("IO_SERVER_CHANNEL2");
+		break;
+	}
 	Io_server ioServer;
     initialize(&ioServer);
     vint transmit_notifier;

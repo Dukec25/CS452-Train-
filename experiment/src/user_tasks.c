@@ -270,7 +270,7 @@ void kernel3_client_task(){
 
 void rcv_notifier(){
     debug(DEBUG_UART_IRQ, "enter = %s", "rcv_notifier");
-	int io_server_id = WhoIs("IO_SERVER_CHANNEL2");
+	int io_server_id = WhoIs("IO_SERVER_CHANNEL");
     Delivery request;
     request.type = RECEIVE_RDY;
     Delivery reply_msg;
@@ -283,7 +283,7 @@ void rcv_notifier(){
 
 void xmit_notifier(){
     debug(DEBUG_UART_IRQ, "enter = %s", "xmit_notifier");
-	int io_server_id = WhoIs("IO_SERVER_CHANNEL2");
+	int io_server_id = WhoIs("IO_SERVER_CHANNEL");
     Delivery request;
     request.type = TRANSMIT_RDY;
     Delivery reply_msg;
