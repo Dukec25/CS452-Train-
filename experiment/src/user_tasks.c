@@ -290,7 +290,7 @@ void xmit_notifier(){
     while(1) {
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
-	//	uart1_device_enable();
+		uart1_device_enable();
         AwaitEvent(XMIT_RDY);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
 		vint *pdata = (vint *) UART1_DATA;
@@ -304,7 +304,7 @@ void io_test_task(){
 	int i = 0;
 	for (i = 0; i < 10; i++) {
    		Putc(0, 'a');
-		uart1_irq_soft();
+//		uart1_irq_soft();
 		debug(DEBUG_UART_IRQ, "return from %s", "Putc");
 	}
 	Exit();

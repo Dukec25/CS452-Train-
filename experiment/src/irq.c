@@ -144,7 +144,7 @@ void uart1_irq_handle(Kernel_state *ks){
 	else if (*uart1_intr & uart_transmit_irq_mask()) {
 */      
 		debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
-		uart1_irq_soft_clear();
+//		uart1_irq_soft_clear();
         if (ks->blocked_on_event[XMIT_RDY]) {
             // notify events await on transmit ready
             volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];
