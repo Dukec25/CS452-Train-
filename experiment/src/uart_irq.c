@@ -1,27 +1,35 @@
 #include <uart_irq.h>
 
-static uint32 uart2_irq_mask()
+static uint32 uart1_irq_mask()
 {
-	return 0x1 << (UART2_GENERAL_INTERRUPT - 33);
+	return 0x1 << (UART1_GENERAL_INTERRUPT - 33);
 }
 
-void uart2_irq_soft()
+void uart1_irq_soft()
 {
 	vint *vic2_soft_int = (vint *) VIC2_SOFT_INT;
-	*vic2_soft_int |= uart2_irq_mask();
+	*vic2_soft_int |= uart1_irq_mask();
 }
 
-void uart2_irq_soft_clear()
+void uart1_irq_soft_clear()
 {
 	vint *vic2_soft_int_clr = (vint *) VIC2_SOFT_INT_CLR;
 	*vic2_soft_int_clr |= 0xFFFFFFFF;
 }
 
-void uart2_irq_enable()
+void uart1_irq_enable()
 {
     mode_irq();
-    uart2_vic_enable();
-    uart2_device_enable();
+    uart1_vic_enable();
+//    uart1_device_enable();
+}
+
+void uart1_irq_disable()
+{
+	vint *vic2_int_enbl = (vint *) VIC2_INT_ENBL;
+	*vic2_int_enbl &= ~uart1_irq_mask();
+	vint *vic_int_enbl_clr = (vint *) VIC2_INT_ENBL_CLR;
+	*vic_int_enbl_clr |= uart1_irq_mask();
 }
 
 void mode_irq(){
@@ -30,21 +38,32 @@ void mode_irq(){
 	*vic2_int_sel &= 0x0;	// interrupt type = IRQ
 }
 
-void uart2_vic_enable()
+void uart1_vic_enable()
 {
-	/*debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_enable");*/
+	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_enable");
 	vint *vic2_int_enbl = (vint *) VIC2_INT_ENBL;
-	*vic2_int_enbl |= uart2_irq_mask();
+	*vic2_int_enbl |= uart1_irq_mask();
+	debug(DEBUG_UART_IRQ, "*vic2_int_enbl = 0x%x, uart1_irq_mask = 0x%x", *vic2_int_enbl, uart1_irq_mask());
 }
 
-void uart2_device_enable()
+void uart1_device_enable()
 {
-	/*debug(DEBUG_UART_IRQ, "enter %s", "uart_device_enable");*/
-	vint *uart2_ctrl = (vint *) UART2_CTRL;
+	debug(DEBUG_UART_IRQ, "enter %s", "uart_device_enable");
+	vint *uart1_ctrl = (vint *) UART1_CTRL;
     // receive interrupt 
-    /**uart2_ctrl |= RIEN_MASK;*/ 
+    /**uart1_ctrl |= RIEN_MASK;*/ 
     // transmit interrupt
-    *uart2_ctrl |= TIEN_MASK;
+    *uart1_ctrl |= TIEN_MASK;
+	*uart1_ctrl |= UARTEN_MASK;
+}
+
+void uart1_device_disable()
+{
+	debug(DEBUG_UART_IRQ, "enter %s", "uart_device_disable");
+	vint *uart1_ctrl = (vint *) UART1_CTRL;
+    // transmit interrupt
+    *uart1_ctrl &= ~TIEN_MASK;
+	*uart1_ctrl &= ~UARTEN_MASK;
 }
 
 int Getc(int channel){
@@ -65,8 +84,8 @@ int Putc(int channel, char ch){
     request.type = PUTC;
     request.data = ch;
     Delivery reply_msg;
-    Send(io_server_channel2_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
-    return reply_msg.data;
+	debug(DEBUG_UART_IRQ, "send %d to io_server_channel2_id %d", ch, io_server_channel2_id);
+    Send(io_server_channel2_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
+	debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
+    return 1;
 }
-
-

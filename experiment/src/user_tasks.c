@@ -287,15 +287,27 @@ void xmit_notifier(){
     Delivery request;
     request.type = TRANSMIT_RDY;
     Delivery reply_msg;
-    while(1){
-        Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
-        request.data = AwaitEvent(XMIT_RDY);
+    while(1) {
+        Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
+		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
+	//	uart1_device_enable();
+        AwaitEvent(XMIT_RDY);
+		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
+		vint *pdata = (vint *) UART1_DATA;
+		*pdata = reply_msg.data;
+	//	uart1_device_disable();
     }
 }
 
 void io_test_task(){
     /*vint val = Getc(0);*/
-    Putc(0, 100);
+	int i = 0;
+	for (i = 0; i < 10; i++) {
+   		Putc(0, 'a');
+		uart1_irq_soft();
+		debug(DEBUG_UART_IRQ, "return from %s", "Putc");
+	}
+	Exit();
     /*debug(SUBMISSION, "received char= %d", val);*/
 }
 
@@ -322,8 +334,8 @@ void first_task()
     /*tid = Create(PRIOR_HIGH, clock_server_notifier);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    tid = Create(PRIOR_LOWEST, idle_task);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
+    /*tid = Create(PRIOR_LOWEST, idle_task);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
     /*tid = Create(PRIOR_MEDIUM, kernel3_client_task); */
     /*debug(SUBMISSION, "created taskId = %d", tid);*/

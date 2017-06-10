@@ -16,8 +16,9 @@ void io_server_start()
     initialize(&ioServer);
     vint transmit_notifier;
     vint buffer_empty=0;
-    vint *uart2_ctrl = (vint *) UART2_CTRL;
-    vint *pdata = (vint *)(UART2_BASE + UART_DATA_OFFSET);
+    vint *uart1_ctrl = (vint *) UART1_CTRL;
+    vint *pdata = (vint *) UART1_DATA;
+	vint xmit_not_waiting = 0;
     
 	while(1) {
 		vint requester;
@@ -27,23 +28,21 @@ void io_server_start()
         debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
         vint tid;
         vint* character; 
+
 		switch(request.type) {
             case TRANSMIT_RDY:
                 debug(DEBUG_UART_IRQ, "io server %s", "XMIT RDY request");
-                buffer_empty = 1;
+				xmit_not_waiting = 1;
+				debug(DEBUG_UART_IRQ, "xmit_not_waiting = %d", xmit_not_waiting);
                 transmit_notifier = requester;
                 if(!is_fifo_empty(&ioServer.transmit_q)){
                     debug(DEBUG_UART_IRQ, "transmit queue is not empty %s", "XMIT RDY request");
-                    // if no chars needs to be transmitted
-                    Reply(requester, &reply_msg, sizeof(reply_msg));
                     fifo_get(&ioServer.transmit_q, &character); // character might cause error
-                    debug(DEBUG_UART_IRQ, "UART DATA IS  %d", *character);
-                    // insert char into uart 
-                    *pdata = *character;
-                } else{
-                    debug(DEBUG_UART_IRQ, "transmit queue is empty %s", "XMIT RDY request");
-                    // turn off the transmit interrupt
-                    *uart2_ctrl &= ~(TIEN_MASK);
+					reply_msg.data = *character;
+                    debug(DEBUG_UART_IRQ, "reply data is %d", *character);
+                    Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
+					xmit_not_waiting = 0;
+					debug(DEBUG_UART_IRQ, "xmit_not_waiting = %d", xmit_not_waiting);
                 }
                 break;
             case RECEIVE_RDY:
@@ -79,19 +78,19 @@ void io_server_start()
                 break;
             case PUTC:
                 debug(DEBUG_UART_IRQ, "enter %s", "IO SERVER, REQUEST PUTC");
+				fifo_put(&ioServer.transmit_q, &request.data);	// transmit_q is not empty
+				debug(DEBUG_UART_IRQ, "xmit_not_waiting = %d, transmit_q is_empty = %d", xmit_not_waiting, is_fifo_empty(&ioServer.transmit_q));
+				reply_msg.data = 0;
                 Reply(requester, &reply_msg, sizeof(reply_msg));
-                if(buffer_empty){
-                    debug(DEBUG_UART_IRQ, "XMIT buffer is empty, request data=%d", request.data);
-                    *pdata = request.data;
-                    debug(DEBUG_UART_IRQ, "finish writing to the %s", "terminal");
-                    // turn on the transmit interrupt
-                    *uart2_ctrl |= TIEN_MASK;
-                    buffer_empty = 0;
+				debug(DEBUG_UART_IRQ, "replied to %d", requester);
+				if (xmit_not_waiting) {
+					debug(DEBUG_UART_IRQ, "inside if xmit_not_waiting = %d", xmit_not_waiting);
+	                vint result = fifo_get(&ioServer.transmit_q, &character); // character might cause error
+                    debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, *character);
+					reply_msg.data = *character;
                     Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
-                } else{
-                    debug(DEBUG_UART_IRQ, "insert char into transmit queue %s", "buffer is empty");
-                    fifo_put(&ioServer.transmit_q, request.data);
-                }
+					xmit_not_waiting = 0;
+				}
                 break;
 		}
 	}

@@ -8,9 +8,9 @@ static uint32 timer3_irq_mask()
 	return 0x1 << (TIMER3_UNDER_FLOW_INTERRUPT - 33);
 }
 
-static uint32 uart2_irq_mask()
+static uint32 uart1_irq_mask()
 {
-	return 0x1 << (UART2_GENERAL_INTERRUPT - 33);
+	return 0x1 << (UART1_GENERAL_INTERRUPT - 33);
 }
 
 static uint32 uart_modem_irq_mask()
@@ -45,15 +45,16 @@ void irq_disable()
 
 void irq_handle(Kernel_state *ks)
 {
-	debug(DEBUG_IRQ, "enter %s", "irq_handle");
+	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
-	debug(DEBUG_IRQ, "*vic2_irq_status = 0x%x", *vic2_irq_status);
-	if (*vic2_irq_status & timer3_irq_mask()) {
-		timer3_irq_handle(ks);
-    } else if(*vic2_irq_status & uart2_irq_mask()){
+	debug(DEBUG_UART_IRQ, "*vic2_irq_status = 0x%x, uart1_irq_mask = 0x%x", *vic2_irq_status, uart1_irq_mask());
+//	if (*vic2_irq_status & timer3_irq_mask() != 0) {
+//		timer3_irq_handle(ks);
+//    }
+//	else if (*vic2_irq_status & uart1_irq_mask() != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "");
-        uart2_irq_handle(ks);
-    }
+        uart1_irq_handle(ks);
+//    }
 }
 
 void timer3_enable()
@@ -120,29 +121,32 @@ void timer3_irq_handle(Kernel_state *ks)
 	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
 }
 
-void uart2_irq_handle(Kernel_state *ks){
-    // check UART interrupt status 
-    vint *uart2_intr = (vint *)UART2_INTR;
-    if(*uart2_intr & uart_receive_irq_mask()){
+void uart1_irq_handle(Kernel_state *ks){
+    // check UART interrupt status
+	debug(DEBUG_UART_IRQ, "enter %s", "uart1_irq_handle"); 
+    vint *uart1_intr = (vint *)UART1_INTR;
+	debug(DEBUG_UART_IRQ, "*uart1_intr = 0x%x", *uart1_intr); 
+/*    if (*uart1_intr & uart_receive_irq_mask()) {
         debug(DEBUG_UART_IRQ, "handle rcv interupt %s", "");
         // receive interrupt
         if (ks->blocked_on_event[RCV_RDY]) {
-            // notify events await on timer
+            // notify events await on receive ready
             volatile Task_descriptor *td = ks->event_blocks[RCV_RDY];
             ks->event_blocks[RCV_RDY] = NULL;
             ks->blocked_on_event[RCV_RDY] = 0;
             td->state = STATE_READY;
-            // read value from uart2 data register
-            vint *uart2_ctrl = (vint *) UART2_CTRL;
-            vint *pdata = (vint *)(UART2_BASE + UART_DATA_OFFSET);
+            vint *pdata = (vint *) UART1_DATA;
             td->retval = *pdata;
             debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up rcv notifier %d, ", td->tid);
             insert_task(td, &(ks->ready_queue));
         }
-    } else if(*uart2_intr & uart_transmit_irq_mask()){
-        debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
+    }
+	else if (*uart1_intr & uart_transmit_irq_mask()) {
+*/      
+		debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
+		uart1_irq_soft_clear();
         if (ks->blocked_on_event[XMIT_RDY]) {
-            // notify events await on timer
+            // notify events await on transmit ready
             volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];
             ks->event_blocks[XMIT_RDY] = NULL;
             ks->blocked_on_event[XMIT_RDY] = 0;
@@ -150,5 +154,5 @@ void uart2_irq_handle(Kernel_state *ks){
             debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid);
             insert_task(td, &(ks->ready_queue));
         }
-    }
+//    }
 }

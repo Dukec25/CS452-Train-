@@ -290,10 +290,10 @@ int main()
 
 	// set up hwi jump table
 	vint *hwi_handle_entry = (vint*) 0x38;
-	debug(DEBUG_IRQ, "hwi_handle_entry = 0x%x", hwi_handle_entry);
-	debug(DEBUG_IRQ, "asm_kernel_hwiEntry = 0x%x", asm_kernel_hwiEntry);
+	debug(DEBUG_UART_IRQ, "hwi_handle_entry = 0x%x", hwi_handle_entry);
+	debug(DEBUG_UART_IRQ, "asm_kernel_hwiEntry = 0x%x", asm_kernel_hwiEntry);
 	*hwi_handle_entry = (vint) (asm_kernel_hwiEntry + 0x218000);
-	debug(DEBUG_IRQ, "hwi_handle_entry = 0x%x", *hwi_handle_entry);
+	debug(DEBUG_UART_IRQ, "hwi_handle_entry = 0x%x", *hwi_handle_entry);
 
 	Kernel_state ks;
 	ks_initialize(&ks);
@@ -303,8 +303,8 @@ int main()
 
 	// enable irq
     /*irq_enable();*/
-    /*uart2_irq_soft();*/
-    uart2_irq_enable();
+    /*uart1_irq_soft();*/
+    uart1_irq_enable();
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
@@ -334,8 +334,8 @@ int main()
 				cur_lr = cur_lr & ~(HWI_MASK);
 				is_entry_from_hwi = 1;
 				td->is_entry_from_hwi = ENTER_FROM_HWI;
-				debug(DEBUG_IRQ, ">>>>>td->is_entry_from_hwi = 0x%x", td->is_entry_from_hwi);
-				debug(DEBUG_IRQ, ">>>>>irq get back into kernel again, cur_lr = 0x%x", cur_lr);
+				debug(DEBUG_UART_IRQ, ">>>>>td->is_entry_from_hwi = 0x%x", td->is_entry_from_hwi);
+				debug(DEBUG_UART_IRQ, ">>>>>irq get back into kernel again, cur_lr = 0x%x", cur_lr);
 			}
 
 			update_td(td, cur_lr);
@@ -359,7 +359,7 @@ int main()
             uint32 arg4 = *((vint*) ((int) td->sp + 4));
 			debug(DEBUG_TRACE, "arg0 = %d, arg1 = %d", arg0, arg1);
 
-            uart2_irq_soft_clear();
+            // uart1_irq_soft_clear();
 			switch(req){
 				case 1:		
 					k_create(td, &ks, (void (*) ()) arg1, tid++, arg0);
@@ -391,13 +391,14 @@ int main()
 			}
 	}
     /*irq_disable();*/
-	
+	uart1_irq_disable();
+
 	// idle task measurement
 	elapsed_time = timer4_read() - elapsed_time;
 	timer4_stop();
-	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
-	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
-	long long fraction = (idle_task_time * 100) / elapsed_time;
-	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
+//	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
+//	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
+//	long long fraction = (idle_task_time * 100) / elapsed_time;
+//	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
 	return 0;
 }
