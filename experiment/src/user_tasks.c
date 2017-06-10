@@ -384,10 +384,10 @@ void uart1_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-		vint *pdata = (vint *) UART1_DATA;
-		debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
-		*pdata = reply_msg.data;
-		debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
+	//	vint *pdata = (vint *) UART1_DATA;
+	//	debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
+	//	*pdata = reply_msg.data;
+	//	debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
     }
 }
 
@@ -402,16 +402,15 @@ void uart2_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART2_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-		vint *pdata = (vint *) UART1_DATA;
-		debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
-		*pdata = reply_msg.data;
-		debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
+	//	vint *pdata = (vint *) UART1_DATA;
+	//	debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
+	//	*pdata = reply_msg.data;
+	//	debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
     }
 }
 
 void first_task()
 {
-    bwputc(COM2, 'C');
 	debug(DEBUG_UART_IRQ, "In user task first_task, priority=%d", PRIOR_MEDIUM);
     int tid = Create(PRIOR_HIGH, name_server_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);

@@ -54,9 +54,8 @@ void uart_irq_disable(int channel)
 
 void uart_device_enable(int channel, UART_IRQ_TYPE type)
 {
-	debug(DEBUG_UART_IRQ, "enter %s", "uart_device_enable");
+	debug(DEBUG_UART_IRQ, "enter uart_device_enable, channel = %d, type = %d", channel, type);
 	vint *uart_ctrl;
-	uint32 mask;
 	switch (channel) {
 	case COM1:
 		uart_ctrl = (vint *) UART1_CTRL;
@@ -67,11 +66,12 @@ void uart_device_enable(int channel, UART_IRQ_TYPE type)
 	}
 	switch (type) {
 	case XMIT:
-		mask = TIEN_MASK;
+		*uart_ctrl |= TIEN_MASK;
+		break;
 	case RCV:
-		mask = RIEN_MASK;
+		*uart_ctrl |= RIEN_MASK;
+		break;
 	}
-    *uart_ctrl |= mask; 
 	debug(DEBUG_UART_IRQ, "uart_ctrl = 0x%x, *uart_ctrl = 0x%x", uart_ctrl, *uart_ctrl);
 }
 
@@ -79,7 +79,6 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 {
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_device_disable");
 	vint *uart_ctrl;
-	uint32 mask;
 	switch (channel) {
 	case COM1:
 		uart_ctrl = (vint *) UART1_CTRL;
@@ -90,11 +89,12 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	}
 	switch (type) {
 	case XMIT:
-		mask = TIEN_MASK;
-	case RCV:
-		mask = RIEN_MASK;
+		*uart_ctrl &= ~TIEN_MASK;
+		break;
+	case RCV
+		*uart_ctrl &= ~RIEN_MASK;
+		break;
 	}
-    *uart_ctrl &= ~mask; 
 }
 
 int Getc(int channel){

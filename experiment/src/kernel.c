@@ -192,5 +192,6 @@ void k_await_event(int event_type, char ch, Task_descriptor *td, Kernel_state *k
     } else if(event_type == XMIT_UART2_RDY) {
 		uart_device_enable(COM2, XMIT);
         td->ch = ch;
+		debug(DEBUG_UART_IRQ, ">>>enbale COM2, XMIT, ch = %d", ch);
     }
 }

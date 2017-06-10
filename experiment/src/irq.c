@@ -163,7 +163,9 @@ void uart_irq_handle(int channel, Kernel_state *ks){
             insert_task(td, &(ks->ready_queue));
         }
     }
-	else if (*uart_intr & uart_transmit_irq_mask()) {
+	// else if (*uart_intr & uart_transmit_irq_mask()) {
+	if (*uart_intr & uart_transmit_irq_mask()) {
+        debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
 		// new transmit interrupt handling 
         if (ks->blocked_on_event[transmit_event]) {
             // notify events await on transmit ready
