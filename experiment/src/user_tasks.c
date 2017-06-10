@@ -353,7 +353,7 @@ void uart1_rcv_notifier(){
     request.type = RECEIVE_RDY;
     Delivery reply_msg;
     while(1){
-        request.data = AwaitEvent(RCV_RDY, -1); 
+        request.data = AwaitEvent(RCV_UART1_RDY, -1); 
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
         debug(DEBUG_UART_IRQ, "receive_notifer get awaked= %s", "");
     }
@@ -366,7 +366,7 @@ void uart2_rcv_notifier(){
     request.type = RECEIVE_RDY;
     Delivery reply_msg;
     while(1){
-        request.data = AwaitEvent(RCV_RDY, -1); 
+        request.data = AwaitEvent(RCV_UART2_RDY, -1); 
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
         debug(DEBUG_UART_IRQ, "receive_notifer get awaked= %s", "");
     }
@@ -381,7 +381,7 @@ void uart1_xmit_notifier(){
     while(1) {
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
-        AwaitEvent(XMIT_RDY, reply_msg.data);
+        AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
 		vint *pdata = (vint *) UART1_DATA;
 		debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
@@ -399,7 +399,7 @@ void uart2_xmit_notifier(){
     while(1) {
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
-        AwaitEvent(XMIT_RDY, reply_msg.data);
+        AwaitEvent(XMIT_UART2_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
 		vint *pdata = (vint *) UART1_DATA;
 		debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);

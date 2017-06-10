@@ -128,14 +128,21 @@ void uart_irq_handle(int channel, Kernel_state *ks){
     // check UART interrupt status
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_handle"); 
     vint *uart_intr, *pdata;
+    vint receive_event;
+    vint transmit_event;
+
 	switch (channel) {
 	case COM1:
 		uart_intr = (vint *) UART1_INTR;
         *pdata = (vint *) UART1_DATA;
+        receive_event = RCV_UART1_RDY;
+        transmit_event = XMIT_UART1_RDY;
 		break;
 	case COM2:
 		uart_intr = (vint *) UART2_INTR;
         *pdata = (vint *) UART2_DATA;
+        receive_event = RCV_UART2_RDY;
+        transmit_event = XMIT_UART2_RDY;
 		break;
 	}
 	debug(DEBUG_UART_IRQ, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr); 
@@ -143,11 +150,11 @@ void uart_irq_handle(int channel, Kernel_state *ks){
 	if (*uart_intr & uart_receive_irq_mask()) {
         debug(DEBUG_UART_IRQ, "handle rcv interupt %s", "");
         // receive interrupt
-        if (ks->blocked_on_event[RCV_RDY]) {
+        if (ks->blocked_on_event[receive_event]) {
             // notify events await on receive ready
-            volatile Task_descriptor *td = ks->event_blocks[RCV_RDY];
-            ks->event_blocks[RCV_RDY] = NULL;
-            ks->blocked_on_event[RCV_RDY] = 0;
+            volatile Task_descriptor *td = ks->event_blocks[receive_event];
+            ks->event_blocks[receive_event] = NULL;
+            ks->blocked_on_event[receive_event] = 0;
             td->state = STATE_READY;
             // read the data 
             td->retval = *pdata;
@@ -157,11 +164,11 @@ void uart_irq_handle(int channel, Kernel_state *ks){
     }
 	else if (*uart_intr & uart_transmit_irq_mask()) {
 		// new transmit interrupt handling 
-        if (ks->blocked_on_event[XMIT_RDY]) {
+        if (ks->blocked_on_event[transmit_event]) {
             // notify events await on transmit ready
-            volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];
-            ks->event_blocks[XMIT_RDY] = NULL;
-            ks->blocked_on_event[XMIT_RDY] = 0;
+            volatile Task_descriptor *td = ks->event_blocks[transmit_event];
+            ks->event_blocks[transmit_event] = NULL;
+            ks->blocked_on_event[transmit_event] = 0;
             td->state = STATE_READY;
             // turn off the XMIT interrupt
 			uart_device_disable(channel, XMIT);

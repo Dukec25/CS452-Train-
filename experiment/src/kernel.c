@@ -186,14 +186,10 @@ void k_await_event(int event_type, char ch, Task_descriptor *td, Kernel_state *k
 	ks->blocked_on_event[event_type] = 1;
     remove_task(td, &(ks->ready_queue));
 	ks->event_blocks[event_type] = td;
-    if(event_type = XMIT_RDY) {
-        // vint *uart1_ctrl = (vint *) UART1_CTRL;
-        // *uart1_ctrl |= TIEN_MASK;
+    if(event_type == XMIT_UART1_RDY) {
 		uart_device_enable(COM1, XMIT);
         td->ch = ch;
-    } else if(event_type = XMIT_UART2_RDY) {
-        // vint *uart2_ctrl = (vint *) UART2_CTRL;
-        // *uart2_ctrl |= TIEN_MASK;
+    } else if(event_type == XMIT_UART2_RDY) {
 		uart_device_enable(COM2, XMIT);
         td->ch = ch;
     }

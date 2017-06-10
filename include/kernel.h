@@ -33,8 +33,8 @@ typedef struct IntIntMessage {
 
 typedef enum Await_event{
     TIMER3_RDY,
-    RCV_RDY,
-    XMIT_RDY,
+    RCV_UART1_RDY,
+    XMIT_UART1_RDY,
     RCV_UART2_RDY,
     XMIT_UART2_RDY    
 } Await_event;
