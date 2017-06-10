@@ -1,6 +1,7 @@
 #include <kernel.h>
 #include <debug.h>
 #include <string.h>
+#include <uart_irq.h>
 
 static uint32 is_task_created(int tid, Kernel_state *ks)
 {
@@ -173,4 +174,22 @@ void k_await_event(int event_type, Task_descriptor *td, Kernel_state *ks)
 	ks->blocked_on_event[event_type] = 1;
     remove_task(td, &(ks->ready_queue));
 	ks->event_blocks[event_type] = td;
+}
+
+void k_await_event_v2(int event_type, char ch, Task_descriptor *td, Kernel_state *ks)
+{
+	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>In kernel mode k_await_event, event_type = %d", event_type);
+	td->state = STATE_EVENT_BLK;
+	ks->blocked_on_event[event_type] = 1;
+    remove_task(td, &(ks->ready_queue));
+	ks->event_blocks[event_type] = td;
+    if(event_type = XMIT_RDY){
+        vint *uart1_ctrl = (vint *) UART1_CTRL;
+        *uart1_ctrl |= TIEN_MASK;
+        td->ch = ch;
+    } else if(event_type = XMIT_UART2_RDY){
+        vint *uart2_ctrl = (vint *) UART2_CTRL;
+        *uart2_ctrl |= TIEN_MASK;
+        td->ch = ch;
+    }
 }

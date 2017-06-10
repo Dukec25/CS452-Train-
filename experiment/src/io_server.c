@@ -96,6 +96,11 @@ void io_server_start()
 	}
 }
 
+/*void io_server_uart1_transmit_start();*/
+/*void io_server_uart2_transmit_start();*/
+/*void io_server_uart1_receive_start();*/
+/*void io_server_uart2_receive_start();*/
+
 /*void receive_notifier(){*/
 	/*int io_server_id = WhoIs("IO_SERVER_CHANNEL2");*/
     /*Delivery request;*/

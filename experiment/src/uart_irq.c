@@ -70,8 +70,11 @@ void uart1_device_disable()
 }
 
 int Getc(int channel){
-	/*vint *flags, *data;*/
-    /*channel_select(channel, &flags, &data);*/
+    /*if(channel == COM1){*/
+        /*int io_server_id = WhoIs("IO_SERVER_UART1_RECEIVE");*/
+    /*} else{*/
+        /*int io_server_id = WhoIs("IO_SERVER_UART2_RECEIVE");*/
+    /*}*/
 	int io_server_channel2_id = WhoIs("IO_SERVER_CHANNEL2");
     debug(DEBUG_UART_IRQ, "enter Getc, server is %d, type = %d", io_server_channel2_id, GETC);
     Delivery request;
@@ -82,6 +85,11 @@ int Getc(int channel){
 }
 
 int Putc(int channel, char ch){
+    /*if(channel == COM1){*/
+        /*int io_server_id = WhoIs("IO_SERVER_UART1_TRANSMIT");*/
+    /*} else{*/
+        /*int io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");*/
+    /*}*/
 	int io_server_channel2_id = WhoIs("IO_SERVER_CHANNEL2");
     Delivery request;
     request.type = PUTC;

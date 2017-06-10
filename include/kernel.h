@@ -34,7 +34,9 @@ typedef struct IntIntMessage {
 typedef enum Await_event{
     TIMER3_RDY,
     RCV_RDY,
-    XMIT_RDY    
+    XMIT_RDY,
+    RCV_UART2_RDY,
+    XMIT_UART2_RDY    
 } Await_event;
 
 /* task descriptor */
@@ -70,6 +72,7 @@ typedef struct Task_descriptor {
 	Task_priority 			priority;
 	struct Task_descriptor *next_task;
     vint                    *fp;
+    char                    ch;
 } Task_descriptor;
 
 /* Priority queue with fifo ordering */

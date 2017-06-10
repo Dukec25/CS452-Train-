@@ -79,3 +79,9 @@ int AwaitEvent(int eventType)
     int data = asm_kernel_await_event(eventType);
 	return data;
 }
+
+/*int AwaitEvent(int eventType, char ch){*/
+    /*debug(DEBUG_SYSCALL, "this is in %s", "user AwaitEvent");*/
+    /*int data = asm_kernel_await_event(eventType, ch);*/
+    /*return data;*/
+/*}*/

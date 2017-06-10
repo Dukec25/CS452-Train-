@@ -388,6 +388,8 @@ int main()
 				case 9:
 					k_await_event(arg0, td, &ks);
 					break;
+                    /*k_await_event(arg0, arg1, td, &ks);*/
+                    /*break;*/
 			}
 	}
     /*irq_disable();*/

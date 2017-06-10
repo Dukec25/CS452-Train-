@@ -8,9 +8,9 @@
 #include <io_server.h>
 #include <clock_server.h>
 
-/*
 #define	UART2_GENERAL_INTERRUPT	54
 #define UART2_CTRL  (UART2_BASE + UART_CTLR_OFFSET) 
+/*
 	#define UARTEN_MASK	0x1
 	#define MSIEN_MASK	0x8	// modem status int
 	#define RIEN_MASK	0x10	// receive int

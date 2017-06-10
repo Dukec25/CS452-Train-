@@ -156,3 +156,21 @@ void uart1_irq_handle(Kernel_state *ks){
         }
 //    }
 }
+
+
+// new transmit interrupt handling 
+        /*if (ks->blocked_on_event[XMIT_RDY]) {*/
+             /*turn off the XMIT interrupt*/
+            /*vint *uart1_ctrl = (vint *) UART1_CTRL;*/
+            /**uart1_ctrl &= ~(TIEN_MASK);*/
+             /*write the data */
+            /*vint *pdata = (vint *) UART1_DATA;*/
+            /**pdata = td->ch;*/
+             /*notify events await on transmit ready*/
+            /*volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];*/
+            /*ks->event_blocks[XMIT_RDY] = NULL;*/
+            /*ks->blocked_on_event[XMIT_RDY] = 0;*/
+            /*td->state = STATE_READY;*/
+            /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid);*/
+            /*insert_task(td, &(ks->ready_queue));*/
+        /*}*/
