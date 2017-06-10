@@ -311,6 +311,38 @@ void io_test_task(){
     /*debug(SUBMISSION, "received char= %d", val);*/
 }
 
+void uart1_rcv_server(){
+    uint32 tid = MyTid();
+    debug(DEBUG_UART_IRQ, "starting io_server_task tid = %d", tid); 
+	io_server_receive_start(COM1);
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
+void uart2_rcv_server(){
+    uint32 tid = MyTid();
+    debug(DEBUG_UART_IRQ, "starting io_server_task tid = %d", tid); 
+	io_server_receive_start(COM2);
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
+void uart1_xmit_server(){
+    uint32 tid = MyTid();
+    debug(DEBUG_UART_IRQ, "starting io_server_task tid = %d", tid); 
+	io_server_transmit_start(COM1);
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
+void uart2_xmit_server(){
+    uint32 tid = MyTid();
+    debug(DEBUG_UART_IRQ, "starting io_server_task tid = %d", tid); 
+	io_server_transmit_start(COM2);
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+    Exit();
+}
+
 void first_task()
 {
 	debug(DEBUG_UART_IRQ, "In user task first_task, priority=%d", PRIOR_MEDIUM);
@@ -328,6 +360,38 @@ void first_task()
 
     tid = Create(PRIOR_MEDIUM, io_test_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
+
+
+
+    /*tid = Create(PRIOR_HIGH, uart1_rcv_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    /*tid = Create(PRIOR_HIGH, uart2_rcv_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    /*tid = Create(PRIOR_HIGH, uart1_xmit_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    /*tid = Create(PRIOR_HIGH, uart2_xmit_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+
+    /*tid = Create(PRIOR_HIGH, uart1_rcv_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    /*tid = Create(PRIOR_HIGH, uart2_rcv_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    /*tid = Create(PRIOR_HIGH, uart1_xmit_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+    /*tid = Create(PRIOR_HIGH, uart2_xmit_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+
+
+
+
+
     /*tid = Create(PRIOR_HIGH, clock_server_task);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
