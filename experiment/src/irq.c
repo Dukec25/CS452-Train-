@@ -8,11 +8,6 @@ static uint32 timer3_irq_mask()
 	return 0x1 << (TIMER3_UNDER_FLOW_INTERRUPT - 33);
 }
 
-static uint32 uart1_irq_mask()
-{
-	return 0x1 << (UART1_GENERAL_INTERRUPT - 33);
-}
-
 static uint32 uart_modem_irq_mask()
 {
     return 0x1;
@@ -27,7 +22,6 @@ static uint32 uart_transmit_irq_mask()
 {
     return 0x1 << 2;
 }
-
 
 void irq_enable()
 {
@@ -127,7 +121,8 @@ void uart1_irq_handle(Kernel_state *ks){
 	debug(DEBUG_UART_IRQ, "enter %s", "uart1_irq_handle"); 
     vint *uart1_intr = (vint *)UART1_INTR;
 	debug(DEBUG_UART_IRQ, "*uart1_intr = 0x%x", *uart1_intr); 
-/*    if (*uart1_intr & uart_receive_irq_mask()) {
+	
+	if (*uart1_intr & uart_receive_irq_mask()) {
         debug(DEBUG_UART_IRQ, "handle rcv interupt %s", "");
         // receive interrupt
         if (ks->blocked_on_event[RCV_RDY]) {
@@ -143,35 +138,22 @@ void uart1_irq_handle(Kernel_state *ks){
         }
     }
 	else if (*uart1_intr & uart_transmit_irq_mask()) {
-*/      
-		debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
-		uart1_irq_soft_clear();
+		// new transmit interrupt handling 
         if (ks->blocked_on_event[XMIT_RDY]) {
             // notify events await on transmit ready
             volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];
             ks->event_blocks[XMIT_RDY] = NULL;
             ks->blocked_on_event[XMIT_RDY] = 0;
             td->state = STATE_READY;
-            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid);
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); 
+            // turn off the XMIT interrupt
+            // vint *uart1_ctrl = (vint *) UART1_CTRL;
+            // *uart1_ctrl &= ~(TIEN_MASK);
+			uart1_device_disable();
+            //  write the data 
+            vint *pdata = (vint *) UART1_DATA;
+            *pdata = td->ch;
             insert_task(td, &(ks->ready_queue));
         }
-//    }
+	}
 }
-
-
-// new transmit interrupt handling 
-        /*if (ks->blocked_on_event[XMIT_RDY]) {*/
-             /*turn off the XMIT interrupt*/
-            /*vint *uart1_ctrl = (vint *) UART1_CTRL;*/
-            /**uart1_ctrl &= ~(TIEN_MASK);*/
-             /*write the data */
-            /*vint *pdata = (vint *) UART1_DATA;*/
-            /**pdata = td->ch;*/
-             /*notify events await on transmit ready*/
-            /*volatile Task_descriptor *td = ks->event_blocks[XMIT_RDY];*/
-            /*ks->event_blocks[XMIT_RDY] = NULL;*/
-            /*ks->blocked_on_event[XMIT_RDY] = 0;*/
-            /*td->state = STATE_READY;*/
-            /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid);*/
-            /*insert_task(td, &(ks->ready_queue));*/
-        /*}*/

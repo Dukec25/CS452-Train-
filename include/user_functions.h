@@ -9,5 +9,5 @@ int MyParentTid();
 int Send( int tid, void *msg, int msglen, void *reply, int replylen );
 int Receive( int *tid, void *msg, int msglen );
 int Reply( int tid, void *reply, int replylen );
-int AwaitEvent(int eventType);
+int AwaitEvent(int eventType, char ch);
 #endif // __USER_FUNCTIONS_H__

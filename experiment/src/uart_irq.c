@@ -1,6 +1,6 @@
 #include <uart_irq.h>
 
-static uint32 uart1_irq_mask()
+uint32 uart1_irq_mask()
 {
 	return 0x1 << (UART1_GENERAL_INTERRUPT - 33);
 }
@@ -42,7 +42,7 @@ void uart1_vic_enable()
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_enable");
 	vint *vic2_int_enbl = (vint *) VIC2_INT_ENBL;
 	*vic2_int_enbl |= uart1_irq_mask();
-	debug(DEBUG_UART_IRQ, "*vic2_int_enbl = 0x%x, uart1_irq_mask = 0x%x", *vic2_int_enbl, uart1_irq_mask());
+	debug(DEBUG_UART_IRQ, "*vic2_int_enbl = 0x%x", *vic2_int_enbl);
 }
 
 void uart1_device_enable()

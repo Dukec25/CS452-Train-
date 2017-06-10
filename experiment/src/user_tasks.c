@@ -94,7 +94,7 @@ void clock_server_notifier(){
     vint clock_server_tid = WhoIs("CLOCK_SERVER");
     while(1){
         debug(DEBUG_TASK, "before enter %s", "awaitEvent");
-        request.data = AwaitEvent(0); // evtType = here should be clock update event;
+        request.data = AwaitEvent(TIMER3_RDY, -1); // evtType = here should be clock update event;
         debug(DEBUG_TASK, "after enter %s", "awaitEvent");
         request.type = CLOCK_NOTIFIER;
         Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
@@ -223,7 +223,7 @@ void event_task()
     uint32 tid = MyTid();
 
     debug(DEBUG_TASK, "starting event_task %d", tid); 
-	int value = AwaitEvent(0);
+	int value = AwaitEvent(TIMER3_RDY, -1);
 
 	debug(DEBUG_TASK, "value = %d, tid =%d exiting", value, tid);
     Exit();
@@ -275,7 +275,7 @@ void rcv_notifier(){
     request.type = RECEIVE_RDY;
     Delivery reply_msg;
     while(1){
-        request.data = AwaitEvent(RCV_RDY); 
+        request.data = AwaitEvent(RCV_RDY, -1); 
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
         debug(DEBUG_UART_IRQ, "receive_notifer get awaked= %s", "");
     }
@@ -290,14 +290,12 @@ void xmit_notifier(){
     while(1) {
         Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
-		uart1_device_enable();
-        AwaitEvent(XMIT_RDY);
+        AwaitEvent(XMIT_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
 		vint *pdata = (vint *) UART1_DATA;
 		debug(DEBUG_UART_IRQ, "*reply_msg.data = %d", reply_msg.data);
 		*pdata = reply_msg.data;
 		debug(DEBUG_UART_IRQ, "*pdata = %d", *pdata);
-		uart1_device_disable();
     }
 }
 
@@ -306,7 +304,7 @@ void io_test_task(){
 	int i = 0;
 	for (i = 0; i < 10; i++) {
    		Putc(0, 'a');
-		uart1_irq_soft();
+//		uart1_irq_soft();
 		debug(DEBUG_UART_IRQ, "return from %s", "Putc");
 	}
 	Exit();

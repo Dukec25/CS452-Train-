@@ -161,7 +161,8 @@ void k_exit(Task_descriptor *td, Kernel_state *ks);
 void k_send(int tid, void *msg, int msglen, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
 void k_receive(vint *receive_tid, void *receive_message, int receive_length, Task_descriptor *td, Kernel_state *ks);
 void k_reply(int reply_tid, void *reply, int replylen, Task_descriptor *td, Kernel_state *ks);
-void k_await_event(int event_type, Task_descriptor *td, Kernel_state *ks); 
+// void k_await_event(int event_type, Task_descriptor *td, Kernel_state *ks); 
+void k_await_event(int event_type, char ch, Task_descriptor *td, Kernel_state *ks);
 /* User tasks */
 void init_kernel();
 void first_task();

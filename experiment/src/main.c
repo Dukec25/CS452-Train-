@@ -386,7 +386,7 @@ int main()
                     k_reply(arg0, arg1, arg2, td, &ks);
                     break;
 				case 9:
-					k_await_event(arg0, td, &ks);
+					k_await_event(arg0, arg1, td, &ks);
 					break;
                     /*k_await_event(arg0, arg1, td, &ks);*/
                     /*break;*/
