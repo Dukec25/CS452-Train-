@@ -6,7 +6,7 @@ uint32 uart_irq_mask(int channel)
 	case COM1:
 		return 0x1 << (UART1_GENERAL_INTERRUPT - 33);
 	case COM2:
-		return 0x1 << (UART1_GENERAL_INTERRUPT - 33);
+		return 0x1 << (UART2_GENERAL_INTERRUPT - 33);
 	default:
 		return 0;
 	}
@@ -72,6 +72,7 @@ void uart_device_enable(int channel, UART_IRQ_TYPE type)
 		mask = RIEN_MASK;
 	}
     *uart_ctrl |= mask; 
+	debug(DEBUG_UART_IRQ, "uart_ctrl = 0x%x, *uart_ctrl = 0x%x", uart_ctrl, *uart_ctrl);
 }
 
 void uart_device_disable(int channel, UART_IRQ_TYPE type)

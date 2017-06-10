@@ -144,7 +144,7 @@ void io_server_receive_start(int channel){
                 if(!is_fifo_empty(&ioServer.receive_q)){
                     debug(DEBUG_UART_IRQ, "Fifo %s", "receive_q is not empty");
                     vint* rcv_data; 
-                    vint result = fifo_get(&ioServer.transmit_q, &rcv_data); // character might cause error
+                    vint result = fifo_get(&ioServer.receive_q, &rcv_data); // character might cause error
                     Delivery reply_client_msg;
                     reply_client_msg.data = *rcv_data;
                     Reply(requester, &reply_client_msg, sizeof(reply_client_msg));

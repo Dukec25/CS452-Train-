@@ -51,11 +51,11 @@ void irq_handle(Kernel_state *ks)
     }
 	// else if doesn't work for some reason
 	if ((*vic2_irq_status & uart_irq_mask(COM1)) != 0) {
-        debug(DEBUG_UART_IRQ, "handle uart interupt %s", "");
+        debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART1");
         uart_irq_handle(COM1, ks);
     }
 	if ((*vic2_irq_status & uart_irq_mask(COM2)) != 0) {
-        debug(DEBUG_UART_IRQ, "handle uart interupt %s", "");
+        debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART2");
         uart_irq_handle(COM2, ks);
     }
 }
@@ -156,9 +156,10 @@ void uart_irq_handle(int channel, Kernel_state *ks){
             ks->event_blocks[receive_event] = NULL;
             ks->blocked_on_event[receive_event] = 0;
             td->state = STATE_READY;
-            // read the data 
-            td->retval = *pdata;
-            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up rcv notifier %d, ", td->tid);
+            // read the data
+			char ch = *pdata; 
+            td->retval = ch;
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up rcv notifier %d, received %d", td->tid, ch);
             insert_task(td, &(ks->ready_queue));
         }
     }

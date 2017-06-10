@@ -233,7 +233,7 @@ void event_task()
 
 void idle_task()
 {
-	debug(DEBUG_TASK, "enter %s", "idle_task");
+	debug(DEBUG_UART_IRQ, "enter %s", "idle_task");
     uint32 tid = MyTid();
 
 	int i, j = 0;
@@ -307,7 +307,7 @@ void io_test_task(){
 	int i = 0;
 	for (i = 0; i < 10; i++) {
    		// Putc(0, 'a');
-    	vint val = Getc(0);
+    	vint val = Getc(COM2);
 //		uart1_irq_soft();
 		debug(DEBUG_UART_IRQ, "return from Getc, receive %d", val);
 	}
@@ -457,8 +457,8 @@ void first_task()
     /*tid = Create(PRIOR_HIGH, clock_server_notifier);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    /*tid = Create(PRIOR_LOWEST, idle_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_LOWEST, idle_task);
+    debug(DEBUG_TASK, "created taskId = %d", tid);
 
     /*tid = Create(PRIOR_MEDIUM, kernel3_client_task); */
     /*debug(SUBMISSION, "created taskId = %d", tid);*/
