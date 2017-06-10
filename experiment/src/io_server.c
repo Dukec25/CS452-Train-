@@ -126,14 +126,14 @@ void io_server_receive_start(int channel){
                 debug(DEBUG_UART_IRQ, "io server %s", "RCV RDY request");
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 if(!is_fifo_empty(&ioServer.get_q)){
-                    vint* client; 
+                    vint client; 
                     vint result = fifo_get(&ioServer.get_q, &client); // character might cause error
                     vint rcv_data = request.data; 
                     debug(DEBUG_UART_IRQ, "Received Data is %d", rcv_data);
                     debug(DEBUG_UART_IRQ, "Client is  %d", client);
                     Delivery reply_client_msg;
                     reply_client_msg.data = rcv_data;
-                    Reply(*client, &reply_client_msg, sizeof(reply_client_msg));
+                    Reply(client, &reply_client_msg, sizeof(reply_client_msg));
                 }
                 else{
                     fifo_put(&ioServer.receive_q, request.data);
