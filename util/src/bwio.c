@@ -208,18 +208,3 @@ void bwprintf(int channel, char *fmt, ...)
         bwformat(channel, fmt, va);
         va_end(va);
 }
-/*
-void bwassert(bool condition, int channel, char *fmt, ...){
-    if(condition){
-        va_list va;
-
-        va_start(va,fmt);
-        bwformat(channel, fmt, va);
-        va_end(va);
-    }
-    
-    // print the message, and hang the program
-    while(1){
-        
-    }
-}*/
