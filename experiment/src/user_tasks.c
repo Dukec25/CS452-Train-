@@ -384,14 +384,7 @@ void uart2_xmit_notifier(){
     }
 }
 
-void first_task()
-{
-	// debug(DEBUG_UART_IRQ, "In user task first_task, priority=%d", PRIOR_MEDIUM);
-    int tid;
-
-	tid = Create(PRIOR_HIGH, name_server_task);
-	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
-
+void irq_io_tasks_cluster(){
     //tid = Create(PRIOR_HIGH, uart1_rcv_server);
     //debug(DEBUG_TASK, "created taskId = %d", tid);
 
@@ -403,10 +396,6 @@ void first_task()
 
     tid = Create(PRIOR_HIGH, uart2_xmit_server);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
-
-    /*tid = Create(PRIOR_HIGH, uart1_rcv_notifier);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-
 
     //tid = Create(PRIOR_HIGH, uart1_rcv_notifier);
     //debug(DEBUG_TASK, "created taskId = %d", tid);
@@ -420,8 +409,21 @@ void first_task()
     tid = Create(PRIOR_HIGH, uart2_xmit_notifier);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
+}
+
+void first_task()
+{
+	// debug(DEBUG_UART_IRQ, "In user task first_task, priority=%d", PRIOR_MEDIUM);
+    int tid;
+
+	tid = Create(PRIOR_HIGH, name_server_task);
+	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+
     //tid = Create(PRIOR_MEDIUM, io_test_task);
     //debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_HIGH, irq_io_tasks_cluster);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
     tid = Create(PRIOR_HIGH, clock_server_task);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
