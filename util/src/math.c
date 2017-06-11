@@ -24,3 +24,8 @@ uint8 clz(uint32 x)
 	/*debug("in clz, lz = %d", lz);*/
 	return lz;
 }
+
+uint8 ffz(uint32 x)
+{
+	return ~x & (x+1);
+}

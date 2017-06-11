@@ -301,7 +301,8 @@ int main()
 	ks_initialize(&ks);
 
 	uint8 tid = 0;
-	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
+	tid = ffz(ks.free_list);
+	td_intialize(first_task, &ks, tid, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
     irq_enable();
@@ -361,7 +362,8 @@ int main()
             // uart1_irq_soft_clear();
 			switch(req){
 				case 1:		
-					k_create(td, &ks, (void (*) ()) arg1, tid++, arg0);
+					tid = ffz(ks.free_list);
+					k_create(td, &ks, (void (*) ()) arg1, tid, arg0);
 					break;
 				case 2:
 					k_pass(td, &ks);
