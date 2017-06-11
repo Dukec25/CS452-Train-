@@ -1,13 +1,6 @@
 #ifndef __IO_SERVER_H__
 #define __IO_SERVER_H__
-
 #include <fifo.h>
-#include <kernel.h>
-#include <define.h>
-#include <name_server.h>
-#include <ts7200.h>
-#include <clock_server.h>
-#include <uart_irq.h>
 
 typedef enum Io_message_type {
     RECEIVE_RDY,

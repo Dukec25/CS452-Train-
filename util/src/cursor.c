@@ -47,5 +47,5 @@ void irq_nextline(int newlines)
 	// expand cursor to the next line
 	irq_pos(offset + newlines, 0);
 	// move to the beginning of the next line
-	irq_putc(COM2, '>');
+	Putc(COM2, '>');
 }

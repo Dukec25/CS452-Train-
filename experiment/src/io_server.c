@@ -1,4 +1,8 @@
 #include <io_server.h>
+#include <user_functions.h>
+#include <debug.h>
+#include <name_server.h>
+#include <clock_server.h>
 
 static void initialize(Io_server *io)
 {
@@ -124,4 +128,45 @@ void io_server_transmit_start(int channel)
                 break;
 		}
 	}
+}
+
+int Getc(int channel)
+{
+	int io_server_id;
+	switch (channel) {
+	case COM1:
+		io_server_id = WhoIs("IO_SERVER_UART1_RECEIVE");
+		break;
+	case COM2:
+		io_server_id = WhoIs("IO_SERVER_UART2_RECEIVE");
+		break;
+	}
+    debug(DEBUG_UART_IRQ, "enter Getc, server is %d, type = %d", io_server_id, GETC);
+    Delivery request;
+    request.type = GETC;
+    Delivery reply_msg;
+    Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
+    return reply_msg.data;
+}
+
+int Putc(int channel, char ch)
+{
+	int io_server_id;
+	switch (channel) {
+	case COM1:
+		io_server_id = WhoIs("IO_SERVER_UART1_TRANSMIT");
+		break;
+	case COM2:
+		io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");
+		break;
+	}
+    debug(DEBUG_UART_IRQ, "enter Putc, server is %d, type = %d", io_server_id, PUTC);
+    Delivery request;
+    request.type = PUTC;
+    request.data = ch;
+    Delivery reply_msg;
+	debug(DEBUG_UART_IRQ, "send %d to io_server_id %d", ch, io_server_id);
+    Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
+	debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
+    return 1;
 }

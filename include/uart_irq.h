@@ -3,10 +3,6 @@
 
 #include <ts7200.h>
 #include <kernel.h>
-#include <irq.h>
-#include <define.h>
-#include <io_server.h>
-#include <clock_server.h>
 
 typedef enum UART_IRQ_TYPE {
 	XMIT,

@@ -1,6 +1,5 @@
 #ifndef __IRQ_IO_H__
 #define __IRQ_IO_H__
-#include <define.h>
 #include <bwio.h>
 
 /* Interrupt I/O */

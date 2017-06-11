@@ -1,11 +1,6 @@
 #ifndef __CLOCK_SERVER_H__
 #define __CLOCK_SERVER_H__
-
-#include <fifo.h>
-#include <kernel.h>
 #include <define.h>
-#include <name_server.h>
-#include <heap.h>
 
 #define MAX_DELAYED_TASKS	50
 
@@ -35,9 +30,5 @@ typedef struct Delivery{
     vint type;
     vint data;
 } Delivery;
-
-int DelayUntil( int ticks );
-int Delay( int ticks );
-int Time();
 
 #endif // __CLOCK_SERVER_H__

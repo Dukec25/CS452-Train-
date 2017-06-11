@@ -1,3 +1,4 @@
+#include <irq.h>
 #include <uart_irq.h>
 
 static uint32 uart_receive_irq_mask()

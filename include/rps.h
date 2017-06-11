@@ -2,7 +2,6 @@
 #define __RPS_H__
 
 #include <fifo.h>
-#include <debug.h>
 #include <kernel.h>
 
 #define NUM_ROUNDS	2

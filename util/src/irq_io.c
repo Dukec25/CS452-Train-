@@ -1,4 +1,5 @@
 #include <irq_io.h>
+#include <user_functions.h>
 
 void irq_format(int channel, char *fmt, va_list va){
 	char bf[12];
@@ -72,19 +73,3 @@ void irq_printf(int channel, char *fmt, ...){
     irq_format(channel, fmt, va);
     va_end(va);
 }
-
-/*// can be used in the program to reduce bugs */
-/*void irq_assert(int condition, int channel, char *fmt, ...){*/
-    /*if(!condition){*/
-        /*va_list va;*/
-
-        /*va_start(va,fmt);*/
-        /*irq_format(channel, fmt, va);*/
-        /*va_end(va);*/
-
-        /*while(1){*/
-            
-        /*}*/
-    /*}*/
-/*}*/
-

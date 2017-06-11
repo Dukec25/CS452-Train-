@@ -131,7 +131,7 @@ void cli_update_switch(char id, char state)
 	irq_save();
 	// Place state
 	irq_pos(SWITCH_ROW + id - 1, RIGHT_BORDER - 1);
-	irq_putc(COM2, toupper(state));
+	Putc(COM2, toupper(state));
 	// Restore screen setup
 	irq_restore();
 }

@@ -1,9 +1,6 @@
 #ifndef __NAME_SERVER_H__
 #define __NAME_SERVER_H__
-
-#include <fifo.h>
 #include <kernel.h>
-#include <define.h>
 
 #define MAX_NUM_NAMES	2
 

@@ -92,7 +92,7 @@ static Server_err insert_service(Name_server *ns, Name_server_message *req)
 		Name_server_message *entry = &(ns->req_map[ns->req_map_pos]);
 		entry->tid = req->tid;
 		entry->type = req->type;
-		memcpy(entry->content, req->content, strlen(req->content) + 1);
+		Memcpy(entry->content, req->content, strlen(req->content) + 1);
 		ns->req_map_pos++;
 		ns->tid_filled[tid]++;
 		debug(DEBUG_SERVER, "entry->content = %s, ns->req_map_pos = %d, ns->tid_filled = %d",
@@ -169,7 +169,7 @@ int RegisterAs(char *name)
 	Name_server_message req;
 	req.tid = MyTid();
 	req.type = MSG_REGITSER_AS;
-	memcpy(req.content, name, strlen(name) + 1);
+	Memcpy(req.content, name, strlen(name) + 1);
 	debug(DEBUG_SERVER, "req.content = %s", req.content);
 	Name_server_message reply;
  
@@ -201,7 +201,7 @@ int WhoIs(char *name)
 	Name_server_message req;
 	req.tid = MyTid();
 	req.type = MSG_WHO_IS;
-	memcpy(req.content, name, strlen(name) + 1);
+	Memcpy(req.content, name, strlen(name) + 1);
 	debug(DEBUG_SERVER, "req.content = %s", req.content);
 	Name_server_message reply;
  

@@ -1,6 +1,7 @@
-#include <bwio.h>
+#include <debug.h>
 #include <train.h>
 #include <string.h>
+#include <user_functions.h>
 
 #define TWO_WAY_SWITCH_OFFSET 0x01
 #define TWO_WAY_SWITCH_NUM 18
@@ -9,7 +10,7 @@
 
 char switch_id_to_byte(uint8 id)
 {
-	bw_assert(id <= NUM_SWITCHES, "sw: Wrong switch id provided!\n");
+	assert(id <= NUM_SWITCHES, "sw: Wrong switch id provided!\n");
 	if ( id > TWO_WAY_SWITCH_NUM ) {
 		return THREE_WAY_SWITCH_OFFSET + ( id - TWO_WAY_SWITCH_NUM - 1 );
 	}
@@ -26,7 +27,7 @@ char switch_state_to_byte(char state)
 	case 'C':
 		return CURVE;
 	default:
-		warn(0, "sw: Wrong switch state provided!\n");
+		assert(0, "sw: Wrong switch state provided!\n");
 	}
 	return 0;
 }
@@ -100,13 +101,13 @@ int command_parse(char *command_buffer, int *pcommand_irq_pos, char *ptrain_id, 
 				}
 			}
 			else {
-				warn(0, "Invalid command\n");
+				assert(0, "Invalid command\n");
 				return -1;
 			}
 		}
 	}
 	else {
-		warn(0, "Invalid command\n");
+		assert(0, "Invalid command\n");
 		return -1;
 	}
 
@@ -118,15 +119,15 @@ int command_parse(char *command_buffer, int *pcommand_irq_pos, char *ptrain_id, 
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer[0]) {
 	case 't':
-		warn(argc == 2, "tr: invalid arguments\n");
+		assert(argc == 2, "tr: invalid arguments\n");
 		*ptrain_speed = pcmd->arg1;
 		*ptrain_id = pcmd->arg0;
 		pcmd->type = TR;
 	case 'r':
-		warn(argc == 1, "rv: invalid arguments\n");
+		assert(argc == 1, "rv: invalid arguments\n");
 		pcmd->type = RV;
 	case 's':
-		warn(argc == 2, "sw: invalid arguments\n");
+		assert(argc == 2, "sw: invalid arguments\n");
 		pcmd->type = SW;
 	default: // fall through
 		pcmd->arg0 = args[0];
@@ -144,7 +145,7 @@ void command_handle(Command *pcmd)
 			Putc(COM1, pcmd->arg1); // speed
 			Putc(COM1, pcmd->arg0); // train
 		} else {
-			bw_assert(0, "tr: Invalid speed %d\n", pcmd->arg1);
+			assert(0, "tr: Invalid speed %d\n", pcmd->arg1);
 		}
 		break;
 	case RV:

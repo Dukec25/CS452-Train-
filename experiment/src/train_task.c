@@ -8,11 +8,10 @@
 
 static int is_exit = 0;
 
-void start_up_task()
+void train_task_startup()
 {
 	cli_startup();
 	initialize_switch();
-	Exit();
 }
 
 void clock_task()

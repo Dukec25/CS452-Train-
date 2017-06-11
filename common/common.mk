@@ -10,7 +10,7 @@ CFLAGS  = -c -fPIC -Wall $(INCLUDE) -mcpu=arm920t -msoft-float --no-builtin
 ASFLAGS	= -mcpu=arm920t -mapcs-32
 ARFLAGS = rcs
 
-INCLUDE = -I../../common/include -I../../util/include -I../../io/include
+INCLUDE = -I../../common/include -I../../util/include -I../../include
 LDPATHS = -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../../common/lib -L../../io/lib -L../../util/lib 
 LIBS 	= -lutil -lcommon -lc -lgcc
 LDFLAGS = -init main -Map $(MAP) -N  -T orex.ld $(LDPATHS) $(LIBS)

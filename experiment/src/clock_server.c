@@ -1,4 +1,7 @@
 #include <clock_server.h>
+#include <user_functions.h>
+#include <debug.h>
+#include <heap.h>
 
 static void initialize(Clock_server *cs)
 {
