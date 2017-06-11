@@ -15,18 +15,21 @@ void train_task_startup()
 
 void clock_task()
 {
-	debug(DEBUG_UART_IRQ, "enter %s", "clock_task");
+	debug(SUBMISSION, "enter %s", "clock_task");
 	vint elapsed_tenth_sec = 0;
 	// digital clock
 	Clock clock;
 	clock_init(&clock);
 
 	while (1) {
+        debug(SUBMISSION, "%s", "before delay");
 		Delay(10);	// update every 100ms
+        debug(SUBMISSION, "%s", "after delay");
 		elapsed_tenth_sec++;
 		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
-		clock_update(&clock, elapsed_tenth_sec);
-		cli_update_clock(&clock);
+        debug(SUBMISSION, "%s", "before clock_update");
+        clock_update(&clock, elapsed_tenth_sec);
+        cli_update_clock(&clock);
 	}
 	Exit();
 }

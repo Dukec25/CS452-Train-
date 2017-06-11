@@ -3,6 +3,7 @@
 #include <cursor.h>
 #include <cli.h>
 #include <train.h>
+#include <debug.h>
 
 /* horizonal borders */
 #define UPPER_BORDER 		1
@@ -100,10 +101,14 @@ void cli_startup()
 
 void cli_update_clock(Clock *pclock)
 {
+    debug(DEBUG_K4, "before %s", "irq_save");
 	// Save screen
 	irq_save();
+    debug(DEBUG_K4, "after %s", "irq_save");
 	// Place clock
+    debug(DEBUG_K4, "before %s", "irq_pos");
 	irq_pos(CLOCK_ROW, CLOCK_COL);
+    debug(DEBUG_K4, "after %s", "irq_pos");
 /*	irq_printf(COM2, "%s%d:%s%d:%d",
 					 pclock->min < 100 ? (pclock->min < 10 ? "00" : "0") : "",
 					 pclock->min,
@@ -111,7 +116,6 @@ void cli_update_clock(Clock *pclock)
 					 pclock->sec,
 					 pclock->tenth_sec);
 */
-    debug(DEBUG_K4, "enter %s", "cli_update_clock");
     irq_printf(COM2, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);
     /*irq_printf(COM1, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);*/
 	// Restore screen setup
