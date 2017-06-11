@@ -16,7 +16,7 @@ void train_task_startup()
 void clock_task()
 {
 	debug(DEBUG_UART_IRQ, "enter %s", "clock_task");
-	int elapsed_tenth_sec = 0;
+	vint elapsed_tenth_sec = 0;
 	// digital clock
 	Clock clock;
 	clock_init(&clock);

@@ -18,8 +18,8 @@ void irq_enable()
 	debug(DEBUG_IRQ, "enter %s", "irq_enable");
 	vint *vic2_int_sel = (vint *) VIC2_INT_SEL;
 	*vic2_int_sel &= 0x0;	// interrupt type = IRQ
-	/*timer3_irq_enable();*/
-	/*timer3_enable();*/
+    timer3_irq_enable();
+    timer3_enable();
 	// UART2 RCV
 	uart_irq_enable(COM1);
 //	uart_irq_enable(COM2);

@@ -197,9 +197,9 @@ void clock_server_notifier(){
     Clock_server_message reply_message;
     vint clock_server_tid = WhoIs("CLOCK_SERVER");
     while(1){
-    //    debug(DEBUG_UART_IRQ, "before enter %s", "awaitEvent");
+        debug(DEBUG_UART_IRQ, "before enter %s", "awaitEvent");
         request.data = AwaitEvent(TIMER3_RDY, -1); // evtType = here should be clock update event;
-    //    debug(DEBUG_UART_IRQ, "after enter awaitEvent, send to clock_server_tid = %d", clock_server_tid);
+        debug(DEBUG_UART_IRQ, "after enter awaitEvent, send to clock_server_tid = %d", clock_server_tid);
         request.type = CLOCK_NOTIFIER;
         Send(clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message));
         /*debug(SUBMISSION, "after enter %s", "clock notify");*/
