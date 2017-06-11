@@ -30,7 +30,7 @@ void irq_disable()
 {
 	timer3_irq_disable();
     uart_irq_disable(COM2);
-    uart_irq_disable(COM1);
+    /*uart_irq_disable(COM1);*/
 }
 
 void irq_handle(Kernel_state *ks)
