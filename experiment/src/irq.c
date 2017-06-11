@@ -21,8 +21,8 @@ void irq_enable()
 	/*timer3_irq_enable();*/
 	/*timer3_enable();*/
 	// UART2 RCV
-//	uart_irq_enable(COM1);
-	uart_irq_enable(COM2);
+	uart_irq_enable(COM1);
+//	uart_irq_enable(COM2);
 //	uart_device_enable(COM2, RCV);
 }
 
