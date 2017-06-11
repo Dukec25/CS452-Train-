@@ -2,6 +2,8 @@
 #include <train.h>
 #include <string.h>
 #include <user_functions.h>
+#include <kernel.h>
+#include <clock_server.h>
 
 #define TWO_WAY_SWITCH_OFFSET 0x01
 #define TWO_WAY_SWITCH_NUM 18
@@ -137,8 +139,43 @@ int command_parse(char *command_buffer, int *pcommand_irq_pos, char *ptrain_id, 
 	return 0;	
 }
 
+void delay_task()
+{
+	int requester;
+	Delay_msg delay_msg;
+
+	// immediately reply
+	Delivery reply_msg;
+	Receive(&requester, &delay_msg, sizeof(delay_msg));	
+	reply_msg.data = 0;
+    Reply(requester, &reply_msg, sizeof(reply_msg));
+
+	// delay
+	Delay(delay_msg.ticks);
+
+	// send command to train
+	switch(delay_msg.cmd.type) {
+	case RV:
+		Putc(COM1, REVERSE); 	 			// reverse	
+		Putc(COM1, delay_msg.cmd.arg0); 	// train
+
+		Putc(COM1, delay_msg.cmd.arg1); 	// train
+		Putc(COM1, delay_msg.cmd.arg0); 	// train
+		break;
+	case SW:
+		Putc(COM1, SOLENOID_OFF); 			// turnoff solenoid
+		break;
+	default:
+		assert(0, "Invalid command\n");
+	}
+}
+
 void command_handle(Command *pcmd)
 {
+	int delay_task_tid;
+	Delay_msg delay_msg;
+	Delivery reply_msg;
+
 	switch(pcmd->type) {
 	case TR:
 		if (pcmd->arg1 <= MAX_SPEED) {
@@ -152,19 +189,26 @@ void command_handle(Command *pcmd)
 		Putc(COM1, STOP); 	 		// stop	
 		Putc(COM1, pcmd->arg0); 	// train
 		// NEED TO MOVE delay into separate task, otherwise will block, ask Slavik tomorrow if you can!!!
-		elay(50);					// Delay 0.5 second
+	//	Delay(50);					// Delay 0.5 second
 
-		Putc(COM1, REVERSE); 	 	// reverse	
-		Putc(COM1, pcmd->arg0); 	// train
-		Delay(50);					// Delay 1 second
+	//	Putc(COM1, REVERSE); 	 	// reverse	
+	//	Putc(COM1, pcmd->arg0); 	// train
+	//	Delay(50);					// Delay 0.5 second
 
-		Putc(COM1, pcmd->arg1); 	// speed
-		Putc(COM1, pcmd->arg0); 	// train
+	//	Putc(COM1, pcmd->arg1); 	// speed
+	//	Putc(COM1, pcmd->arg0); 	// train
+		delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
+		delay_msg.ticks = 50;
+		delay_msg.cmd = *pcmd;
+		Send(delay_task_tid, &delay_msg, sizeof(delay_msg), &(reply_msg), sizeof(reply_msg));
 		break;
 	case SW:
 		Putc(COM1, switch_state_to_byte(pcmd->arg1));	// state
 		Putc(COM1, switch_id_to_byte(pcmd->arg0)); 		// switch
-		Putc(COM1, SOLENOID_OFF); 						// turnoff solenoid
+		delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
+		delay_msg.ticks = 50;
+		delay_msg.cmd = *pcmd;
+		Send(delay_task_tid, &delay_msg, sizeof(delay_msg), &(reply_msg), sizeof(reply_msg));
 		break;
 	case GO:
 		Putc(COM1, START);

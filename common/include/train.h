@@ -72,4 +72,12 @@ int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_i
  */
 void command_handle(Command *pcmd);
 
+/* Delay */
+typedef struct {
+	int ticks;
+	Command cmd;
+} Delay_msg;
+
+void delay_task();
+
 #endif // __TRAIN_H__
