@@ -276,7 +276,7 @@ int main()
     bwsetspeed(COM2, 115200);
     bwsetfifo(COM2, OFF);
 	// user interface and train set up
-	train_task_startup();
+//	train_task_startup();
 
     /*asm volatile("MRC p15, 0, r2, c1, c0, 0");*/
     /*asm volatile("ORR r2, r2, #1<<12");*/
@@ -335,7 +335,6 @@ int main()
 				is_entry_from_hwi = 1;
 				td->is_entry_from_hwi = ENTER_FROM_HWI;
 			//	debug(DEBUG_UART_IRQ, ">>>>>td->is_entry_from_hwi = 0x%x", td->is_entry_from_hwi);
-			//	debug(DEBUG_UART_IRQ, ">>>>>irq get back into kernel again, cur_lr = 0x%x", cur_lr);
 			}
 
 			update_td(td, cur_lr);
@@ -386,7 +385,7 @@ int main()
                     k_reply(arg0, arg1, arg2, td, &ks);
                     break;
 				case 9:
-					debug(DEBUG_UART_IRQ, "before entering %s", "k_await_event");
+				//	debug(DEBUG_UART_IRQ, "before entering %s", "k_await_event");
 					k_await_event(arg0, arg1, td, &ks);
 					break;
                     /*k_await_event(arg0, arg1, td, &ks);*/

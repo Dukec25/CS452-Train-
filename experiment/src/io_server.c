@@ -124,6 +124,7 @@ void io_server_transmit_start(int channel)
 					reply_msg.data = character;
                     Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
 					xmit_not_waiting = 0;
+					debug(DEBUG_UART_IRQ, "NOw xmit_not_waiting = %d", xmit_not_waiting);
 				}
                 break;
 		}
@@ -160,7 +161,7 @@ int Putc(int channel, char ch)
 		io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");
 		break;
 	}
-    debug(DEBUG_UART_IRQ, "enter Putc, server is %d, type = %d", io_server_id, PUTC);
+    debug(DEBUG_UART_IRQ, "enter Putc, channel = %d, server is %d, type = %d", channel, io_server_id, PUTC);
     Delivery request;
     request.type = PUTC;
     request.data = ch;

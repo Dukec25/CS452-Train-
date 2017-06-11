@@ -74,7 +74,7 @@ int Reply( int tid, void *reply, int replylen )
 }
 
 int AwaitEvent(int eventType, char ch){
-    debug(DEBUG_UART_IRQ, "this is in %s", "user AwaitEvent");
+//    debug(DEBUG_UART_IRQ, "this is in %s", "user AwaitEvent");
     int data = asm_kernel_await_event(eventType, ch);
     return data;
 }

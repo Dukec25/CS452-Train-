@@ -159,7 +159,8 @@ void uart_irq_handle(int channel, Kernel_state *ks)
             td->state = STATE_READY;
             // turn off the XMIT interrupt
 			uart_device_disable(channel, XMIT);
-            // write the data 
+            // write the data
+			debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); 
             *pdata = td->ch;
             debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); 
             insert_task(td, &(ks->ready_queue));

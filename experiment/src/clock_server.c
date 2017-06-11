@@ -74,9 +74,9 @@ void clock_server_start()
 		switch(request.type) {
             case CLOCK_NOTIFIER:
                 Reply(requester, &reply_msg, sizeof(reply_msg));
-                /*debug(SUBMISSION, "Enter %s", "CLOCK_NOTIFIER");*/
+                //debug(DEBUG_UART_IRQ, "Enter %s", "CLOCK_NOTIFIER");
                 cs.ticks++;
-                /*debug(SUBMISSION, "increment ticks = %d", cs.ticks);*/
+                //debug(DEBUG_UART_IRQ, "increment ticks = %d", cs.ticks);
                 break;
 			case TIME_REQUEST:
                 debug(SUBMISSION, "Enter %s", "TIME_REQUESTER");
@@ -85,6 +85,7 @@ void clock_server_start()
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 		 		break;
 			case DELAY_REQUEST:
+                //debug(DEBUG_UART_IRQ, "Enter DELAY_REQUEST, requester = %d", requester);
                 tid = requester;
                 vint freedom_tick = cs.ticks + request.data;
                 /*Clock_server_message reply_msg;*/
@@ -110,6 +111,7 @@ void clock_server_start()
         {
             Clock_server_message reply_msg;
             vint tid = (vint)root.data;
+			debug(DEBUG_UART_IRQ, "!!!!!!!!!! reply to %d", tid);
             Reply(tid, &reply_msg, sizeof(reply_msg));
             heap_delete(&delay_h, &del);
             /*int n;*/

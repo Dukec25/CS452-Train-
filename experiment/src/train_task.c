@@ -7,8 +7,6 @@
 #include <user_functions.h>
 #include <debug.h>
 
-static int is_exit = 0;
-
 void train_task_startup()
 {
 	cli_startup();
@@ -17,15 +15,16 @@ void train_task_startup()
 
 void clock_task()
 {
-	debug(DEBUG_IRQ, "enter %s", "clock_task");
+	debug(DEBUG_UART_IRQ, "enter %s", "clock_task");
 	int elapsed_tenth_sec = 0;
 	// digital clock
 	Clock clock;
 	clock_init(&clock);
 
-	while (!is_exit) {
-		Delay(1);	// update every 10ms
+	while (1) {
+		Delay(10);	// update every 100ms
 		elapsed_tenth_sec++;
+		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
 		clock_update(&clock, elapsed_tenth_sec);
 		cli_update_clock(&clock);
 	}
@@ -33,7 +32,7 @@ void clock_task()
 }
 
 void sensor_task() {
-	while (!is_exit) {
+	while (1) {
 		Delay(20);	// delay 200ms
 		Putc(COM1, SENSOR_QUERY);
 		int sensor_data[SENSOR_GROUPS];
@@ -78,7 +77,6 @@ void train_task() {
 			int result = command_parse(command_buffer, &command_buffer_pos, &train_id, &train_speed, &cmd);
 			if (result == 1) {
 				// user hits 'q', exit
-				is_exit = 1;
 				break;
 			} else if (result == 1) {
 				// user enters a valid command, handle command and sends command to train

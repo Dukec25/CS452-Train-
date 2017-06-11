@@ -104,14 +104,16 @@ void cli_update_clock(Clock *pclock)
 	irq_save();
 	// Place clock
 	irq_pos(CLOCK_ROW, CLOCK_COL);
-	irq_printf(COM2, "%s%d:%s%d:%d",
+/*	irq_printf(COM2, "%s%d:%s%d:%d",
 					 pclock->min < 100 ? (pclock->min < 10 ? "00" : "0") : "",
 					 pclock->min,
 					 pclock->sec < 10 ? "0" : "",
 					 pclock->sec,
 					 pclock->tenth_sec);
+*/
+	irq_printf(COM2, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);
 	// Restore screen setup
-	irq_restore();
+//	irq_restore();
 }
 
 void cli_update_train(char id, char speed)

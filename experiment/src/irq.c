@@ -33,9 +33,9 @@ void irq_disable()
 
 void irq_handle(Kernel_state *ks)
 {
-	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
+//	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
-	debug(DEBUG_UART_IRQ, "*vic2_irq_status = 0x%x", *vic2_irq_status);
+//	debug(DEBUG_UART_IRQ, "*vic2_irq_status = 0x%x", *vic2_irq_status);
 	if ((*vic2_irq_status & timer3_irq_mask()) != 0) {
 		timer3_irq_handle(ks);
     }
@@ -100,7 +100,7 @@ void timer3_irq_soft_clear()
 
 void timer3_irq_handle(Kernel_state *ks)
 {
-	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer3_irq_handle");
+//	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer3_irq_handle");
 	timer3_clear();
 	if (ks->blocked_on_event[0]) {
 		// notify events await on timer
@@ -108,8 +108,10 @@ void timer3_irq_handle(Kernel_state *ks)
 		ks->event_blocks[0] = NULL;
 		ks->blocked_on_event[0] = 0;
         td->state = STATE_READY;
-		debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up task %d, ks->blocked_on_event[0] = %d", td->tid, ks->blocked_on_event[0]);
+//		debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up task %d, ks->blocked_on_event[0] = %d", td->tid, ks->blocked_on_event[0]);
         insert_task(td, &(ks->ready_queue));
 	}
-	debug(DEBUG_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
+//	else {
+	//	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
+//	}
 }
