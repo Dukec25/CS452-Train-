@@ -17,9 +17,9 @@ typedef enum Io_message_type {
 } Io_message_type;
 
 typedef struct Io_server{
-    fifo_t get_q;
-    fifo_t transmit_q;
-    fifo_t receive_q;
+    fifo_t get_q; // waiting tasks that want to getc
+    fifo_t transmit_q; // characters waited to be transmit
+    fifo_t receive_q; // input characters waited be return to tasks call getc
 } Io_server;
 
 #endif // __IO_SERVER_H__

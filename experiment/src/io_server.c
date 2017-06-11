@@ -143,10 +143,10 @@ void io_server_receive_start(int channel){
                 debug(DEBUG_UART_IRQ, "enter %s", "IO SERVER, REQUEST GETC");
                 if(!is_fifo_empty(&ioServer.receive_q)){
                     debug(DEBUG_UART_IRQ, "Fifo %s", "receive_q is not empty");
-                    vint* rcv_data; 
+                    vint rcv_data; 
                     vint result = fifo_get(&ioServer.receive_q, &rcv_data); // character might cause error
                     Delivery reply_client_msg;
-                    reply_client_msg.data = *rcv_data;
+                    reply_client_msg.data = rcv_data;
                     Reply(requester, &reply_client_msg, sizeof(reply_client_msg));
                 } else{
                     debug(DEBUG_UART_IRQ, "Fifo %s", "receive_q is empty");
@@ -180,7 +180,7 @@ void io_server_transmit_start(int channel)
 		Receive(&requester, &request, sizeof(request));
         debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
         vint tid;
-        vint* character; 
+        vint character; 
 
 		switch(request.type) {
             case TRANSMIT_RDY:
@@ -191,16 +191,16 @@ void io_server_transmit_start(int channel)
                 if(!is_fifo_empty(&ioServer.transmit_q)){
                     debug(DEBUG_UART_IRQ, "transmit queue is not empty %s", "XMIT RDY request");
                     fifo_get(&ioServer.transmit_q, &character); // character might cause error
-					reply_msg.data = *character;
-                    debug(DEBUG_UART_IRQ, "reply data is %d", *character);
+					reply_msg.data = character;
+                    debug(DEBUG_UART_IRQ, "reply data is %d", &character);
                     Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
 					xmit_not_waiting = 0;
 					debug(DEBUG_UART_IRQ, "xmit_not_waiting = %d", xmit_not_waiting);
                 }
                 break;
             case PUTC:
-                debug(DEBUG_UART_IRQ, "enter %s", "IO SERVER, REQUEST PUTC");
-				fifo_put(&ioServer.transmit_q, &request.data);	// transmit_q is not empty
+                debug(DEBUG_UART_IRQ, "enter IO SERVER, REQUEST PUTC, put data = %d", request.data);
+				fifo_put(&ioServer.transmit_q, request.data);	// transmit_q is not empty
 				debug(DEBUG_UART_IRQ, "xmit_not_waiting = %d, transmit_q is_empty = %d", xmit_not_waiting, is_fifo_empty(&ioServer.transmit_q));
 				reply_msg.data = 0;
                 Reply(requester, &reply_msg, sizeof(reply_msg));
@@ -208,8 +208,8 @@ void io_server_transmit_start(int channel)
 				if (xmit_not_waiting) {
 					debug(DEBUG_UART_IRQ, "inside if xmit_not_waiting = %d", xmit_not_waiting);
 	                vint result = fifo_get(&ioServer.transmit_q, &character); // character might cause error
-                    debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, *character);
-					reply_msg.data = *character;
+                    debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, character);
+					reply_msg.data = character;
                     Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
 					xmit_not_waiting = 0;
 				}

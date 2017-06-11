@@ -6,6 +6,7 @@
 #include <clock_server.h>
 #include <io_server.h>
 #include <uart_irq.h>
+#include <irq_io.h>
 
 #define TIMER_MAX	0xFFFFFFFF
 
@@ -305,13 +306,15 @@ void xmit_notifier(){
 
 void io_test_task(){
 	int i = 0;
-	for (i = 0; i < 10; i++) {
+    debug(100, "!!!!!!!!!!!!!!!!!!before printint irq sentence%s", "% ");
+    irq_printf(COM1, "%s", "golden retriever is the best");
+	/*for (i = 0; i < 255; i++) {*/
    		// Putc(0, 'a');
-    	char val = Getc(COM2);
-		debug(DEBUG_UART_IRQ, "return from Getc, receive %d", val);
-        Putc(COM2, val);
+        /*char val = Getc(COM2);*/
+		/*debug(DEBUG_UART_IRQ, "return from Getc, receive %d", val);*/
+        /*Putc(COM1, i);*/
 //		uart1_irq_soft();
-	}
+	/*}*/
 	Exit();
 }
 
@@ -430,12 +433,11 @@ void first_task()
     tid = Create(PRIOR_HIGH, uart2_rcv_server);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_HIGH, uart1_xmit_server);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-
-    tid = Create(PRIOR_HIGH, uart2_xmit_server);
+    tid = Create(PRIOR_HIGH, uart1_xmit_server);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
+    /*tid = Create(PRIOR_HIGH, uart2_xmit_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
     /*tid = Create(PRIOR_HIGH, uart1_rcv_notifier);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
@@ -443,11 +445,11 @@ void first_task()
     tid = Create(PRIOR_HIGH, uart2_rcv_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_HIGH, uart1_xmit_notifier);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-
-    tid = Create(PRIOR_HIGH, uart2_xmit_notifier);
+    tid = Create(PRIOR_HIGH, uart1_xmit_notifier);
     debug(DEBUG_TASK, "created taskId = %d", tid);
+
+    /*tid = Create(PRIOR_HIGH, uart2_xmit_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
     tid = Create(PRIOR_MEDIUM, io_test_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
