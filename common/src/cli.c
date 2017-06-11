@@ -111,8 +111,9 @@ void cli_update_clock(Clock *pclock)
 					 pclock->sec,
 					 pclock->tenth_sec);
 */
-//	irq_printf(COM2, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);
-	irq_printf(COM1, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);
+    debug(DEBUG_K4, "enter %s", "cli_update_clock");
+    irq_printf(COM2, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);
+    /*irq_printf(COM1, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);*/
 	// Restore screen setup
 //	irq_restore();
 }

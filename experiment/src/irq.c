@@ -21,8 +21,8 @@ void irq_enable()
     timer3_irq_enable();
     timer3_enable();
 	// UART2 RCV
-	uart_irq_enable(COM1);
-//	uart_irq_enable(COM2);
+	/*uart_irq_enable(COM1);*/
+    uart_irq_enable(COM2);
 //	uart_device_enable(COM2, RCV);
 }
 
@@ -30,6 +30,7 @@ void irq_disable()
 {
 	timer3_irq_disable();
     uart_irq_disable(COM2);
+    uart_irq_disable(COM1);
 }
 
 void irq_handle(Kernel_state *ks)
@@ -101,7 +102,8 @@ void timer3_irq_soft_clear()
 
 void timer3_irq_handle(Kernel_state *ks)
 {
-    debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer3_irq_handle");
+    /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer3_irq_handle");*/
+    /*debug(SUBMISSION, "%s", "3");*/
 	timer3_clear();
 	if (ks->blocked_on_event[0]) {
 		// notify events await on timer3

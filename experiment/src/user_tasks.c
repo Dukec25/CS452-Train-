@@ -209,10 +209,13 @@ void clock_server_notifier(){
 void idle_task()
 {
 	debug(DEBUG_UART_IRQ, "enter %s", "idle_task");
+	debug(SUBMISSION, "%s", "idle_task");
     uint32 tid = MyTid();
 
 	int i, j = 0;
     while(1){
+        irq_printf(COM2, "golden retriever is the best\r\n");
+        /*debug(SUBMISSION, "%s", "idle_task");*/
 	/*for (i = 0; i < 300000; i++) {*/
         /*debug(SUBMISSION, "i = %d", i);*/
         /*Pass();*/
@@ -394,11 +397,11 @@ void irq_io_tasks_cluster(){
     /*tid = Create(PRIOR_HIGH, uart2_rcv_server);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    tid = Create(PRIOR_HIGH, uart1_xmit_server);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
+    /*tid = Create(PRIOR_HIGH, uart1_xmit_server);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-//    tid = Create(PRIOR_HIGH, uart2_xmit_server);
-//    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, uart2_xmit_server);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
     //tid = Create(PRIOR_HIGH, uart1_rcv_notifier);
     //debug(DEBUG_TASK, "created taskId = %d", tid);
@@ -406,11 +409,11 @@ void irq_io_tasks_cluster(){
     /*tid = Create(PRIOR_HIGH, uart2_rcv_notifier);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    tid = Create(PRIOR_HIGH, uart1_xmit_notifier);
-    debug(DEBUG_TASK, "created taskId = %d", tid);
+    /*tid = Create(PRIOR_HIGH, uart1_xmit_notifier);*/
+    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-//    tid = Create(PRIOR_HIGH, uart2_xmit_notifier);
-//    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    tid = Create(PRIOR_HIGH, uart2_xmit_notifier);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
 	Exit();
 }
@@ -435,11 +438,11 @@ void first_task()
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-	tid = Create(PRIOR_MEDIUM, clock_task);
-  	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
-
     tid = Create(PRIOR_HIGH, clock_server_notifier);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+
+    /*tid = Create(PRIOR_MEDIUM, clock_task);*/
+    /*debug(DEBUG_UART_IRQ, "created taskId = %d", tid);*/
 
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 	Exit();
