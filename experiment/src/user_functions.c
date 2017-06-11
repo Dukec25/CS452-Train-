@@ -1,5 +1,6 @@
 #include <debug.h>
 #include <user_functions.h>
+#include <io_server.h>
 
 extern void asm_init_kernel();
 extern int asm_kernel_create(int priority, void (*code) ());
@@ -15,7 +16,6 @@ void init_kernel()
 	asm_init_kernel();
 }
 
-// upper case due to A1 specification 
 int Create(int priority, void (*code) ())
 {
 	debug(DEBUG_SYSCALL, "In user mode Create, priority = %d, code = 0x%x", priority, code);
@@ -73,17 +73,49 @@ int Reply( int tid, void *reply, int replylen )
     return result;
 }
 
-/*
-int AwaitEvent(int eventType)
-{
-    debug(DEBUG_SYSCALL, "this is in %s", "user AwaitEvent");
-    int data = asm_kernel_await_event(eventType);
-	return data;
-}
-*/
-
 int AwaitEvent(int eventType, char ch){
     debug(DEBUG_SYSCALL, "this is in %s", "user AwaitEvent");
     int data = asm_kernel_await_event(eventType, ch);
     return data;
+}
+
+int Getc(int channel)
+{
+	int io_server_id;
+	switch (channel) {
+	case COM1:
+		io_server_id = WhoIs("IO_SERVER_UART1_RECEIVE");
+		break;
+	case COM2:
+		io_server_id = WhoIs("IO_SERVER_UART2_RECEIVE");
+		break;
+	}
+    debug(DEBUG_UART_IRQ, "enter Getc, server is %d, type = %d", io_server_id, GETC);
+    Delivery request;
+    request.type = GETC;
+    Delivery reply_msg;
+    Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
+    return reply_msg.data;
+}
+
+int Putc(int channel, char ch)
+{
+	int io_server_id;
+	switch (channel) {
+	case COM1:
+		io_server_id = WhoIs("IO_SERVER_UART1_TRANSMIT");
+		break;
+	case COM2:
+		io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");
+		break;
+	}
+    debug(DEBUG_UART_IRQ, "enter Putc, server is %d, type = %d", io_server_id, PUTC);
+    Delivery request;
+    request.type = PUTC;
+    request.data = ch;
+    Delivery reply_msg;
+	debug(DEBUG_UART_IRQ, "send %d to io_server_id %d", ch, io_server_id);
+    Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
+	debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
+    return 1;
 }

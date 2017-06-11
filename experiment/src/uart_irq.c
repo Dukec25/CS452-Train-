@@ -1,5 +1,15 @@
 #include <uart_irq.h>
 
+static uint32 uart_receive_irq_mask()
+{
+    return 0x1 << 1;
+}
+
+static uint32 uart_transmit_irq_mask()
+{
+    return 0x1 << 2;
+}
+
 uint32 uart_irq_mask(int channel)
 {
 	switch (channel) {
@@ -97,41 +107,61 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	}
 }
 
-int Getc(int channel){
-	int io_server_id;
-	switch (channel) {
-	case COM1:
-		io_server_id = WhoIs("IO_SERVER_UART1_RECEIVE");
-		break;
-	case COM2:
-		io_server_id = WhoIs("IO_SERVER_UART2_RECEIVE");
-		break;
-	}
-    debug(DEBUG_UART_IRQ, "enter Getc, server is %d, type = %d", io_server_id, GETC);
-    Delivery request;
-    request.type = GETC;
-    Delivery reply_msg;
-    Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
-    return reply_msg.data;
-}
+void uart_irq_handle(int channel, Kernel_state *ks)
+{
+    // check UART interrupt status
+	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_handle"); 
+    vint *uart_intr, *pdata;
+    vint receive_event;
+    vint transmit_event;
 
-int Putc(int channel, char ch){
-	int io_server_id;
 	switch (channel) {
 	case COM1:
-		io_server_id = WhoIs("IO_SERVER_UART1_TRANSMIT");
+		uart_intr = (vint *) UART1_INTR;
+        pdata = (vint *) UART1_DATA;
+        receive_event = RCV_UART1_RDY;
+        transmit_event = XMIT_UART1_RDY;
 		break;
 	case COM2:
-		io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");
+		uart_intr = (vint *) UART2_INTR;
+        pdata = (vint *) UART2_DATA;
+        receive_event = RCV_UART2_RDY;
+        transmit_event = XMIT_UART2_RDY;
 		break;
 	}
-    debug(DEBUG_UART_IRQ, "enter Putc, server is %d, type = %d", io_server_id, PUTC);
-    Delivery request;
-    request.type = PUTC;
-    request.data = ch;
-    Delivery reply_msg;
-	debug(DEBUG_UART_IRQ, "send %d to io_server_id %d", ch, io_server_id);
-    Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg));
-	debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
-    return 1;
+	debug(DEBUG_UART_IRQ, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr); 
+	
+	if (*uart_intr & uart_receive_irq_mask()) {
+        debug(DEBUG_UART_IRQ, "handle rcv interupt %s", "");
+        // receive interrupt
+        if (ks->blocked_on_event[receive_event]) {
+            // notify events await on receive ready
+            volatile Task_descriptor *td = ks->event_blocks[receive_event];
+            ks->event_blocks[receive_event] = NULL;
+            ks->blocked_on_event[receive_event] = 0;
+            td->state = STATE_READY;
+            // read the data
+			char ch = *pdata; 
+            td->retval = ch;
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up rcv notifier %d, received %d", td->tid, ch);
+            insert_task(td, &(ks->ready_queue));
+        }
+    }
+	if (*uart_intr & uart_transmit_irq_mask()) {
+        debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
+		// new transmit interrupt handling 
+        if (ks->blocked_on_event[transmit_event]) {
+            // notify events await on transmit ready
+            volatile Task_descriptor *td = ks->event_blocks[transmit_event];
+            ks->event_blocks[transmit_event] = NULL;
+            ks->blocked_on_event[transmit_event] = 0;
+            td->state = STATE_READY;
+            // turn off the XMIT interrupt
+			uart_device_disable(channel, XMIT);
+            // write the data 
+            *pdata = td->ch;
+            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); 
+            insert_task(td, &(ks->ready_queue));
+        }
+	}
 }

@@ -22,4 +22,6 @@ typedef struct Io_server{
     fifo_t receive_q; // input characters waited be return to tasks call getc
 } Io_server;
 
+void io_server_receive_start(int channel);
+void io_server_transmit_start(int channel);
 #endif // __IO_SERVER_H__

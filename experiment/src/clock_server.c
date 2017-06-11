@@ -1,11 +1,13 @@
 #include <clock_server.h>
 
-static void initialize(Clock_server *cs){
+static void initialize(Clock_server *cs)
+{
 	debug(DEBUG_CLOCK, "Enter %s", "clock_server_initialize");
     cs->ticks = 0;
 }
 
-int DelayUntil( int ticks ){
+int DelayUntil(int ticks)
+{
 	debug(DEBUG_CLOCK, "Enter %s", "Primitive DelayUntil");
     if (ticks < 0){
         return -2;
@@ -19,7 +21,8 @@ int DelayUntil( int ticks ){
     return 0;
 }
 
-int Delay( int ticks ){
+int Delay(int ticks)
+{
 	/*debug(SUBMISSION, "Enter %s", "Primitive Delay");*/
     if (ticks <= 0){
         return -2;
@@ -33,7 +36,8 @@ int Delay( int ticks ){
     return 0;
 }
 
-int Time(){
+int Time()
+{
 	debug(SUBMISSION, "Enter %s", "Primitive TIME");
     vint clock_server_tid = WhoIs("CLOCK_SERVER");
     Clock_server_message send_msg;
