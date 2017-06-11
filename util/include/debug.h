@@ -17,6 +17,7 @@ typedef enum debug_level
     DEBUG_INFO,
 	DEBUG_IRQ,
     DEBUG_UART_IRQ,
+    DEBUG_K4,
     SUBMISSION
 } debug_level;
 

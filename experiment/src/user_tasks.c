@@ -285,7 +285,7 @@ void io_test_task(){
 	int i = 0;
     /*debug(100, "!!!!!!!!!!!!!!!!!!before printint irq sentence%s", "% ");*/
     
-    for( i = 0; i < 100; i++ ){
+    for( i = 0; i < 10000; i++ ){
         //irq_printf(COM2, "golden retriever is the best%d\r\n", i);
         irq_printf(COM2, "%d\r\n", i);
     }

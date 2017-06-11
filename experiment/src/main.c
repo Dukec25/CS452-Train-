@@ -304,6 +304,7 @@ int main()
 	td_intialize(first_task, &ks, tid++, INVALID_TID, PRIOR_MEDIUM);
 
 	// enable irq
+    irq_disable(); // reset the state in case previous one messed it up
     irq_enable();
 
 	volatile Task_descriptor *td = NULL;
