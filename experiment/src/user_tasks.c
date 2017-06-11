@@ -183,23 +183,23 @@ void rps_client_task()
 }
 
 void clock_server_task(){
-	debug(DEBUG_TASK, "enter %s", "clock_server_task");
+	debug(DEBUG_UART_IRQ, "enter %s", "clock_server_task");
     uint32 tid = MyTid();
-    debug(DEBUG_TASK, "starting clock_server_task tid = %d", tid); 
+    debug(DEBUG_UART_IRQ, "starting clock_server_task tid = %d", tid); 
 	clock_server_start();
-	debug(DEBUG_TASK, "tid =%d exiting", tid);
+	debug(DEBUG_UART_IRQ, "tid =%d exiting", tid);
     Exit();
 }
 
 void clock_server_notifier(){
-	debug(DEBUG_TASK, "enter %s", "clock_server_notifier");
+	debug(DEBUG_UART_IRQ, "enter %s", "clock_server_notifier");
     Delivery request; 
     Clock_server_message reply_message;
     vint clock_server_tid = WhoIs("CLOCK_SERVER");
     while(1){
-        debug(DEBUG_TASK, "before enter %s", "awaitEvent");
+        debug(DEBUG_UART_IRQ, "before enter %s", "awaitEvent");
         request.data = AwaitEvent(TIMER3_RDY, -1); // evtType = here should be clock update event;
-        debug(DEBUG_TASK, "after enter %s", "awaitEvent");
+        debug(DEBUG_UART_IRQ, "after enter %s", "awaitEvent");
         request.type = CLOCK_NOTIFIER;
         Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );
         /*debug(SUBMISSION, "after enter %s", "clock notify");*/
@@ -385,6 +385,8 @@ void uart2_xmit_notifier(){
 }
 
 void irq_io_tasks_cluster(){
+	int tid;
+
     //tid = Create(PRIOR_HIGH, uart1_rcv_server);
     //debug(DEBUG_TASK, "created taskId = %d", tid);
 
@@ -409,6 +411,7 @@ void irq_io_tasks_cluster(){
     tid = Create(PRIOR_HIGH, uart2_xmit_notifier);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
+	Exit();
 }
 
 void first_task()
@@ -431,11 +434,11 @@ void first_task()
     tid = Create(PRIOR_HIGH, clock_server_notifier);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-	tid = Create(PRIOR_HIGH, clock_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+//	tid = Create(PRIOR_HIGH, clock_task);
+//    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_LOWEST, idle_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+//    tid = Create(PRIOR_LOWEST, idle_task);
+//    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 	Exit();

@@ -5,6 +5,7 @@
 #include <train.h>
 #include <clock_server.h>
 #include <user_functions.h>
+#include <debug.h>
 
 static int is_exit = 0;
 
@@ -16,6 +17,7 @@ void train_task_startup()
 
 void clock_task()
 {
+	debug(DEBUG_IRQ, "enter %s", "clock_task");
 	int elapsed_tenth_sec = 0;
 	// digital clock
 	Clock clock;
