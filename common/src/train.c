@@ -151,7 +151,8 @@ void command_handle(Command *pcmd)
 	case RV:
 		Putc(COM1, STOP); 	 		// stop	
 		Putc(COM1, pcmd->arg0); 	// train
-		Delay(50);					// Delay 0.5 second
+		// NEED TO MOVE delay into separate task, otherwise will block, ask Slavik tomorrow if you can!!!
+		elay(50);					// Delay 0.5 second
 
 		Putc(COM1, REVERSE); 	 	// reverse	
 		Putc(COM1, pcmd->arg0); 	// train
