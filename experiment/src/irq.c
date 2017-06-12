@@ -102,7 +102,7 @@ void timer3_irq_soft_clear()
 
 void timer3_irq_handle(Kernel_state *ks)
 {
-    /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>enter %s, reached time limit", "timer3_irq_handle");*/
+    /*debug(SUBMISSION, "%s", "3_irq_h");*/
     /*debug(SUBMISSION, "%s", "3");*/
 	timer3_clear();
 	if (ks->blocked_on_event[0]) {
@@ -111,7 +111,8 @@ void timer3_irq_handle(Kernel_state *ks)
 		ks->event_blocks[0] = NULL;
 		ks->blocked_on_event[0] = 0;
         td->state = STATE_READY;
-        debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up task %d, ks->blocked_on_event[0] = %d", td->tid, ks->blocked_on_event[0]);
+        debug(SUBMISSION, "task%d", td->tid);
+        /*debug(SUBMISSION, ">>>h%d<%d<", td->tid, ks->blocked_on_event[0]);*/
         insert_task(td, &(ks->ready_queue));
 	}
 //	else {

@@ -24,7 +24,7 @@ typedef enum debug_level
 /* debug */
 #define debug(level, fmt, ...) 												 			\
 		do {																			\
-			if (level >= DEBUG && level < 100)									\
+			if (level >= DEBUG && level < SUBMISSION)									\
 				bwprintf(COM1, "%s:%d " fmt "\r\n", __FILE__, __LINE__, __VA_ARGS__);	\
 			else if (level >= SUBMISSION)												\
 				bwprintf(COM1, fmt "\r\n", __VA_ARGS__);								\

@@ -185,6 +185,7 @@ void k_await_event(int event_type, char ch, Task_descriptor *td, Kernel_state *k
 	td->state = STATE_EVENT_BLK;
 	ks->blocked_on_event[event_type] = 1;
     remove_task(td, &(ks->ready_queue));
+    debug(SUBMISSION, "%d", td->tid);
 	ks->event_blocks[event_type] = td;
     if(event_type == XMIT_UART1_RDY) {
 		uart_device_enable(COM1, XMIT);

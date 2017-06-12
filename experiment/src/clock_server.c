@@ -55,6 +55,7 @@ int Time()
 void clock_server_start()
 {
 	debug(DEBUG_CLOCK, "Enter %s", "clock_server_start");
+	debug(SUBMISSION, "Enter %s", "clock_server_start");
 
 	vint register_result = RegisterAs("CLOCK_SERVER");
 	Clock_server cs;
@@ -74,7 +75,7 @@ void clock_server_start()
         vint tid;
 		switch(request.type) {
             case CLOCK_NOTIFIER:
-                /*debug(SUBMISSION, "%s", "CL");*/
+                debug(SUBMISSION, "%s", "CL");
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 //debug(DEBUG_UART_IRQ, "Enter %s", "CLOCK_NOTIFIER");
                 cs.ticks++;
