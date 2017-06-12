@@ -443,17 +443,17 @@ void first_task()
     tid = Create(PRIOR_MEDIUM, io_test_task);
     debug(DEBUG_TASK, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_HIGH, clock_server_task);*/
-    /*debug(DEBUG_UART_IRQ, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, clock_server_task);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
     /*tid = Create(PRIOR_LOWEST, idle_task);*/
     /*debug(DEBUG_UART_IRQ, "created taskId = %d", tid);*/
 
-    /*tid = Create(PRIOR_HIGH, clock_server_notifier);*/
-    /*debug(DEBUG_UART_IRQ, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, clock_server_notifier);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-	tid = Create(PRIOR_MEDIUM, train_task);
-	debug(DEBUG_UART_IRQ, "create taskId = %d", tid);
+	/*tid = Create(PRIOR_MEDIUM, train_task);*/
+	/*debug(DEBUG_UART_IRQ, "create taskId = %d", tid);*/
 
     /*tid = Create(PRIOR_HIGH, clock_task);*/
     /*debug(DEBUG_UART_IRQ, "created taskId = %d", tid);*/

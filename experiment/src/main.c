@@ -388,6 +388,7 @@ int main()
                     break;
 				case 9:
 				//	debug(DEBUG_UART_IRQ, "before entering %s", "k_await_event");
+                    /*debug(SUBMISSION, "%d", td->tid);*/
 					k_await_event(arg0, arg1, td, &ks);
 					break;
                     /*k_await_event(arg0, arg1, td, &ks);*/

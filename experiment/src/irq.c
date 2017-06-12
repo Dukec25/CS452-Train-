@@ -19,12 +19,12 @@ void irq_enable()
 	vint *vic2_int_sel = (vint *) VIC2_INT_SEL;
 	*vic2_int_sel &= 0x0;	// interrupt type = IRQ
 
-//    timer3_irq_enable();
-//    timer3_enable();
+    timer3_irq_enable();
+    timer3_enable();
 
-	uart_irq_enable(COM1);
+	/*uart_irq_enable(COM1);*/
     uart_irq_enable(COM2);
-	uart_device_enable(COM2, RCV);
+	/*uart_device_enable(COM2, RCV);*/
 }
 
 void irq_disable()
