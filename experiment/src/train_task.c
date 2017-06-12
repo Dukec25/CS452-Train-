@@ -68,20 +68,19 @@ void train_task() {
 	while(1) {
 		// user I/O and send command to train
 		char c = Getc(COM2);
-		if (c != (char)-1) {
-			command_buffer[command_buffer_pos++] = c;
+		if (c == 'q') {
+			// user hits 'q', exit
+			debug(SUBMISSION, "%s", "user hits q, exiting");	
+			break;
 		}
-		if (c == '\r') {
+		else if (c == '\r') {
 			// user hits ENTER
 			newlines += 1;
 			irq_nextline(newlines);
 			// parse command
 			Command cmd;
 			int result = command_parse(command_buffer, &command_buffer_pos, &train_id, &train_speed, &cmd);
-			if (result == 1) {
-				// user hits 'q', exit
-				break;
-			} else if (result == 1) {
+			if (result != -1) {
 				// user enters a valid command, handle command and sends command to train
 				command_handle(&cmd);
 				// update command line interface
@@ -91,6 +90,9 @@ void train_task() {
 					cli_update_switch(cmd.arg0, cmd.arg1);
 				}
 			}
+		}
+		else {
+			command_buffer[command_buffer_pos++] = c;
 		}
 		Putc(COM2, c);
 	}

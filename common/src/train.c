@@ -10,7 +10,7 @@
 
 char switch_id_to_byte(uint8 id)
 {
-	assert(id <= NUM_SWITCHES, "sw: Wrong switch id provided!\n");
+	assert(id <= NUM_SWITCHES, "sw: Wrong switch id %d provided!", id);
 	if ( id > TWO_WAY_SWITCH_NUM ) {
 		return THREE_WAY_SWITCH_OFFSET + ( id - TWO_WAY_SWITCH_NUM - 1 );
 	}
@@ -27,7 +27,8 @@ char switch_state_to_byte(char state)
 	case 'C':
 		return CURVE;
 	default:
-		assert(0, "sw: Wrong switch state provided!\n");
+		assert(0, "sw: Wrong switch state provided! %s", state);
+		break;
 	}
 	return 0;
 }
@@ -60,16 +61,12 @@ static int is_state(char c)
 	}
 }
 
-int command_parse(char *command_buffer, int *pcommand_irq_pos, char *ptrain_id, char *ptrain_speed, Command *pcmd)
+int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_id, char *ptrain_speed, Command *pcmd)
 {
 	char args[10];
 	int argc = 0;
 
-	if (command_buffer[0] == 'q') {
-		// quit
-		return 1;
-	}
-	else if (!strcmp(command_buffer, "go", 2)) {
+	if (!strcmp(command_buffer, "go", 2)) {
 		pcmd->type = GO;
 	}
 	else if (!strcmp(command_buffer, "stop", 4)) {
@@ -79,62 +76,76 @@ int command_parse(char *command_buffer, int *pcommand_irq_pos, char *ptrain_id, 
 		// parse arguments
 		int pos = 2;
 		char num_buffer[10];
-		int num_irq_pos = 0;
-		while (pos++ < *pcommand_irq_pos) {
+		int i = 0;
+		for (i = 0; i < 10; i++){
+				num_buffer[i] = '\0';
+		}	
+		int num_buffer_pos = 0;
+		debug(DEBUG_K4, "%s", "start of a valid command");
+		while (pos++ < *pcommand_buffer_pos) {
+			debug(DEBUG_K4, "pos = %d", pos);
 			if (is_digit(command_buffer[pos])) {
 				// current char is a digit
-				num_buffer[num_irq_pos++] = command_buffer[pos];
+				num_buffer[num_buffer_pos++] = command_buffer[pos];
+				debug(DEBUG_K4, "num_buffer = %s", num_buffer);
 			}
 			else if (is_state(command_buffer[pos])) {
 				// current char is a switch state
 				args[argc++] = command_buffer[pos];
+				debug(DEBUG_K4, "args[%d] = %d", argc - 1, args[argc - 1]);
 			}
-			else if (command_buffer[pos] == ' ' || command_buffer[pos] == '\n' || command_buffer[pos] == '\r') {
-				// skip non-digit characters: space, new line, and carriage return
-				if (!num_irq_pos) {
+			else if (command_buffer[pos] == ' ' || (pos == *pcommand_buffer_pos)) {
+				// skip space
+				if (num_buffer_pos != 0) {
 					// at the end of a number
 					args[argc++] = atoi(num_buffer);
+					debug(DEBUG_K4, "args[%d] = %d", argc - 1, args[argc - 1]);
 				}
 				// clear num_buffer
-				while (!num_irq_pos) {
-					num_buffer[num_irq_pos--] = 0;
+				num_buffer_pos = 0;
+				for (i = 0; i < 10; i++){
+					num_buffer[i] = '\0';
 				}
 			}
 			else {
-				assert(0, "Invalid command\n");
+				assert(0, "Invalid char %d at pos = %d", command_buffer[pos - 1], pos - 1);
 				return -1;
 			}
 		}
 	}
 	else {
-		assert(0, "Invalid command\n");
+		assert(0, "Invalid command %s", command_buffer);
 		return -1;
-	}
-
-	// clear command buffer
-	while(!pcommand_irq_pos) {
-		command_buffer[*pcommand_irq_pos--] = 0;
 	}
 
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer[0]) {
 	case 't':
-		assert(argc == 2, "tr: invalid arguments\n");
+		assert(argc == 2, "tr: invalid number of arguments %d", argc);
 		*ptrain_speed = pcmd->arg1;
 		*ptrain_id = pcmd->arg0;
 		pcmd->type = TR;
+		break;
 	case 'r':
-		assert(argc == 1, "rv: invalid arguments\n");
+		assert(argc == 1, "rv: invalid number of arguments %d", argc);
 		pcmd->type = RV;
+		break;
 	case 's':
-		assert(argc == 2, "sw: invalid arguments\n");
+		assert(argc == 2, "sw: invalid number of arguments %d", argc);
 		pcmd->type = SW;
-	default: // fall through
-		pcmd->arg0 = args[0];
-		pcmd->arg1 = (pcmd->type == RV) ? *ptrain_speed : args[1];
+		break;
 	}
+	pcmd->arg0 = args[0];
+	pcmd->arg1 = (pcmd->type == RV) ? *ptrain_speed : args[1];
 
-	return 0;	
+	// clear command buffer
+	int i = 0;
+	for (i = 0; i <= *pcommand_buffer_pos; i++) {
+		command_buffer[i] = '\0';
+	}
+	*pcommand_buffer_pos = 0;
+
+	return 0;
 }
 
 void command_handle(Command *pcmd)
@@ -145,7 +156,7 @@ void command_handle(Command *pcmd)
 			Putc(COM1, pcmd->arg1); // speed
 			Putc(COM1, pcmd->arg0); // train
 		} else {
-			assert(0, "tr: Invalid speed %d\n", pcmd->arg1);
+			assert(0, "tr: Invalid speed %d", pcmd->arg1);
 		}
 		break;
 	case RV:

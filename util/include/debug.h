@@ -27,10 +27,17 @@ typedef enum debug_level
 			if (level >= DEBUG && level < SUBMISSION)									\
 				bwprintf(COM1, "%s:%d " fmt "\r\n", __FILE__, __LINE__, __VA_ARGS__);	\
 			else if (level >= SUBMISSION)												\
-				bwprintf(COM1, fmt "\r\n", __VA_ARGS__);								\
+				bwprintf(COM2, fmt "\r\n", __VA_ARGS__);								\
 			}																			\
 		while (0)
 
+#define assert(cond, fmt, ...)		 										 								\
+		do {																								\
+			if (cond != 1)																					\
+				bwprintf(COM2, "ASSERTION FAILURE! " "%s:%d " fmt "\r\n", __FILE__, __LINE__, __VA_ARGS__);	\
+			}																								\
+		while (0)
+
 void debug_asm(uint32 x);
-void assert(int expr, char *message, ...);
+// void assert(int expr, char *message, ...);
 #endif // __DEBUG_H__
