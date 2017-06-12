@@ -22,9 +22,9 @@ void irq_enable()
     timer3_irq_enable();
     timer3_enable();
 
-	/*uart_irq_enable(COM1);*/
+    uart_irq_enable(COM1);
     uart_irq_enable(COM2);
-	/*uart_device_enable(COM2, RCV);*/
+    uart_device_enable(COM2, RCV);
 }
 
 void irq_disable()
@@ -104,8 +104,6 @@ void timer3_irq_soft_clear()
 
 void timer3_irq_handle(Kernel_state *ks)
 {
-    /*debug(SUBMISSION, "%s", "3_irq_h");*/
-    /*debug(SUBMISSION, "%s", "3");*/
 	if (ks->blocked_on_event[TIMER3_RDY]) {
 		// notify events await on timer3
 		volatile Task_descriptor *td = ks->event_blocks[TIMER3_RDY];

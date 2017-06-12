@@ -214,7 +214,7 @@ void idle_task()
 
 	int i, j = 0;
     while(1){
-        Putc(COM2, 'A');
+        /*Putc(COM2, 'A');*/
         /*irq_printf(COM2, "golden retriever is the best\r\n");*/
         /*debug(SUBMISSION, "%s", "idle_task");*/
 	/*for (i = 0; i < 300000; i++) {*/
@@ -428,6 +428,8 @@ void uart2_rcv_enable(){
 
 void irq_io_tasks_cluster(){
     uart2_xmit_enable();
+    uart2_rcv_enable();
+    uart1_xmit_enable();
 }
 
 void first_task()
