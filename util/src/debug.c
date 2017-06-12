@@ -7,6 +7,7 @@ void debug_asm(uint32 x)
 	}
 }
 
+/*
 void assert(int expr, char *message, ...)
 {
 	va_list va;
@@ -18,5 +19,4 @@ void assert(int expr, char *message, ...)
 	}
 	va_end(va);
 }
-
-
+*/

@@ -277,7 +277,7 @@ int main()
     bwsetspeed(COM2, 115200);
     bwsetfifo(COM2, OFF);
 	// user interface and train set up
-//	train_task_startup();
+	train_task_startup();
 
     /*asm volatile("MRC p15, 0, r2, c1, c0, 0");*/
     /*asm volatile("ORR r2, r2, #1<<12");*/
