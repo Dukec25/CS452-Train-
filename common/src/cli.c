@@ -107,6 +107,7 @@ void cli_user_input(Command_buffer *command_buffer)
 
 void cli_update_clock(Clock *pclock)
 {
+	irq_save();
 	// Place clock
 	irq_pos(CLOCK_ROW, CLOCK_COL);
     irq_printf(COM2, "%s%d:%s%d:%d",
@@ -115,6 +116,7 @@ void cli_update_clock(Clock *pclock)
                      pclock->sec < 10 ? "0" : "",
                      pclock->sec,
                      pclock->tenth_sec);
+	irq_restore();
 }
 
 void cli_update_train(char id, char speed)

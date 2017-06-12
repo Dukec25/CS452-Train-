@@ -455,11 +455,11 @@ void first_task()
     tid = Create(PRIOR_MEDIUM, clock_server_notifier);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_MEDIUM, train_task);
-   	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    //tid = Create(PRIOR_LOW, clock_task);
+    //debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-//    tid = Create(PRIOR_MEDIUM, clock_task);
-//    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    tid = Create(PRIOR_LOW, train_task);
+   	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
     tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_UART_IRQ, "create taskId = %d", tid);

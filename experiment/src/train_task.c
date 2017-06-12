@@ -17,12 +17,6 @@ void train_task_startup()
 
 void clock_task()
 {
-	int command_buffer_addr = 0;
-	int train_task_tid = 0;
-	Receive(&train_task_tid, &command_buffer_addr, sizeof(command_buffer_addr));
-	Reply(train_task_tid, 0, 0);
-	Command_buffer * command_buffer = (Command_buffer *) command_buffer_addr;
-
 	vint elapsed_tenth_sec = 0;
 	// digital clock
 	Clock clock;
@@ -34,7 +28,7 @@ void clock_task()
 		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
         clock_update(&clock, elapsed_tenth_sec);
         cli_update_clock(&clock);
-		cli_user_input(command_buffer);
+	//	cli_user_input(command_buffer);
 	}
 	Exit();
 }
@@ -120,7 +114,7 @@ void train_task() {
 		}
 		else {
 			command_buffer.data[command_buffer.pos++] = c;
-			Putc(COM2, c);
+			//Putc(COM2, c);
 		}
 	}
 	Exit();
