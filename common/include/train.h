@@ -39,7 +39,7 @@ char switch_state_to_byte(char state);
 /* Sensors */
 #define SENSOR_GROUPS 5
 #define SENSORS_PER_GROUP 16
-#define SENSOR_QUERY 128 + SENSOR_GROUPS
+#define SENSOR_QUERY_BASE 193
 
 /* Train commands */
 #define COMMAND_SIZE 100
@@ -56,16 +56,25 @@ typedef struct {
 	char arg0;
 	char arg1;
 } Command;
+typedef struct Command_buffer
+{
+	char data[COMMAND_SIZE];
+	int pos;
+} Command_buffer;
+
+/*
+ * Clear the command_buffer by fill it with space
+ */
+int command_clear(Command_buffer *command_buffer);
 
 /*
  * Parses the command in the command_buffer.
- * Resets command_buffer and pcommand_buffer_pos upon return.
  * Updates ptrain_id and ptrain_speed if command_buffer stores a valid TR command.
  * Returns 0 if the command is a valid train command, and the command type and arguments are stored in pcmd.
  * Returns 1 if the command is 'q'.
  * Returns -1 otherwise.
  */
-int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_id, char *ptrain_speed, Command *pcmd);
+int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_speed, Command *pcmd);
 
 /*
  * Based on pcmd, send bytes to train. 

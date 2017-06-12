@@ -1,4 +1,5 @@
 #include <debug.h>
+#include <cli.h>
 #include <train.h>
 #include <string.h>
 #include <user_functions.h>
@@ -61,18 +62,30 @@ static int is_state(char c)
 	}
 }
 
-int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_id, char *ptrain_speed, Command *pcmd)
+int command_clear(Command_buffer *command_buffer)
+{
+	int i = 0;
+	for (i = 0; i <= command_buffer->pos; i++) {
+		command_buffer->data[i] = ' ';
+	}
+	command_buffer->data[command_buffer->pos] = '\0';
+	cli_user_input(command_buffer);
+	command_buffer->pos = 0;
+	cli_user_input(command_buffer);
+}
+
+int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_speed, Command *pcmd)
 {
 	char args[10];
 	int argc = 0;
 
-	if (!strcmp(command_buffer, "go", 2)) {
+	if (!strcmp(command_buffer->data, "go", 2)) {
 		pcmd->type = GO;
 	}
-	else if (!strcmp(command_buffer, "stop", 4)) {
+	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 	}
-	else if (!strcmp(command_buffer, "tr", 2) || !strcmp(command_buffer, "rv", 2) || !strcmp(command_buffer, "sw", 2)) {
+	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) || !strcmp(command_buffer->data, "sw", 2)) {
 		// parse arguments
 		int pos = 2;
 		char num_buffer[10];
@@ -82,19 +95,19 @@ int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_i
 		}	
 		int num_buffer_pos = 0;
 		debug(DEBUG_K4, "%s", "start of a valid command");
-		while (pos++ < *pcommand_buffer_pos) {
+		while (pos++ < command_buffer->pos) {
 			debug(DEBUG_K4, "pos = %d", pos);
-			if (is_digit(command_buffer[pos])) {
+			if (is_digit(command_buffer->data[pos])) {
 				// current char is a digit
-				num_buffer[num_buffer_pos++] = command_buffer[pos];
+				num_buffer[num_buffer_pos++] = command_buffer->data[pos];
 				debug(DEBUG_K4, "num_buffer = %s", num_buffer);
 			}
-			else if (is_state(command_buffer[pos])) {
+			else if (is_state(command_buffer->data[pos])) {
 				// current char is a switch state
-				args[argc++] = command_buffer[pos];
+				args[argc++] = command_buffer->data[pos];
 				debug(DEBUG_K4, "args[%d] = %d", argc - 1, args[argc - 1]);
 			}
-			else if (command_buffer[pos] == ' ' || (pos == *pcommand_buffer_pos)) {
+			else if (command_buffer->data[pos] == ' ' || (pos == command_buffer->pos)) {
 				// skip space
 				if (num_buffer_pos != 0) {
 					// at the end of a number
@@ -108,18 +121,16 @@ int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_i
 				}
 			}
 			else {
-				assert(0, "Invalid char %d at pos = %d", command_buffer[pos - 1], pos - 1);
 				return -1;
 			}
 		}
 	}
 	else {
-		assert(0, "Invalid command %s", command_buffer);
 		return -1;
 	}
 
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
-	switch (command_buffer[0]) {
+	switch (command_buffer->data[0]) {
 	case 't':
 		assert(argc == 2, "tr: invalid number of arguments %d", argc);
 		*ptrain_speed = pcmd->arg1;
@@ -138,13 +149,6 @@ int command_parse(char *command_buffer, int *pcommand_buffer_pos, char *ptrain_i
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? *ptrain_speed : args[1];
 
-	// clear command buffer
-	int i = 0;
-	for (i = 0; i <= *pcommand_buffer_pos; i++) {
-		command_buffer[i] = '\0';
-	}
-	*pcommand_buffer_pos = 0;
-
 	return 0;
 }
 
@@ -155,6 +159,7 @@ void command_handle(Command *pcmd)
 		if (pcmd->arg1 <= MAX_SPEED) {
 			Putc(COM1, pcmd->arg1); // speed
 			Putc(COM1, pcmd->arg0); // train
+            cli_update_train(pcmd->arg0, pcmd->arg1);
 		} else {
 			assert(0, "tr: Invalid speed %d", pcmd->arg1);
 		}
@@ -162,11 +167,11 @@ void command_handle(Command *pcmd)
 	case RV:
 		Putc(COM1, STOP); 	 		// stop	
 		Putc(COM1, pcmd->arg0); 	// train
-		Delay(50);					// Delay 0.5 second
+		Delay(20);					// Delay 0.2 second
 
 		Putc(COM1, REVERSE); 	 	// reverse	
 		Putc(COM1, pcmd->arg0); 	// train
-		Delay(50);					// Delay 1 second
+		Delay(20);					// Delay 0.2 second
 
 		Putc(COM1, pcmd->arg1); 	// speed
 		Putc(COM1, pcmd->arg0); 	// train
@@ -174,7 +179,9 @@ void command_handle(Command *pcmd)
 	case SW:
 		Putc(COM1, switch_state_to_byte(pcmd->arg1));	// state
 		Putc(COM1, switch_id_to_byte(pcmd->arg0)); 		// switch
+		Delay(20);					// Delay 0.2 second
 		Putc(COM1, SOLENOID_OFF); 						// turnoff solenoid
+        cli_update_switch(pcmd->arg0, pcmd->arg1);
 		break;
 	case GO:
 		Putc(COM1, START);

@@ -149,7 +149,7 @@ void uart_irq_handle(int channel, Kernel_state *ks)
         }
     }
 	if (*uart_intr & uart_transmit_irq_mask()) {
-        debug(DEBUG_UART_IRQ, "handle xmit interupt %s", "");
+        debug(DEBUG_UART_IRQ, "handle xmit interrupt %s", "");
 		// new transmit interrupt handling 
         if (ks->blocked_on_event[transmit_event]) {
             // notify events await on transmit ready
@@ -161,7 +161,7 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 			uart_device_disable(channel, XMIT);
             // write the data
 			/*debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); */
-            *pdata = td->ch;
+			*pdata = td->ch;
             /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); */
             /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
             insert_task(td, &(ks->ready_queue));

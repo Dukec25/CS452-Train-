@@ -6,6 +6,8 @@
 #include <clock_server.h>
 #include <user_functions.h>
 #include <debug.h>
+#include <kernel.h>
+#include <name_server.h>
 
 void train_task_startup()
 {
@@ -15,7 +17,12 @@ void train_task_startup()
 
 void clock_task()
 {
-	debug(SUBMISSION, "enter %s", "clock_task");
+	int command_buffer_addr = 0;
+	int train_task_tid = 0;
+	Receive(&train_task_tid, &command_buffer_addr, sizeof(command_buffer_addr));
+	Reply(train_task_tid, 0, 0);
+	Command_buffer * command_buffer = (Command_buffer *) command_buffer_addr;
+
 	vint elapsed_tenth_sec = 0;
 	// digital clock
 	Clock clock;
@@ -27,24 +34,38 @@ void clock_task()
 		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
         clock_update(&clock, elapsed_tenth_sec);
         cli_update_clock(&clock);
+		cli_user_input(command_buffer);
 	}
 	Exit();
 }
 
 void sensor_task() {
+	int result = RegisterAs("train_task");
+
+	int updates = 0;
 	while (1) {
 		Delay(20);	// delay 200ms
-		Putc(COM1, SENSOR_QUERY);
-		int sensor_data[SENSOR_GROUPS];
+		int sensor_data_lo[SENSOR_GROUPS];
+		int sensor_data_hi[SENSOR_GROUPS];
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
-			sensor_data[group] = Getc(COM1);
+			Putc(COM1, SENSOR_QUERY_BASE + group);
+			sensor_data_lo[group] = Getc(COM1);
+		//	irq_printf(COM2, "sensor_data_lo[%d] = %d\r\n", group, sensor_data_lo[group]);
+			sensor_data_hi[group] = Getc(COM1);
+		//	irq_printf(COM2, "sensor_data_hi[%d] = %d\r\n", group, sensor_data_hi[group]);
 		}
+
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			int id = 0;
-			for (id = 0; id < SENSORS_PER_GROUP; id++) {
-				if (sensor_data[group] & (0x1 << id)) {
-					cli_update_sensor(group, id);
+			for (id = 0; id < SENSORS_PER_GROUP / 2; id++) {
+				if (sensor_data_lo[group] & (0x1 << id)) {
+					updates++;
+					cli_update_sensor(group, id, updates);
+				}
+				if (sensor_data_hi[group] & (0x1 << id)) {
+					updates++;
+					cli_update_sensor(group, SENSORS_PER_GROUP / 2 + id, updates);
 				}
 			}
 		}
@@ -54,14 +75,18 @@ void sensor_task() {
 
 void train_task() {
 	// command
-	char command_buffer[COMMAND_SIZE];
-	int command_buffer_pos = 0;
+	Command_buffer command_buffer;
+	command_buffer.pos = 0;
 	char train_id = 0;
 	char train_speed = 0;
 
-	// console set up
-	int newlines = 0;
+	int result = RegisterAs("train_task");
+/*
+    int clock_task_tid = Create(PRIOR_MEDIUM, clock_task);
 
+	int command_buffer_addr = (int) &command_buffer;
+	Send(clock_task_tid, &command_buffer_addr, sizeof(command_buffer_addr), 0, 0);
+*/
 	while(1) {
 		// user I/O and send command to train
 		char c = Getc(COM2);
@@ -72,26 +97,20 @@ void train_task() {
 		}
 		else if (c == '\r') {
 			// user hits ENTER
-			newlines += 1;
-			irq_nextline(newlines);
 			// parse command
 			Command cmd;
-			int result = command_parse(command_buffer, &command_buffer_pos, &train_id, &train_speed, &cmd);
+			int result = command_parse(&command_buffer, &train_id, &train_speed, &cmd);
 			if (result != -1) {
-				// user enters a valid command, handle command and sends command to train
-				command_handle(&cmd);
-				// update command line interface
-				if (TR == cmd.type) {
-					cli_update_train(cmd.arg0, cmd.arg1);
-				} else if (SW == cmd.type) {
-					cli_update_switch(cmd.arg0, cmd.arg1);
-				}
+				// user entered a valid command, sends command to train and updates user interface
+              	command_handle(&cmd);
 			}
+			// clears command_buffer
+			command_clear(&command_buffer);
 		}
 		else {
-			command_buffer[command_buffer_pos++] = c;
+			command_buffer.data[command_buffer.pos++] = c;
+			Putc(COM2, c);
 		}
-		Putc(COM2, c);
 	}
 	Exit();
 }

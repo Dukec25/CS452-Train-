@@ -16,6 +16,11 @@
 void cli_startup();
 
 /*
+ * Display user input
+ */
+void cli_user_input(Command_buffer *command_buffer);
+
+/*
  * Update the digital clock in the command line interface
  */
 void cli_update_clock(Clock *pclock);
@@ -33,6 +38,6 @@ void cli_update_switch(char id, char state);
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(char group, char id);
+void cli_update_sensor(char group, char id, int updates);
 
 #endif // __CLI_H__

@@ -3,6 +3,7 @@
 #include <cli.h>
 #include <cursor.h>
 #include <debug.h>
+#include <irq_io.h>
 
 #define ESC 0x1B
 
@@ -48,6 +49,4 @@ void irq_nextline(int newlines)
 	offset = HEIGHT;
 	// expand cursor to the next line
 	irq_pos(offset + newlines, 0);
-	// move to the beginning of the next line
-	Putc(COM2, '>');
 }

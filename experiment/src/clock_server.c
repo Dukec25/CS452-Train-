@@ -55,7 +55,7 @@ int Time()
 void clock_server_start()
 {
 	debug(DEBUG_CLOCK, "Enter %s", "clock_server_start");
-	debug(SUBMISSION, "Enter %s", "clock_server_start");
+	//debug(SUBMISSION, "Enter %s", "clock_server_start");
 
 	vint register_result = RegisterAs("CLOCK_SERVER");
 	Clock_server cs;

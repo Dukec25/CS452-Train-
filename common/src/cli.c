@@ -3,7 +3,6 @@
 #include <cursor.h>
 #include <cli.h>
 #include <train.h>
-#include <debug.h>
 
 /* horizonal borders */
 #define UPPER_BORDER 		1
@@ -93,60 +92,47 @@ void cli_startup()
 
 	// Place input cursor at the end
 	bw_pos(HEIGHT, 0);
-	bwputc(COM2, '>');
+	bwputstr(COM2, "> ");
 
 	// Save screen setup
 	bw_save();
 }
 
+void cli_user_input(Command_buffer *command_buffer)
+{
+	irq_pos(HEIGHT, 0);
+	command_buffer->data[command_buffer->pos] = '\0';
+	irq_printf(COM2, "> %s", command_buffer->data);
+}
+
 void cli_update_clock(Clock *pclock)
 {
-    debug(DEBUG_K4, "before %s", "irq_save");
-	// Save screen
-	irq_save();
-    debug(DEBUG_K4, "after %s", "irq_save");
 	// Place clock
-    debug(DEBUG_K4, "before %s", "irq_pos");
 	irq_pos(CLOCK_ROW, CLOCK_COL);
-    debug(DEBUG_K4, "after %s", "irq_pos");
     irq_printf(COM2, "%s%d:%s%d:%d",
                      pclock->min < 100 ? (pclock->min < 10 ? "00" : "0") : "",
                      pclock->min,
                      pclock->sec < 10 ? "0" : "",
                      pclock->sec,
                      pclock->tenth_sec);
-
-    /*irq_printf(COM2, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);*/
-    /*irq_printf(COM1, "%d:%d:%d\r\n", pclock->min, pclock->sec, pclock->tenth_sec);*/
-	// Restore screen setup
-    irq_restore();
 }
 
 void cli_update_train(char id, char speed)
 {
-	// Save screen
-	irq_save();
 	// Place train
 	irq_pos(TRAIN_ROW, TRAIN_COL);
 	irq_printf(COM2, "tr %d %s%d", id, speed < 10 ? "0" : "", speed);
-	// Restore screen setup
-	irq_restore();
 }
 
 void cli_update_switch(char id, char state)
 {
-	// Save screen
-	irq_save();
 	// Place state
 	irq_pos(SWITCH_ROW + id - 1, RIGHT_BORDER - 1);
 	Putc(COM2, toupper(state));
-	// Restore screen setup
-	irq_restore();
 }
 
-void cli_update_sensor(char group, char id)
+void cli_update_sensor(char group, char id, int updates)
 {
-	static uint32 updates = 0;
 	// Save screen
 	irq_save();
 	// Place sensor
@@ -154,5 +140,4 @@ void cli_update_sensor(char group, char id)
 	irq_printf(COM2, "%c0%d", SENSOR_LABEL_BASE + group - 2, id);
 	// Restore screen setup
 	irq_restore();
-	updates++;
 }

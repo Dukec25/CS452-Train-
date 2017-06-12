@@ -20,6 +20,7 @@ uint32 uart_irq_mask();
 #define UART1_CTRL  (UART1_BASE + UART_CTLR_OFFSET) 
 #define UART1_INTR	(UART1_BASE + UART_INTR_OFFSET) // Interrupt identification and clear registers
 #define UART1_DATA	(UART1_BASE + UART_DATA_OFFSET)
+#define UART1_FLAG	(UART1_BASE + UART_FLAG_OFFSET)
 
 #define UARTEN_MASK	0x1
 #define MSIEN_MASK	0x8		// modem status int
