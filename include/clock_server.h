@@ -29,6 +29,7 @@ typedef struct Delayed_task {
 typedef struct Delivery{
     vint type;
     vint data;
+    char *data_arr;
 } Delivery;
 
 #endif // __CLOCK_SERVER_H__

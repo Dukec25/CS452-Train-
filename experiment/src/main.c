@@ -279,10 +279,10 @@ int main()
 	// user interface and train set up
 	train_task_startup();
 
-    /*asm volatile("MRC p15, 0, r2, c1, c0, 0");*/
-    /*asm volatile("ORR r2, r2, #1<<12");*/
-    /*asm volatile("ORR r2, r2, #1<<2");*/
-    /*asm volatile("MCR p15, 0, r2, c1, c0, 0");*/
+    asm volatile("MRC p15, 0, r2, c1, c0, 0");
+    asm volatile("ORR r2, r2, #1<<12");
+    asm volatile("ORR r2, r2, #1<<2");
+    asm volatile("MCR p15, 0, r2, c1, c0, 0");
 
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;

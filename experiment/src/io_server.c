@@ -93,6 +93,7 @@ void io_server_transmit_start(int channel)
         debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
         vint tid;
         vint character; 
+        char *printf_buf;
 
 		switch(request.type) {
             case TRANSMIT_RDY:
@@ -119,6 +120,22 @@ void io_server_transmit_start(int channel)
 				debug(DEBUG_UART_IRQ, "replied to %d", requester);
 				if (xmit_not_waiting) {
 					debug(DEBUG_UART_IRQ, "inside if xmit_not_waiting = %d", xmit_not_waiting);
+	                vint result = fifo_get(&ioServer.transmit_q, &character); // character might cause error
+                    debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, character);
+					reply_msg.data = character;
+                    Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
+					xmit_not_waiting = 0;
+					debug(DEBUG_UART_IRQ, "NOw xmit_not_waiting = %d", xmit_not_waiting);
+				}
+                break;
+            case PRINTF:
+                printf_buf = request.data_arr;
+                while(*printf_buf != '\0'){
+                    fifo_put(&ioServer.transmit_q, *printf_buf++);
+                }
+				reply_msg.data = 0;
+                Reply(requester, &reply_msg, sizeof(reply_msg));
+				if (xmit_not_waiting) {
 	                vint result = fifo_get(&ioServer.transmit_q, &character); // character might cause error
                     debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, character);
 					reply_msg.data = character;
