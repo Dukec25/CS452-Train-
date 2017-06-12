@@ -16,7 +16,7 @@
 
 /* HWI */
 #define ENTER_FROM_HWI	0xAA
-#define NUM_EVENTS		4
+#define NUM_EVENTS		100
 
 /* inter-tasks communication */
 typedef struct Message {

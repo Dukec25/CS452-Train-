@@ -117,23 +117,23 @@ void uart_irq_handle(int channel, Kernel_state *ks)
     vint transmit_event;
 
 	switch (channel) {
-	case COM1:
-		uart_intr = (vint *) UART1_INTR;
-        pdata = (vint *) UART1_DATA;
-        receive_event = RCV_UART1_RDY;
-        transmit_event = XMIT_UART1_RDY;
-		break;
-	case COM2:
-		uart_intr = (vint *) UART2_INTR;
-        pdata = (vint *) UART2_DATA;
-        receive_event = RCV_UART2_RDY;
-        transmit_event = XMIT_UART2_RDY;
-		break;
+        case COM1:
+            uart_intr = (vint *) UART1_INTR;
+            pdata = (vint *) UART1_DATA;
+            receive_event = RCV_UART1_RDY;
+            transmit_event = XMIT_UART1_RDY;
+            break;
+        case COM2:
+            uart_intr = (vint *) UART2_INTR;
+            pdata = (vint *) UART2_DATA;
+            receive_event = RCV_UART2_RDY;
+            transmit_event = XMIT_UART2_RDY;
+            break;
 	}
-	debug(DEBUG_UART_IRQ, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr); 
+	/*debug(SUBMISSION, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr); */
 	
 	if (*uart_intr & uart_receive_irq_mask()) {
-        debug(DEBUG_UART_IRQ, "handle rcv interupt %s", "");
+        /*debug(SUBMISSION, "handle rcv interupt %s", "");*/
         // receive interrupt
         if (ks->blocked_on_event[receive_event]) {
             // notify events await on receive ready
@@ -153,16 +153,17 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 		// new transmit interrupt handling 
         if (ks->blocked_on_event[transmit_event]) {
             // notify events await on transmit ready
-            volatile Task_descriptor *td = ks->event_blocks[transmit_event];
+            Task_descriptor *td = ks->event_blocks[transmit_event];
             ks->event_blocks[transmit_event] = NULL;
             ks->blocked_on_event[transmit_event] = 0;
             td->state = STATE_READY;
             // turn off the XMIT interrupt
 			uart_device_disable(channel, XMIT);
             // write the data
-			debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); 
+			/*debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); */
             *pdata = td->ch;
-            debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); 
+            /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); */
+            /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
             insert_task(td, &(ks->ready_queue));
         }
 	}

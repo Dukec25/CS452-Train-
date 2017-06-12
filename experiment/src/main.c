@@ -336,7 +336,6 @@ int main()
 				cur_lr = cur_lr & ~(HWI_MASK);
 				is_entry_from_hwi = 1;
 				td->is_entry_from_hwi = ENTER_FROM_HWI;
-			//	debug(DEBUG_UART_IRQ, ">>>>>td->is_entry_from_hwi = 0x%x", td->is_entry_from_hwi);
 			}
 
 			update_td(td, cur_lr);
@@ -387,12 +386,9 @@ int main()
                     k_reply(arg0, arg1, arg2, td, &ks);
                     break;
 				case 9:
-				//	debug(DEBUG_UART_IRQ, "before entering %s", "k_await_event");
-                    /*debug(SUBMISSION, "%d", td->tid);*/
+                    /*debug(SUBMISSION, "1%d", td->tid);*/
 					k_await_event(arg0, arg1, td, &ks);
 					break;
-                    /*k_await_event(arg0, arg1, td, &ks);*/
-                    /*break;*/
 			}
 	}
     irq_disable();

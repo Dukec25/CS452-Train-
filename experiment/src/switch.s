@@ -16,7 +16,7 @@
 	.equ	SEND,						0x5006
 	.equ	RECEIVE,					0x3007
 	.equ	REPLY,						0x3008
-	.equ	AWAIT_EVENT,				0x1009
+	.equ	AWAIT_EVENT,				0x2009
 
 	.global	asm_print_sp
 	.global asm_kernel_swiEntry
@@ -230,9 +230,9 @@ asm_kernel_reply:
 
 asm_kernel_await_event:
 	mov 	ip, sp 
-	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, fp, ip, lr}
 	SWI 	#AWAIT_EVENT
 	mov		ip, r0
-	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, fp, sp, lr}
 	mov		r0, ip
 	mov 	pc, lr

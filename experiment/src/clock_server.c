@@ -35,7 +35,7 @@ int Delay(int ticks)
     Clock_server_message reply_msg;
     send_msg.data = ticks;
     send_msg.type = DELAY_REQUEST;
-    debug(SUBMISSION,  "before send delay_message, clock server id=%d", clock_server_tid);
+    /*debug(SUBMISSION,  "before send delay_message, clock server id=%d", clock_server_tid);*/
     Send(clock_server_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
     return 0;
 }
@@ -75,20 +75,18 @@ void clock_server_start()
         vint tid;
 		switch(request.type) {
             case CLOCK_NOTIFIER:
-                debug(SUBMISSION, "%s", "CL");
+                /*debug(SUBMISSION, "%s", "CL");*/
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 //debug(DEBUG_UART_IRQ, "Enter %s", "CLOCK_NOTIFIER");
                 cs.ticks++;
                 //debug(DEBUG_UART_IRQ, "increment ticks = %d", cs.ticks);
                 break;
 			case TIME_REQUEST:
-                debug(SUBMISSION, "Enter %s", "TIME_REQUESTER");
                 reply_msg.ticks = cs.ticks;
                 debug(SUBMISSION, "current ticks= %d", cs.ticks);
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 		 		break;
 			case DELAY_REQUEST:
-                debug(SUBMISSION, "Enter %s", "DELAY_REQUESTER");
                 //debug(DEBUG_UART_IRQ, "Enter DELAY_REQUEST, requester = %d", requester);
                 tid = requester;
                 vint freedom_tick = cs.ticks + request.data;
@@ -98,7 +96,6 @@ void clock_server_start()
                 heap_insert(&delay_h, freedom_tick, (void*)tid);
 		 		break;
             case DELAY_REQUEST_UNTIL:
-                debug(SUBMISSION, "Enter %s", "DELAY_REQUESTER_UNTIL");
                 /*vint freedom_tick = cs.ticks + request.data;*/
                 /*delayed_task.tid = requester;*/
                 /*delayed_task.freedom_tick = request.data;*/
@@ -109,14 +106,13 @@ void clock_server_start()
             continue; 
         }
         
-        debug(SUBMISSION, "%s", "heap not empty");
         node_t root, del;
 		root = heap_root(&delay_h);
         while(root.priority <= cs.ticks)
         {
             Clock_server_message reply_msg;
             vint tid = (vint)root.data;
-			debug(SUBMISSION, "!!!!!!!!!! reply to %d", tid);
+			/*debug(SUBMISSION, "!!!!!!!!!! reply to %d", tid);*/
             Reply(tid, &reply_msg, sizeof(reply_msg));
             heap_delete(&delay_h, &del);
             /*int n;*/

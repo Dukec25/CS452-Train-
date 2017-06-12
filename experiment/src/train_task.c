@@ -22,12 +22,9 @@ void clock_task()
 	clock_init(&clock);
 
 	while (1) {
-        debug(SUBMISSION, "%s", "before delay");
 		Delay(10);	// update every 100ms
-        debug(SUBMISSION, "%s", "after delay");
 		elapsed_tenth_sec++;
 		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
-        debug(SUBMISSION, "%s", "before clock_update");
         clock_update(&clock, elapsed_tenth_sec);
         cli_update_clock(&clock);
 	}

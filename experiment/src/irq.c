@@ -29,8 +29,7 @@ void irq_enable()
 
 void irq_disable()
 {
-//	timer3_irq_disable();
-
+    timer3_irq_disable();
     uart_irq_disable(COM2);
     uart_irq_disable(COM1);
 }
@@ -40,9 +39,6 @@ void irq_handle(Kernel_state *ks)
 //	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
 //	debug(DEBUG_UART_IRQ, "*vic2_irq_status = 0x%x", *vic2_irq_status);
-	if ((*vic2_irq_status & timer3_irq_mask()) != 0) {
-		timer3_irq_handle(ks);
-    }
 	// else if doesn't work for some reason
 	if ((*vic2_irq_status & uart_irq_mask(COM1)) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART1");
@@ -51,6 +47,10 @@ void irq_handle(Kernel_state *ks)
 	if ((*vic2_irq_status & uart_irq_mask(COM2)) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART2");
         uart_irq_handle(COM2, ks);
+    }
+
+	if ((*vic2_irq_status & timer3_irq_mask()) != 0) {
+		timer3_irq_handle(ks);
     }
 }
 
@@ -106,17 +106,16 @@ void timer3_irq_handle(Kernel_state *ks)
 {
     /*debug(SUBMISSION, "%s", "3_irq_h");*/
     /*debug(SUBMISSION, "%s", "3");*/
-	timer3_clear();
-	if (ks->blocked_on_event[0]) {
+	if (ks->blocked_on_event[TIMER3_RDY]) {
 		// notify events await on timer3
-		volatile Task_descriptor *td = ks->event_blocks[0];
-		ks->event_blocks[0] = NULL;
-		ks->blocked_on_event[0] = 0;
+		volatile Task_descriptor *td = ks->event_blocks[TIMER3_RDY];
+		ks->event_blocks[TIMER3_RDY] = NULL;
+		ks->blocked_on_event[TIMER3_RDY] = 0;
         td->state = STATE_READY;
-        debug(SUBMISSION, "task%d", td->tid);
         /*debug(SUBMISSION, ">>>h%d<%d<", td->tid, ks->blocked_on_event[0]);*/
         insert_task(td, &(ks->ready_queue));
 	}
+	timer3_clear();
 //	else {
 	//	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>> %s, no task to get awaked", "timer3_irq_handle");
 //	}

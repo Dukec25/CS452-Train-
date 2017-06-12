@@ -10,8 +10,6 @@ void clock_init(Clock *pclock)
 
 void clock_update(Clock *pclock, int elapsed_tenth_sec)
 {
-    debug(SUBMISSION, "%s", "enter clock_update");
-
 	pclock->min = elapsed_tenth_sec / 600;
 	pclock->sec = (elapsed_tenth_sec % 600) / 10;
 	pclock->tenth_sec = (elapsed_tenth_sec % 600) % 10;
