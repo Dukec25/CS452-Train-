@@ -24,6 +24,7 @@ void irq_enable()
 
     uart_irq_enable(COM1);
     uart_irq_enable(COM2);
+    uart_device_enable(COM1, RCV);
     uart_device_enable(COM2, RCV);
 }
 

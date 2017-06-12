@@ -44,28 +44,39 @@ void sensor_task() {
 
 	int updates = 0;
 	while (1) {
-		Delay(20);	// delay 200ms
+		Delay(100);	// delay 1 second
+//		Putc(COM1, 133);
 		int sensor_data_lo[SENSOR_GROUPS];
 		int sensor_data_hi[SENSOR_GROUPS];
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			Putc(COM1, SENSOR_QUERY_BASE + group);
+//			debug(DEBUG_UART_IRQ, "%s", "sent sensor query");
+//			irq_printf(COM2, "%s\r\n", "sent sensor query");
 			sensor_data_lo[group] = Getc(COM1);
-		//	irq_printf(COM2, "sensor_data_lo[%d] = %d\r\n", group, sensor_data_lo[group]);
-			sensor_data_hi[group] = Getc(COM1);
-		//	irq_printf(COM2, "sensor_data_hi[%d] = %d\r\n", group, sensor_data_hi[group]);
+//			debug(DEBUG_UART_IRQ, "%s", "receive sensor query low");
+//			irq_printf(COM2, "%s\r\n", "receive sensor query low");
+			if (sensor_data_lo[group] != 0) {
+//				debug(DEBUG_UART_IRQ, "received %d", sensor_data_lo[group]);
+//				irq_printf(COM2, "received %d\r\n", sensor_data_lo[group]);
+			}
+//			sensor_data_hi[group] = Getc(COM1);
+//			debug(DEBUG_UART_IRQ, "%s", "receive sensor query high");
+//			if (sensor_data_hi[group] != 0) {
+//				debug(DEBUG_UART_IRQ, "received %d", sensor_data_hi[group]);
+//			}
 		}
 
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			int id = 0;
 			for (id = 0; id < SENSORS_PER_GROUP / 2; id++) {
 				if (sensor_data_lo[group] & (0x1 << id)) {
-					updates++;
-					cli_update_sensor(group, id, updates);
+					cli_update_sensor(group, id, updates++);
 				}
+			}
+			for (id = 0; id < SENSORS_PER_GROUP / 2; id++) {
 				if (sensor_data_hi[group] & (0x1 << id)) {
-					updates++;
-					cli_update_sensor(group, SENSORS_PER_GROUP / 2 + id, updates);
+					cli_update_sensor(group, SENSORS_PER_GROUP / 2 + id, updates++);
 				}
 			}
 		}

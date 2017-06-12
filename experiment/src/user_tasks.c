@@ -428,8 +428,9 @@ void uart2_rcv_enable(){
 
 void irq_io_tasks_cluster(){
     uart2_xmit_enable();
-    uart2_rcv_enable();
     uart1_xmit_enable();
+    uart2_rcv_enable();
+    uart1_rcv_enable();
 }
 
 void first_task()
@@ -445,23 +446,23 @@ void first_task()
     /*tid = Create(PRIOR_MEDIUM, io_test_task);*/
     /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
 
-    tid = Create(PRIOR_HIGH, clock_server_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
-
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_HIGH, clock_server_notifier);
+    tid = Create(PRIOR_HIGH, clock_server_task);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_HIGH, train_task);
+    tid = Create(PRIOR_MEDIUM, clock_server_notifier);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_MEDIUM, train_task);
    	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
 //    tid = Create(PRIOR_MEDIUM, clock_task);
 //    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-//    tid = Create(PRIOR_MEDIUM, sensor_task);
-//    debug(DEBUG_UART_IRQ, "create taskId = %d", tid);
+    tid = Create(PRIOR_LOW, sensor_task);
+    debug(DEBUG_UART_IRQ, "create taskId = %d", tid);
 
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 	Exit();

@@ -181,7 +181,8 @@ void k_await_event(int event_type, Task_descriptor *td, Kernel_state *ks)
 // void k_await_event_v2(int event_type, char ch, Task_descriptor *td, Kernel_state *ks)
 void k_await_event(int event_type, char ch, Task_descriptor *td, Kernel_state *ks)
 {
-//	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>In kernel mode k_await_event, event_type = %d", event_type);
+	if (event_type == RCV_UART1_RDY) 
+		debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>In kernel mode k_await_event, event_type = %d", event_type);
 	td->state = STATE_EVENT_BLK;
 	ks->blocked_on_event[event_type] = 1;
     remove_task(td, &(ks->ready_queue));

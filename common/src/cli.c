@@ -119,16 +119,20 @@ void cli_update_clock(Clock *pclock)
 
 void cli_update_train(char id, char speed)
 {
+	irq_save();
 	// Place train
 	irq_pos(TRAIN_ROW, TRAIN_COL);
 	irq_printf(COM2, "tr %d %s%d", id, speed < 10 ? "0" : "", speed);
+	irq_restore();
 }
 
 void cli_update_switch(char id, char state)
 {
+	irq_save();
 	// Place state
 	irq_pos(SWITCH_ROW + id - 1, RIGHT_BORDER - 1);
 	Putc(COM2, toupper(state));
+	irq_restore();
 }
 
 void cli_update_sensor(char group, char id, int updates)
@@ -136,8 +140,8 @@ void cli_update_sensor(char group, char id, int updates)
 	// Save screen
 	irq_save();
 	// Place sensor
-	irq_pos(SENSOR_ROW + updates % SENSORS_PER_COL, SENSOR_COL + updates / SENSORS_PER_COL * SENSOR_INDENT_WIDTH);
-	irq_printf(COM2, "%c0%d", SENSOR_LABEL_BASE + group - 2, id);
+	irq_pos(SENSOR_ROW + updates % SENSORS_PER_COL, SENSOR_COL + (updates / SENSORS_PER_COL % SENSORS_PER_ROW) * SENSOR_INDENT_WIDTH);
+	irq_printf(COM2, "%c%s%d", SENSOR_LABEL_BASE + group, id < 10 ? "0" : "", id);
 	// Restore screen setup
 	irq_restore();
 }

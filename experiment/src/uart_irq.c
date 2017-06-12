@@ -130,10 +130,10 @@ void uart_irq_handle(int channel, Kernel_state *ks)
             transmit_event = XMIT_UART2_RDY;
             break;
 	}
-	/*debug(SUBMISSION, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr); */
+	debug(DEBUG_UART_IRQ, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr);
 	
 	if (*uart_intr & uart_receive_irq_mask()) {
-        /*debug(SUBMISSION, "handle rcv interupt %s", "");*/
+        //debug(SUBMISSION, "handle rcv interupt %s", "");
         // receive interrupt
         if (ks->blocked_on_event[receive_event]) {
             // notify events await on receive ready
