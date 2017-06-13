@@ -160,7 +160,7 @@ void name_client_task2()
 
 void time_receive(){
     int round;
-    /*debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");*/
+    debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");
     int sender_tid;   
     /*vint reply_msg = 5;*/
     /*vint msg;*/
@@ -189,7 +189,7 @@ void time_send(){
     /*vint reply_msg;*/
     char msg[64];
     char reply_msg[64];
-    /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");*/
+    debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "time send");
     for(round=0; round < 1000000; round++){
         /*debug(DEBUG_TIME, "!!!!!!!!!!!enter %s", "about to send");*/
         vint send_result = Send(1, &msg, sizeof(msg), &reply_msg, sizeof(reply_msg));
@@ -248,7 +248,7 @@ void first_task()
 */	
 
 	int tid;
-    tid = Create(PRIOR_HIGH, time_receive);
+    tid = Create(PRIOR_MEDIUM, time_receive);
 	debug(DEBUG_TASK, "created taskId = %d", tid);
     tid = Create(PRIOR_HIGH, time_send);  // comment out for now to test generalized priority queue
     debug(DEBUG_TASK, "created taskId = %d", tid);

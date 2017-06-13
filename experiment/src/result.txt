@@ -1,0 +1,7 @@
+receive before send:
+send time = 9385065
+receive time = 3633246, reply time = 5634573
+
+send before receive: 
+send time = 9461840
+receive time = 3638465, reply time = 5706609
