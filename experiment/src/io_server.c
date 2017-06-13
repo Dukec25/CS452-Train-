@@ -30,7 +30,6 @@ void io_server_receive_start(int channel)
         Delivery reply_msg;
 		Receive(&requester, &request, sizeof(request));
         debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
-        vint tid;
         vint* character; 
 
 		switch(request.type) {
@@ -91,7 +90,6 @@ void io_server_transmit_start(int channel)
         Delivery reply_msg;
 		Receive(&requester, &request, sizeof(request));
         debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
-        vint tid;
         vint character; 
         char *printf_buf;
 
