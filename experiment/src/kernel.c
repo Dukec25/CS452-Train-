@@ -85,8 +85,6 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
             void *receive_message = *((vint*) (receive_task_sp + 4));
             int receive_length = *((vint*) (receive_task_sp + 8));
             *receive_tid = td->tid;
-            // if receive_length and send_length are different, shall we deal
-            // with it ?
             memcpy(receive_message, send_message, receive_length);
 
             receive_td->state = STATE_READY;
@@ -95,13 +93,12 @@ void k_send(int tid, void *send_message, int send_length, void *reply, int reply
             insert_task(td, &(ks->reply_block));
             remove_task(td, &(ks->ready_queue));
         }
-        /*reschedule(td, ks);*/
         td->retval = 0; // currently didn't consider situation of trunction
     } else {
         // if the receiver task has not been created
         debug(DEBUG_SYSCALL, "task has not been created, tid=%d", td->tid);
-        reschedule(td, ks);
         td->retval = -2;
+        reschedule(td, ks);
     }
 }
 
