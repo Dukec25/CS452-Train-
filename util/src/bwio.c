@@ -90,7 +90,12 @@ int bwputc(int channel, char c)
 {
 	vint *flags, *data;
 	channel_select (channel, &flags, &data);
-	while(*flags & TXFF_MASK) ;
+	if (channel == COM2) {
+		while (*flags & TXFF_MASK) ;
+	}
+	else {
+		while ((*flags & TXFF_MASK) || !(*flags & CTS_MASK)) ;
+	}
 	*data = c;
 	return 0;
 }

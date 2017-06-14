@@ -254,11 +254,6 @@ void first_task()
 	tid = Create(PRIOR_HIGH, name_server_task);
 	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-    irq_io_tasks_cluster();
-
-    /*tid = Create(PRIOR_MEDIUM, io_test_task);*/
-    /*debug(DEBUG_TASK, "created taskId = %d", tid);*/
-
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
@@ -268,14 +263,8 @@ void first_task()
     tid = Create(PRIOR_MEDIUM, clock_server_notifier);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_LOW, clock_task);
+	tid = Create(PRIOR_MEDIUM, train_task_startup);
     debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
-
-    tid = Create(PRIOR_LOW, train_task);
-   	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
-
-    tid = Create(PRIOR_LOW, sensor_task);
-    debug(DEBUG_UART_IRQ, "create taskId = %d", tid);
 
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 	Exit();

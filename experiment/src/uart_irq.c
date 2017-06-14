@@ -161,7 +161,15 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 			uart_device_disable(channel, XMIT);
             // write the data
 			/*debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); */
-			*pdata = td->ch;
+			if (channel == COM2) {
+				*pdata = td->ch;
+			}
+			else {
+				vint * uart1_flag = (vint *) UART1_FLAG;
+				if (*uart1_flag & CTS_MASK) {
+					*pdata = td->ch;
+				}
+			}
             /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); */
             /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
             insert_task(td, &(ks->ready_queue));

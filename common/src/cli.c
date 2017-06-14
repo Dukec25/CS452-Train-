@@ -3,34 +3,8 @@
 #include <cursor.h>
 #include <cli.h>
 #include <train.h>
-
-/* horizonal borders */
-#define UPPER_BORDER 		1
-#define STATUS_BORDER 		UPPER_BORDER + 2
-#define LABEL_BORDER 		STATUS_BORDER + 2
-#define BOTTOM_BORDER 		HEIGHT - 2
-/* vertical borders */
-#define LEFT_BORDER 		0
-#define RIGHT_BORDER 		LEFT_BORDER + WIDTH
-#define MIDDLE_BORDER 		RIGHT_BORDER - RIGHT_COL_WIDTH
-/* Clock */
-#define CLOCK_ROW		STATUS_BORDER - 1
-#define CLOCK_COL		LEFT_BORDER + 2
-/* Train */
-#define TRAIN_ROW		STATUS_BORDER - 1
-#define TRAIN_COL		MIDDLE_BORDER + 1
-/* Sensor */
-#define SENSOR_LABEL_ROW	LABEL_BORDER - 1
-#define SENSOR_ROW		LABEL_BORDER + 2
-#define SENSOR_COL		LEFT_BORDER + 2
-#define SENSORS_PER_ROW		4
-#define SENSORS_PER_COL		22
-#define SENSOR_LABEL_BASE	'A'
-#define SENSOR_INDENT_WIDTH	8
-/* Switch */
-#define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
-#define SWITCH_ROW		LABEL_BORDER + 1
-#define SWITCH_COL 		MIDDLE_BORDER + 1
+#include <user_functions.h>
+#include <irq_io.h>
 
 void cli_startup()
 {
@@ -85,9 +59,6 @@ void cli_startup()
 		// Place sw id
 		bw_pos(SWITCH_ROW + sw, SWITCH_COL);
 		bwputx(COM2, sw_address);
-		// Place state
-		bw_pos(SWITCH_ROW + sw, RIGHT_BORDER - 1);
-		bwputc(COM2, (sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
 	// Place input cursor at the end

@@ -27,6 +27,11 @@ typedef enum {
 void initialize_switch();
 
 /*
+ * Test switches initialization buying set switches the opposite state
+*/
+void test_initialize_switch();
+
+/*
  * Convert a switch id to a byte to be sent to the train controller
  */
 char switch_id_to_byte(uint8 id);
@@ -65,7 +70,7 @@ typedef struct Command_buffer
 /*
  * Clear the command_buffer by fill it with space
  */
-int command_clear(Command_buffer *command_buffer);
+void command_clear(Command_buffer *command_buffer);
 
 /*
  * Parses the command in the command_buffer.

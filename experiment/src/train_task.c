@@ -8,11 +8,27 @@
 #include <debug.h>
 #include <kernel.h>
 #include <name_server.h>
+#include <train_task.h>
 
 void train_task_startup()
 {
 	cli_startup();
+	test_initialize_switch();
 	initialize_switch();
+
+    irq_io_tasks_cluster();
+
+    int tid;
+	tid  = Create(PRIOR_LOW, clock_task);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+
+	tid = Create(PRIOR_LOW, train_task);
+   	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+
+	tid = Create(PRIOR_LOW, sensor_task);
+    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+	
+	Exit();
 }
 
 void clock_task()
@@ -40,37 +56,20 @@ void sensor_task() {
 	while (1) {
 		Delay(100);	// delay 1 second
 //		Putc(COM1, 133);
-		int sensor_data_lo[SENSOR_GROUPS];
-		int sensor_data_hi[SENSOR_GROUPS];
+		int sensor_data[SENSOR_GROUPS];
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			Putc(COM1, SENSOR_QUERY_BASE + group);
-//			debug(DEBUG_UART_IRQ, "%s", "sent sensor query");
-//			irq_printf(COM2, "%s\r\n", "sent sensor query");
-			sensor_data_lo[group] = Getc(COM1);
-//			debug(DEBUG_UART_IRQ, "%s", "receive sensor query low");
-//			irq_printf(COM2, "%s\r\n", "receive sensor query low");
-			if (sensor_data_lo[group] != 0) {
-//				debug(DEBUG_UART_IRQ, "received %d", sensor_data_lo[group]);
-//				irq_printf(COM2, "received %d\r\n", sensor_data_lo[group]);
-			}
-//			sensor_data_hi[group] = Getc(COM1);
-//			debug(DEBUG_UART_IRQ, "%s", "receive sensor query high");
-//			if (sensor_data_hi[group] != 0) {
-//				debug(DEBUG_UART_IRQ, "received %d", sensor_data_hi[group]);
-//			}
+			char lower = Getc(COM1);
+			char upper = Getc(COM1);
+			sensor_data[group] = upper << 8 | lower;
 		}
 
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			int id = 0;
-			for (id = 0; id < SENSORS_PER_GROUP / 2; id++) {
-				if (sensor_data_lo[group] & (0x1 << id)) {
+			for (id = 0; id < SENSORS_PER_GROUP; id++) {
+				if (sensor_data[group] & (0x1 << id)) {
 					cli_update_sensor(group, id, updates++);
-				}
-			}
-			for (id = 0; id < SENSORS_PER_GROUP / 2; id++) {
-				if (sensor_data_hi[group] & (0x1 << id)) {
-					cli_update_sensor(group, SENSORS_PER_GROUP / 2 + id, updates++);
 				}
 			}
 		}
@@ -114,7 +113,7 @@ void train_task() {
 		}
 		else {
 			command_buffer.data[command_buffer.pos++] = c;
-			//Putc(COM2, c);
+			Putc(COM2, c);
 		}
 	}
 	Exit();

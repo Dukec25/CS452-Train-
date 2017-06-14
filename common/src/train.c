@@ -36,12 +36,28 @@ char switch_state_to_byte(char state)
 
 void initialize_switch()
 {
+	bw_save();
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		bwputc(COM1, switch_state_to_byte((sw == 19 || sw == 21) ? 'S' : 'C')); // state
 		bwputc(COM1, switch_id_to_byte( sw )); // switch
+		bw_pos(SWITCH_ROW + sw - 1, RIGHT_BORDER - 1);
+		bwputc(COM2, (sw == 19 || sw == 21) ? 'S' : 'C');
+		Delay(10);
 	}
-	bwputc( COM1, SOLENOID_OFF); // turn off solenoid
+	bwputc(COM1, SOLENOID_OFF); // turn off solenoid
+	bw_restore();
+}
+
+void test_initialize_switch()
+{
+	int sw;
+	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
+		bwputc(COM1, switch_state_to_byte((sw == 19 || sw == 21) ? 'C' : 'S')); // state
+		bwputc(COM1, switch_id_to_byte( sw )); // switch
+		Delay(10);
+	}
+	bwputc(COM1, SOLENOID_OFF); // turn off solenoid
 }
 
 static int is_digit(char c)
@@ -62,7 +78,7 @@ static int is_state(char c)
 	}
 }
 
-int command_clear(Command_buffer *command_buffer)
+void command_clear(Command_buffer *command_buffer)
 {
 	int i = 0;
 	for (i = 0; i <= command_buffer->pos; i++) {
