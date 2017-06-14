@@ -69,7 +69,15 @@ void sensor_task() {
 			int id = 0;
 			for (id = 0; id < SENSORS_PER_GROUP; id++) {
 				if (sensor_data[group] & (0x1 << id)) {
-					cli_update_sensor(group, id, updates++);
+                    int actual_id; 
+                    if( id + 1 <= 8){
+                        actual_id = 8 - id;
+                    } else{
+                        actual_id = 8 + 16 - id;
+                    }
+                    //sensor_data actually looks like 
+                    // 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
+					cli_update_sensor(group, actual_id, updates++);
 				}
 			}
 		}
