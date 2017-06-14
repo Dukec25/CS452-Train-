@@ -44,22 +44,18 @@ void clock_task()
 		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
         clock_update(&clock, elapsed_tenth_sec);
         cli_update_clock(&clock);
-	//	cli_user_input(command_buffer);
 	}
 	Exit();
 }
 
 void sensor_task() {
-	int result = RegisterAs("train_task");
-
 	int updates = 0;
 	while (1) {
-		Delay(100);	// delay 1 second
-//		Putc(COM1, 133);
+		Delay(20);	// delay 0.2 second
+		Putc(COM1, SENSOR_QUERY);
 		int sensor_data[SENSOR_GROUPS];
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
-			Putc(COM1, SENSOR_QUERY_BASE + group);
 			char lower = Getc(COM1);
 			char upper = Getc(COM1);
 			sensor_data[group] = upper << 8 | lower;
@@ -92,13 +88,6 @@ void train_task() {
 	char train_id = 0;
 	char train_speed = 0;
 
-	int result = RegisterAs("train_task");
-/*
-    int clock_task_tid = Create(PRIOR_MEDIUM, clock_task);
-
-	int command_buffer_addr = (int) &command_buffer;
-	Send(clock_task_tid, &command_buffer_addr, sizeof(command_buffer_addr), 0, 0);
-*/
 	while(1) {
 		// user I/O and send command to train
 		char c = Getc(COM2);

@@ -44,7 +44,7 @@ char switch_state_to_byte(char state);
 /* Sensors */
 #define SENSOR_GROUPS 5
 #define SENSORS_PER_GROUP 16
-#define SENSOR_QUERY_BASE 193
+#define SENSOR_QUERY 128 + SENSOR_GROUPS
 
 /* Train commands */
 #define COMMAND_SIZE 100
