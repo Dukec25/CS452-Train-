@@ -186,6 +186,7 @@ void uart1_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
+		Delay(5);
     }
 }
 
@@ -252,19 +253,19 @@ void first_task()
     int tid;
 
 	tid = Create(PRIOR_HIGH, name_server_task);
-	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+	debug(DEBUG_K4, "created taskId = %d", tid);
 
     tid = Create(PRIOR_LOWEST, idle_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    debug(DEBUG_K4, "created taskId = %d", tid);
 
     tid = Create(PRIOR_HIGH, clock_server_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    debug(DEBUG_K4, "created taskId = %d", tid);
 
     tid = Create(PRIOR_MEDIUM, clock_server_notifier);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    debug(DEBUG_K4, "created taskId = %d", tid);
 
 	tid = Create(PRIOR_MEDIUM, train_task_startup);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    debug(DEBUG_K4, "created taskId = %d", tid);
 
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 	Exit();

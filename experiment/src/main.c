@@ -52,6 +52,7 @@ void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Tas
 	td->priority = priority;
 	td->spsr = USR; // hardcoded to user mode, not flag bit set
 	td->is_entry_from_hwi = 0;
+	td->ch = -1;
 	// assign memory to the first task
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer

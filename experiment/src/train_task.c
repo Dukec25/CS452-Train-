@@ -13,20 +13,21 @@
 void train_task_startup()
 {
 	cli_startup();
-	test_initialize_switch();
-	initialize_switch();
+//	test_initialize_switch();
+//	initialize_switch();
+    debug(DEBUG_K4, "%s", "initialized switches");
 
     irq_io_tasks_cluster();
 
     int tid;
 	tid  = Create(PRIOR_LOW, clock_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
 	tid = Create(PRIOR_LOW, train_task);
-   	debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+   	debug(DEBUG_K4, "created train_task taskId = %d", tid);
 
 	tid = Create(PRIOR_LOW, sensor_task);
-    debug(DEBUG_UART_IRQ, "created taskId = %d", tid);
+    debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
 	
 	Exit();
 }
@@ -41,7 +42,7 @@ void clock_task()
 	while (1) {
 		Delay(10);	// update every 100ms
 		elapsed_tenth_sec++;
-		debug(DEBUG_UART_IRQ, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
+		//debug(DEBUG_K4, "!!!!!!delayed time interval, elapsed_tenth_sec = %d", elapsed_tenth_sec);
         clock_update(&clock, elapsed_tenth_sec);
         cli_update_clock(&clock);
 	}

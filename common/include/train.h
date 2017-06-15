@@ -66,7 +66,13 @@ typedef struct Command_buffer
 	char data[COMMAND_SIZE];
 	int pos;
 } Command_buffer;
-
+typedef struct Delay_command
+{
+	TRAIN_COMMAND type;
+	int delay_time;
+	char arg0;
+	char arg1;
+} Delay_command;
 /*
  * Clear the command_buffer by fill it with space
  */

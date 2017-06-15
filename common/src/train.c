@@ -3,6 +3,7 @@
 #include <train.h>
 #include <string.h>
 #include <user_functions.h>
+#include <kernel.h>
 
 #define TWO_WAY_SWITCH_OFFSET 0x01
 #define TWO_WAY_SWITCH_NUM 18
@@ -43,7 +44,7 @@ void initialize_switch()
 		bwputc(COM1, switch_id_to_byte( sw )); // switch
 		bw_pos(SWITCH_ROW + sw - 1, RIGHT_BORDER - 1);
 		bwputc(COM2, (sw == 19 || sw == 21) ? 'S' : 'C');
-		Delay(10);
+		Delay(20);
 	}
 	bwputc(COM1, SOLENOID_OFF); // turn off solenoid
 	bw_restore();
@@ -55,7 +56,7 @@ void test_initialize_switch()
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		bwputc(COM1, switch_state_to_byte((sw == 19 || sw == 21) ? 'C' : 'S')); // state
 		bwputc(COM1, switch_id_to_byte( sw )); // switch
-		Delay(10);
+		Delay(20);
 	}
 	bwputc(COM1, SOLENOID_OFF); // turn off solenoid
 }
@@ -110,25 +111,20 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 				num_buffer[i] = '\0';
 		}	
 		int num_buffer_pos = 0;
-		debug(DEBUG_K4, "%s", "start of a valid command");
 		while (pos++ < command_buffer->pos) {
-			debug(DEBUG_K4, "pos = %d", pos);
 			if (is_digit(command_buffer->data[pos])) {
 				// current char is a digit
 				num_buffer[num_buffer_pos++] = command_buffer->data[pos];
-				debug(DEBUG_K4, "num_buffer = %s", num_buffer);
 			}
 			else if (is_state(command_buffer->data[pos])) {
 				// current char is a switch state
 				args[argc++] = command_buffer->data[pos];
-				debug(DEBUG_K4, "args[%d] = %d", argc - 1, args[argc - 1]);
 			}
 			else if (command_buffer->data[pos] == ' ' || (pos == command_buffer->pos)) {
 				// skip space
 				if (num_buffer_pos != 0) {
 					// at the end of a number
 					args[argc++] = atoi(num_buffer);
-					debug(DEBUG_K4, "args[%d] = %d", argc - 1, args[argc - 1]);
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;
@@ -168,8 +164,47 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 	return 0;
 }
 
+void delay_task()
+{
+	int train_task_tid;
+	Delay_command delay_cmd;
+	char reply_msg = 0;
+	int tid = MyTid();
+	debug(DEBUG_K4, "in delay task %d", tid);
+	Receive(&train_task_tid, &delay_cmd, sizeof(delay_cmd));
+	debug(DEBUG_K4, "received command from %d", train_task_tid);
+	Reply(train_task_tid, &reply_msg, sizeof(reply_msg));
+	
+	switch(delay_cmd.type) {
+	case RV:
+		Delay(delay_cmd.delay_time);
+		debug(DEBUG_K4, "reached time limit %d, begin REVERSE", delay_cmd.delay_time);
+		Putc(COM1, REVERSE);
+		Putc(COM1, delay_cmd.arg0);
+
+		Delay(delay_cmd.delay_time);
+		debug(DEBUG_K4, "reached time limit %d, begin set speed", delay_cmd.delay_time);
+
+		Putc(COM1, delay_cmd.arg1);
+		Putc(COM1, delay_cmd.arg0);
+		break;
+	case SW:
+		Delay(delay_cmd.delay_time);
+		debug(DEBUG_K4, "reached time limit %d, begin to turn of SOLENOID_OFF", delay_cmd.delay_time);
+
+		Putc(COM1, SOLENOID_OFF);
+		break;
+	}
+	Exit();
+}
+
 void command_handle(Command *pcmd)
 {
+	debug(DEBUG_K4, "enter %s", "command_handle");
+	Delay_command delay_cmd;
+	int delay_task_tid = INVALID_TID;
+	char reply_msg;
+
 	switch(pcmd->type) {
 	case TR:
 		if (pcmd->arg1 <= MAX_SPEED) {
@@ -181,22 +216,32 @@ void command_handle(Command *pcmd)
 		}
 		break;
 	case RV:
-		Putc(COM1, STOP); 	 		// stop	
+		Putc(COM1, 0); 	 			// stop	
 		Putc(COM1, pcmd->arg0); 	// train
-		Delay(20);					// Delay 0.2 second
 
-		Putc(COM1, REVERSE); 	 	// reverse	
-		Putc(COM1, pcmd->arg0); 	// train
-		Delay(20);					// Delay 0.2 second
+		delay_task_tid = Create(PRIOR_LOW, delay_task);
+		debug(DEBUG_K4, "delay_task_tid = %d", delay_task_tid);
 
-		Putc(COM1, pcmd->arg1); 	// speed
-		Putc(COM1, pcmd->arg0); 	// train
+		delay_cmd.type = RV;
+		delay_cmd.delay_time = 20;
+		delay_cmd.arg0 = pcmd->arg0; // train
+		delay_cmd.arg1 = pcmd->arg1; // speed
+
+		Send(delay_task_tid, &delay_cmd, sizeof(delay_cmd), &reply_msg, sizeof(reply_msg));
 		break;
 	case SW:
 		Putc(COM1, switch_state_to_byte(pcmd->arg1));	// state
 		Putc(COM1, switch_id_to_byte(pcmd->arg0)); 		// switch
-		Delay(20);					// Delay 0.2 second
-		Putc(COM1, SOLENOID_OFF); 						// turnoff solenoid
+
+		delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
+		debug(DEBUG_K4, "delay_task_tid = %d", delay_task_tid);
+
+		delay_cmd.type = SW;
+		delay_cmd.delay_time = 20;
+
+		debug(DEBUG_K4, "sending command to %d", delay_task_tid);
+		Send(delay_task, &delay_cmd, sizeof(delay_cmd), &reply_msg, sizeof(reply_msg));
+	
         cli_update_switch(pcmd->arg0, pcmd->arg1);
 		break;
 	case GO:
