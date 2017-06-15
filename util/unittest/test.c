@@ -3,6 +3,9 @@
 #include <bwio.h>
 #include <debug.h>
 #include <define.h>
+#include <lifo.h>
+#include <calculation.h>
+#include <track_node.h>
 
 #define assert_str(cond, msg)		 										 			\
 		do {																			\
@@ -109,6 +112,27 @@ int main()
 	assert(!strcmp(source, dest9, dest9_num) && (dest9[dest9_num - 1] == '\0'), "memcpy test9 failed, dest = %s", dest9);
 	debug(DEBUG_INFO, "%s test passed", "memcpy");
 
+    //calculate distance between two sensor
+    track_node tracka[TRACK_MAX];
+    init_tracka(tracka);
+    
+    bwprintf(COM2, "hello\r\n");
+    int b = cal_distance(tracka, 0, 44);
+    assert((100 == b), "cal_distance test failed, int = %d", b);
+    
+    //fifo test 
+    Lifo_t stack; 
+    lifo_init(&stack);
+
+    int i;
+    for(i = 0; i < 10; i++){
+        lifo_push(&stack, (void *)i);
+    }
+    while(!is_lifo_empty(&stack)){
+        int a;
+        lifo_pop(&stack, &a);
+        assert((100 == a), "fifo test failed, int = %d", a);
+    }
 	// heap test
 	const size_t heap_size = 12;
 	node_t data[heap_size];
