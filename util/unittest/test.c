@@ -116,8 +116,8 @@ int main()
     track_node tracka[TRACK_MAX];
     init_tracka(tracka);
     
-    bwprintf(COM2, "hello\r\n");
     int b = cal_distance(tracka, 0, 44);
+
     assert((100 == b), "cal_distance test failed, int = %d", b);
     
     //fifo test 
