@@ -1,7 +1,4 @@
 #include <clock_server.h>
-#include <user_functions.h>
-#include <debug.h>
-#include <heap.h>
 
 static void initialize(Clock_server *cs)
 {
@@ -35,7 +32,6 @@ int Delay(int ticks)
     Clock_server_message reply_msg;
     send_msg.data = ticks;
     send_msg.type = DELAY_REQUEST;
-    /*debug(SUBMISSION,  "before send delay_message, clock server id=%d", clock_server_tid);*/
     Send(clock_server_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
     return 0;
 }
@@ -75,7 +71,6 @@ void clock_server_start()
         vint tid;
 		switch(request.type) {
             case CLOCK_NOTIFIER:
-                /*debug(SUBMISSION, "%s", "CL");*/
                 Reply(requester, &reply_msg, sizeof(reply_msg));
                 //debug(DEBUG_UART_IRQ, "Enter %s", "CLOCK_NOTIFIER");
                 cs.ticks++;
@@ -87,12 +82,8 @@ void clock_server_start()
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 		 		break;
 			case DELAY_REQUEST:
-                //debug(DEBUG_UART_IRQ, "Enter DELAY_REQUEST, requester = %d", requester);
                 tid = requester;
                 vint freedom_tick = cs.ticks + request.data;
-                /*Clock_server_message reply_msg;*/
-                /*Reply(tid, &reply_msg, sizeof(reply_msg));*/
-                /*debug(SUBMISSION, "request_tick=%d", request.data);*/
                 heap_insert(&delay_h, freedom_tick, (void*)tid);
 		 		break;
             case DELAY_REQUEST_UNTIL:
@@ -113,6 +104,7 @@ void clock_server_start()
             Clock_server_message reply_msg;
             vint tid = (vint)root.data;
 			/*debug(SUBMISSION, "!!!!!!!!!! reply to %d", tid);*/
+            debug(SUBMISSION, "!!!!!!!!!! freedom_tick= %d", root.priority);
             Reply(tid, &reply_msg, sizeof(reply_msg));
             heap_delete(&delay_h, &del);
             /*int n;*/
@@ -127,13 +119,3 @@ void clock_server_start()
 	}
 }
 
-/*void clock_server_notifier(){*/
-    /*Delivery request; */
-    /*Clock_server_message reply_message;*/
-    /*int clock_server_tid = WhoIs("CLOCK_SERVER");*/
-    /*while(1){*/
-        /*request.data = AwaitEvent( evtType  ); // evtType = here should be clock update event;*/
-        /*request.type = NOTIFIER;*/
-        /*Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );*/
-    /*}*/
-/*}*/

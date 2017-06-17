@@ -91,7 +91,7 @@ void idle_task()
         /*debug(SUBMISSION, "%s", "idle_task");*/
 	/*for (i = 0; i < 300000; i++) {*/
         /*debug(SUBMISSION, "i = %d", i);*/
-        /*Pass();*/
+        Pass();
 		/*j += 2;*/
 	}
 	/*debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);*/
@@ -241,10 +241,65 @@ void uart2_rcv_enable(){
 }
 
 void irq_io_tasks_cluster(){
-    uart2_xmit_enable();
-    uart1_xmit_enable();
-    uart2_rcv_enable();
-    uart1_rcv_enable();
+    /*uart2_xmit_enable();*/
+    /*uart1_xmit_enable();*/
+    /*uart2_rcv_enable();*/
+    /*uart1_rcv_enable();*/
+}
+
+void kernel3_client_task(){
+    vint parent_tid = MyParentTid();
+    Message send_msg;
+    IntIntMessage reply_msg;
+    Send(parent_tid, &send_msg, sizeof(send_msg), &reply_msg, sizeof(reply_msg));
+    vint delayed_time_interval = reply_msg.content1;
+    vint num_delays = reply_msg.content2;
+    vint clock_server_tid = WhoIs("CLOCK_SERVER");
+    int n;
+    for(n=1; n < num_delays+1; n++){
+        debug(SUBMISSION, "enter delayed time interval = %d", delayed_time_interval);
+        Delay(delayed_time_interval); 
+        debug(SUBMISSION, "delayed_interval = %d", delayed_time_interval);
+        debug(SUBMISSION, "number of delayed has completed = %d", n);
+    }
+    debug(SUBMISSION, "completed task ****= %d", MyTid());
+    Exit();
+}
+
+void kernel3_task()
+{
+	int tid;
+ 	tid = Create(PRIOR_LEVEL2_MEDIUM, kernel3_client_task); 
+    debug(SUBMISSION, "created taskId = %d", tid);
+    int sender_tid;
+    Message receive_msg;
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    IntIntMessage reply_msg;
+    reply_msg.content1 = 10;
+    reply_msg.content2 = 20;
+    debug(SUBMISSION, "reply to taskId = %d", sender_tid);
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+
+    tid = Create(PRIOR_LEVEL2_LOW, kernel3_client_task);
+    debug(SUBMISSION, "created taskId = %d", tid);
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    reply_msg.content1 = 23;
+    reply_msg.content2 = 9;
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+
+    tid = Create(PRIOR_HIGH, kernel3_client_task);
+    debug(SUBMISSION, "created taskId = %d", tid);
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    reply_msg.content1 = 33;
+    reply_msg.content2 = 6;
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
+
+    tid = Create(PRIOR_MEDIUM, kernel3_client_task);
+    debug(SUBMISSION, "created taskId = %d", tid);
+    Receive( &sender_tid, &receive_msg, sizeof(receive_msg) ); // should return value here later
+    reply_msg.content1 = 71;
+    reply_msg.content2 = 3;
+    Reply(sender_tid, &reply_msg, sizeof(reply_msg));
 }
 
 void first_task()
@@ -252,21 +307,22 @@ void first_task()
 	// debug(DEBUG_UART_IRQ, "In user task first_task, priority=%d", PRIOR_MEDIUM);
     int tid;
 
-	tid = Create(PRIOR_HIGH, name_server_task);
+	tid = Create(PRIOR_LEVEL2_HIGH, name_server_task);
 	debug(DEBUG_K4, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_LEVEL2_HIGH, clock_server_task);
+    debug(DEBUG_K4, "created taskId = %d", tid);
+
+    tid = Create(PRIOR_HIGHEST, clock_server_notifier);
+    debug(DEBUG_K4, "created taskId = %d", tid);
+
+    kernel3_task();
+	/*tid = Create(PRIOR_MEDIUM, train_task_startup);*/
+    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
+
+    /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_K4, "created taskId = %d", tid);
-
-    tid = Create(PRIOR_HIGH, clock_server_task);
-    debug(DEBUG_K4, "created taskId = %d", tid);
-
-    tid = Create(PRIOR_MEDIUM, clock_server_notifier);
-    debug(DEBUG_K4, "created taskId = %d", tid);
-
-	tid = Create(PRIOR_MEDIUM, train_task_startup);
-    debug(DEBUG_K4, "created taskId = %d", tid);
-
-    /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
 	Exit();
 }

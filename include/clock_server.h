@@ -1,6 +1,9 @@
 #ifndef __CLOCK_SERVER_H__
 #define __CLOCK_SERVER_H__
 #include <define.h>
+#include <user_functions.h>
+#include <debug.h>
+#include <heap.h>
 
 #define MAX_DELAYED_TASKS	50
 

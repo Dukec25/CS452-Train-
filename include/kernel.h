@@ -53,8 +53,13 @@ typedef enum Task_priority {
 	PRIOR_LOWEST,
 	PRIOR_LOW,
 	PRIOR_MEDIUM,
-	PRIOR_HIGH
+	PRIOR_HIGH,
+    PRIOR_LEVEL2_LOW,
+    PRIOR_LEVEL2_MEDIUM,
+    PRIOR_LEVEL2_HIGH,
+    PRIOR_HIGHEST
 } Task_priority;
+
 typedef enum Processor_mode {
 	USR = 0x10,
 	SYS = 0xDF,
@@ -82,7 +87,7 @@ typedef struct Fifo_llist {
 } Fifo_llist;
 typedef struct Priority_fifo {
 	uint32		mask;
-	Fifo_llist	fifos[PRIOR_HIGH + 1];
+	Fifo_llist	fifos[PRIOR_HIGHEST + 1];
 } Priority_fifo;
 
 /* kernel state */
