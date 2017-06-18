@@ -1,6 +1,9 @@
 #ifndef __CLOCK_SERVER_H__
 #define __CLOCK_SERVER_H__
 #include <define.h>
+#include <user_functions.h>
+#include <debug.h>
+#include <heap.h>
 
 #define MAX_DELAYED_TASKS	50
 
@@ -18,7 +21,6 @@ typedef struct Clock_server_message {
 
 typedef struct Clock_server {
 	vint ticks;
-	//node_t delayed_tasks[MAX_DELAYED_TASKS];
 } Clock_server;
 
 typedef struct Delayed_task {
@@ -31,5 +33,10 @@ typedef struct Delivery{
     vint data;
     char *data_arr;
 } Delivery;
+
+int DelayUntil(int ticks);
+int Delay(int ticks);
+int Time();
+void clock_server_start();
 
 #endif // __CLOCK_SERVER_H__

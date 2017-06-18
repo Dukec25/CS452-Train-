@@ -40,10 +40,10 @@ void initialize_switch()
 	bw_save();
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
-		bwputc(COM1, switch_state_to_byte((sw == 19 || sw == 21) ? 'S' : 'C')); // state
+		bwputc(COM1, switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C')); // state
 		bwputc(COM1, switch_id_to_byte( sw )); // switch
 		bw_pos(SWITCH_ROW + sw - 1, RIGHT_BORDER - 1);
-		bwputc(COM2, (sw == 19 || sw == 21) ? 'S' : 'C');
+		bwputc(COM2, (sw == 16 || sw == 10 || sw == 15|| sw == 19 || sw == 21) ? 'S' : 'C');
 		Delay(20);
 	}
 	bwputc(COM1, SOLENOID_OFF); // turn off solenoid

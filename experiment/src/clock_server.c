@@ -1,7 +1,4 @@
 #include <clock_server.h>
-#include <user_functions.h>
-#include <debug.h>
-#include <heap.h>
 
 static void initialize(Clock_server *cs)
 {
@@ -126,14 +123,3 @@ void clock_server_start()
         }
 	}
 }
-
-/*void clock_server_notifier(){*/
-    /*Delivery request; */
-    /*Clock_server_message reply_message;*/
-    /*int clock_server_tid = WhoIs("CLOCK_SERVER");*/
-    /*while(1){*/
-        /*request.data = AwaitEvent( evtType  ); // evtType = here should be clock update event;*/
-        /*request.type = NOTIFIER;*/
-        /*Send( clock_server_tid, &request, sizeof(request), &reply_message, sizeof(reply_message) );*/
-    /*}*/
-/*}*/

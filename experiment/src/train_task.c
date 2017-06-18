@@ -1,20 +1,10 @@
-#include <define.h>
-#include <bwio.h>
-#include <cursor.h>
-#include <cli.h>
-#include <train.h>
-#include <clock_server.h>
-#include <user_functions.h>
-#include <debug.h>
-#include <kernel.h>
-#include <name_server.h>
 #include <train_task.h>
 
 void train_task_startup()
 {
 	cli_startup();
-//	test_initialize_switch();
-//	initialize_switch();
+    test_initialize_switch();
+    initialize_switch();
     debug(DEBUG_K4, "%s", "initialized switches");
 
     irq_io_tasks_cluster();
@@ -51,6 +41,11 @@ void clock_task()
 
 void sensor_task() {
 	int updates = 0;
+    vint stop_sensor=16;
+    vint last_stop;
+
+    track_node tracka[TRACK_MAX];
+    init_tracka(tracka);
 	while (1) {
 		Delay(20);	// delay 0.2 second
 		Putc(COM1, SENSOR_QUERY);
@@ -75,6 +70,15 @@ void sensor_task() {
                     //sensor_data actually looks like 
                     // 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
 					cli_update_sensor(group, actual_id, updates++);
+                    if(group*16-1 + actual_id  == stop_sensor){
+                        Putc(COM1, 0); 	 	// stop	
+                        Putc(COM1, 69); 	// train
+                    }
+                    if(last_stop != -1){
+                        int b = cal_distance(tracka, last_stop, group*16-1 + actual_id);
+                        Putc(COM2, b);
+                        last_stop = group*16-1 + actual_id ;
+                    }
 				}
 			}
 		}
@@ -104,6 +108,7 @@ void train_task() {
 			int result = command_parse(&command_buffer, &train_id, &train_speed, &cmd);
 			if (result != -1) {
 				// user entered a valid command, sends command to train and updates user interface
+                // command_handle is within common/src/train.c
               	command_handle(&cmd);
 			}
 			// clears command_buffer
