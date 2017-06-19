@@ -50,6 +50,7 @@ void initialize_switch()
 	bw_restore();
 }
 
+// method seems deprecated, currently only use initalize_switch
 void test_initialize_switch()
 {
 	int sw;

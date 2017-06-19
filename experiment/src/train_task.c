@@ -3,11 +3,11 @@
 void train_task_startup()
 {
 	cli_startup();
-    test_initialize_switch();
+    irq_io_tasks_cluster();
+
+    Putc(COM1, START); // switches won't work without start command
     initialize_switch();
     debug(DEBUG_K4, "%s", "initialized switches");
-
-    irq_io_tasks_cluster();
 
     int tid;
 	tid  = Create(PRIOR_LOW, clock_task);
@@ -46,6 +46,7 @@ void sensor_task() {
 
     track_node tracka[TRACK_MAX];
     init_tracka(tracka);
+
 	while (1) {
 		Delay(20);	// delay 0.2 second
 		Putc(COM1, SENSOR_QUERY);
@@ -75,8 +76,8 @@ void sensor_task() {
                         Putc(COM1, 69); 	// train
                     }
                     if(last_stop != -1){
-                        int b = cal_distance(tracka, last_stop, group*16-1 + actual_id);
-                        Putc(COM2, b);
+                        /*int b = cal_distance(tracka, last_stop, group*16-1 + actual_id);*/
+                        /*Putc(COM2, b);*/
                         last_stop = group*16-1 + actual_id ;
                     }
 				}

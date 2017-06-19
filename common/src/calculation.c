@@ -8,19 +8,16 @@ int cal_distance(track_node *track, int src, int dest){
     fifo_init(&queue);
 
     track[src].buf = 0; // initialize the distance 
-    bwprintf(COM2, "first element %d\r\n", track[src].num);
     fifo_put(&queue, &(track[src]));
     while(!is_fifo_empty(&queue)){
         track_node *temp;
         fifo_get(&queue, &temp);
 
-        bwprintf(COM2, "hello \r\n");
 
         if(temp->num == track[dest].num){
             return temp->buf;
         }
         if (temp->type == NODE_BRANCH){
-            bwprintf(COM2, "within NODE_BRANCH\r\n");
             temp->edge[DIR_STRAIGHT].dest->buf = temp->buf + temp->edge[DIR_STRAIGHT].dist;
             fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
             temp->edge[DIR_CURVED].dest->buf = temp->buf + temp->edge[DIR_CURVED].dist;
