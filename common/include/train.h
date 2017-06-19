@@ -54,7 +54,8 @@ typedef enum {
 	RV, 	/* The train should reverse direction. */
 	SW, 	/* Throw the given switch to straight (S) or curved (C). */
 	GO, 	/* Start the train controller */
-	STOP 	/* Stop the train controller */
+	STOP,	/* Stop the train controller */
+    ST      /* Specify the stop location for the train */
 } TRAIN_COMMAND;
 typedef struct {
 	TRAIN_COMMAND type;

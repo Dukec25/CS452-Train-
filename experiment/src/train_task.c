@@ -13,10 +13,11 @@ void train_task_startup()
 	tid  = Create(PRIOR_LOW, clock_task);
     debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
-	tid = Create(PRIOR_LOW, train_task);
-   	debug(DEBUG_K4, "created train_task taskId = %d", tid);
+	/*tid = Create(PRIOR_LOW, train_task);*/
+       /*debug(DEBUG_K4, "created train_task taskId = %d", tid);*/
 
-	tid = Create(PRIOR_LOW, sensor_task);
+    sensor_initialization();
+    tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
 	
 	Exit();
@@ -39,7 +40,18 @@ void clock_task()
 	Exit();
 }
 
+void sensor_initialization(){
+    // clear up any unread sensor data
+    Putc(COM1, SENSOR_QUERY);
+    int group = 0;
+    for (group = 0; group < SENSOR_GROUPS; group++) {
+        char lower = Getc(COM1);
+        char upper = Getc(COM1);
+    } 
+}
+
 void sensor_task() {
+
 	int updates = 0;
     vint stop_sensor=16;
     vint last_stop;

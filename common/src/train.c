@@ -103,7 +103,7 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 	}
-	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) || !strcmp(command_buffer->data, "sw", 2)) {
+	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) || !strcmp(command_buffer->data, "sw", 2) || !strcmp(command_buffer->data, "st", 2)) {
 		// parse arguments
 		int pos = 2;
 		char num_buffer[10];
@@ -145,17 +145,17 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
-		assert(argc == 2, "tr: invalid number of arguments %d", argc);
+		/*assert(argc == 2, "tr: invalid number of arguments %d", argc);*/
 		*ptrain_speed = pcmd->arg1;
 		*ptrain_id = pcmd->arg0;
 		pcmd->type = TR;
 		break;
 	case 'r':
-		assert(argc == 1, "rv: invalid number of arguments %d", argc);
+		/*assert(argc == 1, "rv: invalid number of arguments %d", argc);*/
 		pcmd->type = RV;
 		break;
 	case 's':
-		assert(argc == 2, "sw: invalid number of arguments %d", argc);
+		/*assert(argc == 2, "sw: invalid number of arguments %d", argc);*/
 		pcmd->type = SW;
 		break;
 	}
@@ -206,6 +206,7 @@ void command_handle(Command *pcmd)
 	int delay_task_tid = INVALID_TID;
 	char reply_msg;
 
+    // pcmd->type get defined at train.h
 	switch(pcmd->type) {
 	case TR:
 		if (pcmd->arg1 <= MAX_SPEED) {
@@ -213,7 +214,7 @@ void command_handle(Command *pcmd)
 			Putc(COM1, pcmd->arg0); // train
             cli_update_train(pcmd->arg0, pcmd->arg1);
 		} else {
-			assert(0, "tr: Invalid speed %d", pcmd->arg1);
+			/*assert(0, "tr: Invalid speed %d", pcmd->arg1);*/
 		}
 		break;
 	case RV:
@@ -251,5 +252,8 @@ void command_handle(Command *pcmd)
 	case STOP:
 		Putc(COM1, HALT);
 		break;
+    case ST:
+        // modify the stop distance overhere
+        break;
 	}
 }
