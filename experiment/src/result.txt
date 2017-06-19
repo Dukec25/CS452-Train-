@@ -1,6 +1,8 @@
 receive before send:
 send time = 9385065
 receive time = 3633246, reply time = 5634573
+one iteration takes around 18.5 us 
+
 
 send before receive: 
 send time = 9461840

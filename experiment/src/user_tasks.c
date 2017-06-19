@@ -40,7 +40,7 @@ void send_task()
 void receive_task()
 {
 	debug(DEBUG_TASK, "enter %s", "receive task");
-    int sender_tid; // why, why, why????????? Compare with previous version 
+    int sender_tid; 
     Message msg;
 	uint32 tid = MyTid();
 	debug(DEBUG_TASK, "this receive_task tid = %d", tid);
@@ -199,6 +199,8 @@ void time_send(){
 	vint *ptimer = timer();
 	uint32 timer_output = TIMER_MAX - *ptimer;
     debug(DEBUG_TIME, "send time = %d", timer_output);
+    // how to calculate the time in microsecond 
+    // ( (timer_output / round of iteration) / 508 ) * 1000
     Exit();
 }
 
