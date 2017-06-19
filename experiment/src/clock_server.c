@@ -104,7 +104,7 @@ void clock_server_start()
             Clock_server_message reply_msg;
             vint tid = (vint)root.data;
 			/*debug(SUBMISSION, "!!!!!!!!!! reply to %d", tid);*/
-            debug(SUBMISSION, "!!!!!!!!!! freedom_tick= %d", root.priority);
+            debug(SUBMISSION, "free_tick= %d", root.priority);
             Reply(tid, &reply_msg, sizeof(reply_msg));
             heap_delete(&delay_h, &del);
             /*int n;*/
