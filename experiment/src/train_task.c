@@ -7,16 +7,16 @@ void train_task_startup()
 
     Putc(COM1, START); // switches won't work without start command
     initialize_switch();
+    sensor_initialization();
     debug(DEBUG_K4, "%s", "initialized switches");
 
     int tid;
 	tid  = Create(PRIOR_LOW, clock_task);
     debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
-	/*tid = Create(PRIOR_LOW, train_task);*/
-       /*debug(DEBUG_K4, "created train_task taskId = %d", tid);*/
+    tid = Create(PRIOR_LOW, train_task);
+    debug(DEBUG_K4, "created train_task taskId = %d", tid);
 
-    sensor_initialization();
     tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
 	
@@ -41,6 +41,7 @@ void clock_task()
 }
 
 void sensor_initialization(){
+    Delay(20);	// delay 0.2 second
     // clear up any unread sensor data
     Putc(COM1, SENSOR_QUERY);
     int group = 0;
