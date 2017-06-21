@@ -388,6 +388,9 @@ int main()
                     /*debug(SUBMISSION, "1%d", td->tid);*/
 					k_await_event(arg0, arg1, td, &ks);
 					break;
+                case 10:
+                    ks.ready_queue.mask = 0;
+                    break;
 			}
 	}
     irq_disable();

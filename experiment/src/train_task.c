@@ -14,8 +14,8 @@ void train_task_startup()
 	tid  = Create(PRIOR_LOW, clock_task);
     debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
-    /*tid = Create(PRIOR_LOW, train_task);*/
-    /*debug(DEBUG_K4, "created train_task taskId = %d", tid);*/
+    tid = Create(PRIOR_LOW, train_task);
+    debug(DEBUG_K4, "created train_task taskId = %d", tid);
 
     tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
@@ -60,6 +60,7 @@ void sensor_task() {
     track_node tracka[TRACK_MAX];
     init_tracka(tracka);
 
+
 	while (1) {
         bwprintf(COM2, "%s", "sensor");
         /*debug(SUBMISSION, "%s", "sensor is printing");*/
@@ -73,7 +74,8 @@ void sensor_task() {
 			char lower = Getc(COM1);
 			char upper = Getc(COM1);
 			sensor_data[group] = upper << 8 | lower;
-            Putc(COM1, START); // speed
+            /*Putc(COM1, START); // speed*/
+            /*intput_bool = false;*/
 		}
 
 		for (group = 0; group < SENSOR_GROUPS; group++) {
@@ -114,12 +116,15 @@ void train_task() {
 	char train_id = 0;
 	char train_speed = 0;
 
+    Calibration_package calibration_package;
+
 	while(1) {
 		// user I/O and send command to train
 		char c = Getc(COM2);
 		if (c == 'q') {
 			// user hits 'q', exit
-			debug(SUBMISSION, "%s", "user hits q, exiting");	
+			bwprintf(COM2, "user hits q, terminate the program");	
+            Terminate();
 			break;
 		}
 		else if (c == '\r') {

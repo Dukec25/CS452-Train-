@@ -78,3 +78,7 @@ int AwaitEvent(int eventType, char ch){
     int data = asm_kernel_await_event(eventType, ch);
     return data;
 }
+
+void Terminate(){
+    asm_kernel_terminate();
+}

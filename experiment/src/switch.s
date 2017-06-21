@@ -17,6 +17,7 @@
 	.equ	RECEIVE,					0x3007
 	.equ	REPLY,						0x3008
 	.equ	AWAIT_EVENT,				0x2009
+    .equ    TERMINATE,                   0XA
 
 	.global	asm_print_sp
 	.global asm_kernel_swiEntry
@@ -32,6 +33,7 @@
     .global asm_kernel_receive
     .global asm_kernel_reply
 	.global asm_kernel_await_event
+    .global asm_kernel_terminate
     .global asm_get_spsr
     .global asm_get_sp
     .global asm_get_fp
@@ -236,3 +238,9 @@ asm_kernel_await_event:
 	ldmia   sp,  {r0, r1, r2, r3, r4, r5, r6, r7, r8, fp, sp, lr}
 	mov		r0, ip
 	mov 	pc, lr
+
+asm_kernel_terminate:
+	mov 	ip, sp 
+	stmdb   sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov		r0, ip
+	SWI 	#TERMINATE
