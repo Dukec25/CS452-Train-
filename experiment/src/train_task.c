@@ -14,11 +14,11 @@ void train_task_startup()
 	tid  = Create(PRIOR_LOW, clock_task);
     debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
-    tid = Create(PRIOR_LOW, train_task);
-    debug(DEBUG_K4, "created train_task taskId = %d", tid);
-
     tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
+
+    tid = Create(PRIOR_LOW, train_task);
+    debug(DEBUG_K4, "created train_task taskId = %d", tid);
 	
 	Exit();
 }
@@ -54,12 +54,16 @@ void sensor_initialization(){
 void sensor_task() {
 
 	int updates = 0;
-    vint stop_sensor=16;
-    vint last_stop;
+
+	vint register_result = RegisterAs("SENSOR_TASK");
+    vint requester;
+    Calibration_package cali_pkg;
+    Delivery reply_msg;
+    Receive(&requester, &cali_pkg, sizeof(cali_pkg));
+    Reply(requester, &reply_msg, sizeof(reply_msg));
 
     track_node tracka[TRACK_MAX];
     init_tracka(tracka);
-
 
 	while (1) {
         bwprintf(COM2, "%s", "sensor");
@@ -72,10 +76,9 @@ void sensor_task() {
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			char lower = Getc(COM1);
+            Putc(COM1, 0); // speed
 			char upper = Getc(COM1);
 			sensor_data[group] = upper << 8 | lower;
-            /*Putc(COM1, START); // speed*/
-            /*intput_bool = false;*/
 		}
 
 		for (group = 0; group < SENSOR_GROUPS; group++) {
@@ -93,15 +96,15 @@ void sensor_task() {
                     cli_update_sensor(group, actual_id, updates++);
                     /*irq_printf(COM2, "%s", "sensor is printing");*/
                     
-                    if(group*16-1 + actual_id  == stop_sensor){
+                    if(group*16-1 + actual_id  == *(cali_pkg.stop_sensor)){
                         Putc(COM1, 0); 	 	// stop	
                         Putc(COM1, 69); 	// train
                     }
-                    if(last_stop != -1){
-                        /*int b = cal_distance(tracka, last_stop, group*16-1 + actual_id);*/
-                        /*Putc(COM2, b);*/
-                        last_stop = group*16-1 + actual_id ;
-                    }
+                    /*if(last_stop != -1){*/
+                        /*[>int b = cal_distance(tracka, last_stop, group*16-1 + actual_id);<]*/
+                        /*[>Putc(COM2, b);<]*/
+                        /*last_stop = group*16-1 + actual_id ;*/
+                    /*}*/
 				}
 			}
 		}
@@ -116,7 +119,16 @@ void train_task() {
 	char train_id = 0;
 	char train_speed = 0;
 
+    vint stop_sensor = -1;
+    vint last_stop = -1;
+
     Calibration_package calibration_package;
+    calibration_package.stop_sensor = &stop_sensor;
+    calibration_package.last_stop = &last_stop;
+
+    int sensor_task_tid = WhoIs("SENSOR_TASK");
+    Delivery reply_msg;
+    Send(sensor_task_tid, &calibration_package, sizeof(Calibration_package), &reply_msg, sizeof(reply_msg) );
 
 	while(1) {
 		// user I/O and send command to train
@@ -135,7 +147,7 @@ void train_task() {
 			if (result != -1) {
 				// user entered a valid command, sends command to train and updates user interface
                 // command_handle is within common/src/train.c
-              	command_handle(&cmd);
+              	command_handle(&cmd, &calibration_package);
 			}
 			// clears command_buffer
 			command_clear(&command_buffer);

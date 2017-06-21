@@ -199,7 +199,7 @@ void delay_task()
 	Exit();
 }
 
-void command_handle(Command *pcmd)
+void command_handle(Command *pcmd, Calibration_package *calibration_package)
 {
 	debug(DEBUG_K4, "enter %s", "command_handle");
 	Delay_command delay_cmd;
@@ -255,7 +255,8 @@ void command_handle(Command *pcmd)
 		Putc(COM1, HALT);
 		break;
     case ST:
-        // modify the stop distance overhere
+        // currently only deal with one train, pcmd->arg0 is the number representation of the sensor 
+        *calibration_package->stop_sensor=pcmd->arg0;
         break;
 	}
 }

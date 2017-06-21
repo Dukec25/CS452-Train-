@@ -18,9 +18,4 @@ void sensor_initialization();
 void sensor_task();
 void train_task();
 
-typedef struct Calibration_package {
-    vint stop_sensor;
-    vint last_stop;
-} Calibration_package;
-
 #endif // __TRAIN_TASK__

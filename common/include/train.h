@@ -21,6 +21,11 @@ typedef enum {
 	CURVE = 34
 } SWITCH_STATE;
 
+typedef struct Calibration_package {
+    vint *stop_sensor;
+    vint *last_stop;
+} Calibration_package;
+
 /*
  * Initialize all switches except switch 19 and 21 to curved
  */
@@ -91,6 +96,6 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 /*
  * Based on pcmd, send bytes to train. 
  */
-void command_handle(Command *pcmd);
+void command_handle(Command *pcmd, Calibration_package *cali_pkg);
 
 #endif // __TRAIN_H__
