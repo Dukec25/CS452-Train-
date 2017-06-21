@@ -247,7 +247,9 @@ void command_handle(Command *pcmd)
         cli_update_switch(pcmd->arg0, pcmd->arg1);
 		break;
 	case GO:
-		Putc(COM1, START);
+        /*bwprintf(COM2, "%s", "stuck here?");*/
+        Putc(COM1, START);
+        bwprintf(COM2, "%s", "or here?");
 		break;
 	case STOP:
 		Putc(COM1, HALT);

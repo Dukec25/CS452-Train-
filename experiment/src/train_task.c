@@ -14,8 +14,8 @@ void train_task_startup()
 	tid  = Create(PRIOR_LOW, clock_task);
     debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
-    tid = Create(PRIOR_LOW, train_task);
-    debug(DEBUG_K4, "created train_task taskId = %d", tid);
+    /*tid = Create(PRIOR_LOW, train_task);*/
+    /*debug(DEBUG_K4, "created train_task taskId = %d", tid);*/
 
     tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
@@ -61,14 +61,19 @@ void sensor_task() {
     init_tracka(tracka);
 
 	while (1) {
-		Delay(20);	// delay 0.2 second
+        bwprintf(COM2, "%s", "sensor");
+        /*debug(SUBMISSION, "%s", "sensor is printing");*/
+        /*irq_printf(COM2, "%s", "sensor is printing");*/
+        Delay(20);	// delay 0.2 second
 		Putc(COM1, SENSOR_QUERY);
+        /*bwprintf(COM2, "%s", "after SENSOR_QUERY\r\n");*/
 		int sensor_data[SENSOR_GROUPS];
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			char lower = Getc(COM1);
 			char upper = Getc(COM1);
 			sensor_data[group] = upper << 8 | lower;
+            Putc(COM1, START); // speed
 		}
 
 		for (group = 0; group < SENSOR_GROUPS; group++) {
@@ -83,7 +88,9 @@ void sensor_task() {
                     }
                     //sensor_data actually looks like 
                     // 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
-					cli_update_sensor(group, actual_id, updates++);
+                    cli_update_sensor(group, actual_id, updates++);
+                    /*irq_printf(COM2, "%s", "sensor is printing");*/
+                    
                     if(group*16-1 + actual_id  == stop_sensor){
                         Putc(COM1, 0); 	 	// stop	
                         Putc(COM1, 69); 	// train

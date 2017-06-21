@@ -87,9 +87,6 @@ void clock_server_start()
                 //debug(DEBUG_UART_IRQ, "Enter DELAY_REQUEST, requester = %d", requester);
                 tid = requester;
                 vint freedom_tick = cs.ticks + request.data;
-                /*Clock_server_message reply_msg;*/
-                /*Reply(tid, &reply_msg, sizeof(reply_msg));*/
-                /*debug(SUBMISSION, "request_tick=%d", request.data);*/
                 heap_insert(&delay_h, freedom_tick, (void*)tid);
 		 		break;
             case DELAY_REQUEST_UNTIL:
@@ -109,7 +106,7 @@ void clock_server_start()
         {
             Clock_server_message reply_msg;
             vint tid = (vint)root.data;
-			/*debug(SUBMISSION, "!!!!!!!!!! reply to %d", tid);*/
+            /*debug(SUBMISSION, "!!! reply to %d", tid);*/
             Reply(tid, &reply_msg, sizeof(reply_msg));
             heap_delete(&delay_h, &del);
             /*int n;*/

@@ -6,6 +6,8 @@
 #include <clock_server.h>
 #include <io_server.h>
 #include <train_task.h>
+#include <ts7200.h>
+#include <uart_irq.h>
 
 #define TIMER_MAX	0xFFFFFFFF
 
@@ -85,7 +87,23 @@ void idle_task()
     uint32 tid = MyTid();
 
 	int i, j = 0;
+    vint *uart1_error = (vint *) UART1_ERROR;
     while(1){
+
+        if(*uart1_error & FE_MASK){
+            debug(SUBMISSION, "%s", "frame error");
+        }
+        if(*uart1_error & PE_MASK){
+            debug(SUBMISSION, "%s", "parity error");
+        }
+        if(*uart1_error & BE_MASK){
+            debug(SUBMISSION, "%s", "break error");
+        }
+        if(*uart1_error & OE_MASK){
+            debug(SUBMISSION, "%s", "overrun error");
+        }
+        
+        /*bwprintf(COM2, "%s", "id");*/
         /*Putc(COM2, 'A');*/
         /*irq_printf(COM2, "golden retriever is the best\r\n");*/
         /*debug(SUBMISSION, "%s", "idle_task");*/
@@ -186,7 +204,10 @@ void uart1_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-		Delay(5);
+        /*Delay(5);*/
+        /*vint *flags = (int *)( UART1_BASE + UART_FLAG_OFFSET  );*/
+        /*while( !(*flags & TXFE_MASK) || !( *flags & CTS_MASK  )  ) ;*/
+        /*if(*UART1Flag & CTS_MASK){}*/
     }
 }
 

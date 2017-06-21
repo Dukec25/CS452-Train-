@@ -22,6 +22,8 @@ uint32 uart_irq_mask();
 #define UART1_DATA	(UART1_BASE + UART_DATA_OFFSET)
 #define UART1_FLAG	(UART1_BASE + UART_FLAG_OFFSET)
 
+#define UART1_ERROR (UART1_BASE + UART_RSR_OFFSET)
+
 #define UARTEN_MASK	0x1
 #define MSIEN_MASK	0x8		// modem status int
 #define RIEN_MASK	0x10	// receive int
