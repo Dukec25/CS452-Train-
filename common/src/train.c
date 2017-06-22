@@ -29,7 +29,7 @@ char switch_state_to_byte(char state)
 	case 'C':
 		return CURVE;
 	default:
-		assert(0, "sw: Wrong switch state provided! %s", state);
+		/*assert(0, "sw: Wrong switch state provided! %s", state);*/
 		break;
 	}
 	return 0;

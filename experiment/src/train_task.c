@@ -7,7 +7,6 @@ void train_task_startup()
 
     Putc(COM1, START); // switches won't work without start command
     initialize_switch();
-    test_initialize_switch();
     sensor_initialization();
     debug(DEBUG_K4, "%s", "initialized switches");
 
@@ -67,7 +66,7 @@ void sensor_task() {
     init_tracka(tracka);
 
 	while (1) {
-        bwprintf(COM2, "%s", "running  ");
+        bwprintf(COM2, "%s", "sensor");
         /*debug(SUBMISSION, "%s", "sensor is printing");*/
         /*irq_printf(COM2, "%s", "sensor is printing");*/
         Delay(20);	// delay 0.2 second
@@ -77,6 +76,7 @@ void sensor_task() {
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			char lower = Getc(COM1);
+            Putc(COM1, 0); // speed
 			char upper = Getc(COM1);
 			sensor_data[group] = upper << 8 | lower;
 		}
@@ -84,7 +84,7 @@ void sensor_task() {
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			int id = 0;
 			for (id = 0; id < SENSORS_PER_GROUP; id++) {
-                /*bwprintf(COM2, "%s", "Sensor group  ");*/
+				if (sensor_data[group] & (0x1 << id)) {
                     int actual_id; 
                     if( id + 1 <= 8){
                         actual_id = 8 - id;
