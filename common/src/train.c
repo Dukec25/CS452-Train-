@@ -180,14 +180,12 @@ void delay_task()
 	case RV:
 		Delay(delay_cmd.delay_time);
 		debug(DEBUG_K4, "reached time limit %d, begin REVERSE", delay_cmd.delay_time);
-		Putc(COM1, REVERSE);
-		Putc(COM1, delay_cmd.arg0);
+        irq_printf(COM1, "%d%d", REVERSE, delay_cmd.arg0);
 
 		Delay(delay_cmd.delay_time);
 		debug(DEBUG_K4, "reached time limit %d, begin set speed", delay_cmd.delay_time);
 
-		Putc(COM1, delay_cmd.arg1);
-		Putc(COM1, delay_cmd.arg0);
+        irq_printf(COM1, "%d%d", delay_cmd.arg1, delay_cmd.arg0);
 		break;
 	case SW:
 		Delay(delay_cmd.delay_time);
@@ -210,16 +208,14 @@ void command_handle(Command *pcmd, Calibration_package *calibration_package)
 	switch(pcmd->type) {
 	case TR:
 		if (pcmd->arg1 <= MAX_SPEED) {
-			Putc(COM1, pcmd->arg1); // speed
-			Putc(COM1, pcmd->arg0); // train
+            irq_printf(COM1, "%d%d", pcmd->arg1, pcmd->arg0);
             cli_update_train(pcmd->arg0, pcmd->arg1);
 		} else {
 			/*assert(0, "tr: Invalid speed %d", pcmd->arg1);*/
 		}
 		break;
 	case RV:
-		Putc(COM1, 0); 	 			// stop	
-		Putc(COM1, pcmd->arg0); 	// train
+        irq_printf(COM1, "%d%d", 0, pcmd->arg0);
 
 		delay_task_tid = Create(PRIOR_LOW, delay_task);
 		debug(DEBUG_K4, "delay_task_tid = %d", delay_task_tid);
@@ -232,8 +228,7 @@ void command_handle(Command *pcmd, Calibration_package *calibration_package)
 		Send(delay_task_tid, &delay_cmd, sizeof(delay_cmd), &reply_msg, sizeof(reply_msg));
 		break;
 	case SW:
-		Putc(COM1, switch_state_to_byte(pcmd->arg1));	// state
-		Putc(COM1, switch_id_to_byte(pcmd->arg0)); 		// switch
+        irq_printf(COM1, "%d%d", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
 
 		delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
 		debug(DEBUG_K4, "delay_task_tid = %d", delay_task_tid);

@@ -92,5 +92,4 @@ void irq_printf(int channel, char *fmt, ...){
     va_start(va,fmt);
     irq_format(channel, fmt, va);
     va_end(va);
-
 }
