@@ -128,9 +128,15 @@ void io_server_transmit_start(int channel)
                 break;
             case PRINTF:
                 printf_buf = request.data_arr;
-                while(*printf_buf != '\0'){
-                    fifo_put(&ioServer.transmit_q, *printf_buf++);
-                }
+				if (channel == COM1) {
+                	while(*printf_buf != 127){
+                    	fifo_put(&ioServer.transmit_q, *printf_buf++);
+                	}
+				} else {
+                	while(*printf_buf != '\0'){
+                    	fifo_put(&ioServer.transmit_q, *printf_buf++);
+                	}
+				}
 				reply_msg.data = 0;
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 				if (xmit_not_waiting) {

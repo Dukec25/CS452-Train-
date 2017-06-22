@@ -55,14 +55,15 @@ void irq_format(int channel, char *fmt, va_list va){
 			}
 		}
 	}
-    buffer[idx] = '\0';
 
     vint io_server_id;
 	switch (channel) {
         case COM1:
+    		buffer[idx] = 127;
             io_server_id = WhoIs("IO_SERVER_UART1_TRANSMIT");
             break;
         case COM2:
+    		buffer[idx] = '\0';
             io_server_id = WhoIs("IO_SERVER_UART2_TRANSMIT");
             break;
 	}

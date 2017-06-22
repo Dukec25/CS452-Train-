@@ -6,6 +6,7 @@ void train_task_startup()
     irq_io_tasks_cluster();
 
     Putc(COM1, START); // switches won't work without start command
+//    test_initialize_switch();
     initialize_switch();
     sensor_initialization();
     debug(DEBUG_K4, "%s", "initialized switches");
@@ -84,6 +85,7 @@ void sensor_task() {
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			int id = 0;
 			for (id = 0; id < SENSORS_PER_GROUP; id++) {
+                /* bwprintf(COM2, "%s", "Sensor group  "); */
 				if (sensor_data[group] & (0x1 << id)) {
                     int actual_id; 
                     if( id + 1 <= 8){
@@ -128,7 +130,7 @@ void train_task() {
 
     int sensor_task_tid = WhoIs("SENSOR_TASK");
     Delivery reply_msg;
-    Send(sensor_task_tid, &calibration_package, sizeof(Calibration_package), &reply_msg, sizeof(reply_msg) );
+    Send(sensor_task_tid, &calibration_package, sizeof(Calibration_package), &reply_msg, sizeof(reply_msg));
 
 	while(1) {
 		// user I/O and send command to train
