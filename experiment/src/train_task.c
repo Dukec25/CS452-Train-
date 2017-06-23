@@ -1,23 +1,43 @@
 #include <train_task.h>
 
+void test_task(){
+    while (1) {
+        Delay(20);	// delay 0.2 second
+        Putc(COM1, SENSOR_QUERY);
+        int i;
+        for(i = 0; i < 5; i++){
+            char lower = Getc(COM1);
+//            irq_printf(COM2, "first\r\n");
+            char upper = Getc(COM1);
+//            irq_printf(COM2, "second\r\n");
+//            Putc(COM1, 0); 	 	// stop	
+//            Putc(COM1, 63); 	// train
+        }
+    }
+}
+
+
 void train_task_startup()
 {
-	cli_startup();
+//	cli_startup();
     irq_io_tasks_cluster();
 
-    Putc(COM1, START); // switches won't work without start command
+//    Putc(COM1, START); // switches won't work without start command
 //    test_initialize_switch();
-    initialize_switch();
-    sensor_initialization();
-    debug(DEBUG_K4, "%s", "initialized switches");
+//    initialize_switch();
+//    sensor_initialization();
+//    debug(DEBUG_K4, "%s", "initialized switches");
 
     int tid;
-	tid  = Create(PRIOR_LOW, clock_task);
-    debug(DEBUG_K4, "created clock_task taskId = %d", tid);
+//	tid  = Create(PRIOR_LOW, clock_task);
+//    debug(DEBUG_K4, "created clock_task taskId = %d", tid);
 
     tid = Create(PRIOR_LOW, sensor_task);
     debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
 
+//   tid = Create(PRIOR_LOW, test_task);
+//    debug(DEBUG_K4, "created train_task taskId = %d", tid);
+	
     tid = Create(PRIOR_LOW, train_task);
     debug(DEBUG_K4, "created train_task taskId = %d", tid);
 	
@@ -77,7 +97,7 @@ void sensor_task() {
 		int group = 0;
 		for (group = 0; group < SENSOR_GROUPS; group++) {
 			char lower = Getc(COM1);
-            Putc(COM1, 0); // speed
+           // Putc(COM1, 0); // speed
 			char upper = Getc(COM1);
 			sensor_data[group] = upper << 8 | lower;
 		}
@@ -156,7 +176,7 @@ void train_task() {
 		}
 		else {
 			command_buffer.data[command_buffer.pos++] = c;
-			Putc(COM2, c);
+//			Putc(COM2, c);
 		}
 	}
 	Exit();

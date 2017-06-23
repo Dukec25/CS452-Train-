@@ -3,6 +3,7 @@
 
 #include <define.h> 
 #include <debug.h>
+#include <fifo.h>
 
 /* task descriptor */
 #define TASK_SIZE 			102400 /* 100kb */
@@ -73,6 +74,7 @@ typedef struct Task_descriptor {
 	struct Task_descriptor *next_task;
     vint                    *fp;
     char                    ch;
+	uint8					is_ch_transmitted;
 } Task_descriptor;
 
 /* Priority queue with fifo ordering */
@@ -98,6 +100,7 @@ typedef struct Kernel_state {
 	uint8				blocked_on_event[NUM_EVENTS];
 	// stores the event blocked tasks, one task for each event type
 	Task_descriptor		*event_blocks[NUM_EVENTS];
+	fifo_t				uart1_putc_q;
 } Kernel_state;
 
 /* task descriptor */

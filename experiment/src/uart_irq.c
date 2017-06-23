@@ -115,7 +115,7 @@ void uart_irq_handle(int channel, Kernel_state *ks)
     vint *uart_intr, *pdata;
     vint receive_event;
     vint transmit_event;
-
+	
 	switch (channel) {
         case COM1:
             uart_intr = (vint *) UART1_INTR;
@@ -132,7 +132,8 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 	}
 	debug(DEBUG_UART_IRQ, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr);
 	
-	if (*uart_intr & uart_receive_irq_mask()) {
+	vint uart_intr_value = *uart_intr;
+	if (uart_intr_value & uart_receive_irq_mask()) {
         //debug(SUBMISSION, "handle rcv interupt %s", "");
         // receive interrupt
         if (ks->blocked_on_event[receive_event]) {
@@ -148,31 +149,46 @@ void uart_irq_handle(int channel, Kernel_state *ks)
             insert_task(td, &(ks->ready_queue));
         }
     }
-	if (*uart_intr & uart_transmit_irq_mask()) {
+	if (uart_intr_value & uart_transmit_irq_mask()) {
         debug(DEBUG_UART_IRQ, "handle xmit interrupt %s", "");
+
 		// new transmit interrupt handling 
         if (ks->blocked_on_event[transmit_event]) {
-            // notify events await on transmit ready
-            Task_descriptor *td = ks->event_blocks[transmit_event];
-            ks->event_blocks[transmit_event] = NULL;
-            ks->blocked_on_event[transmit_event] = 0;
-            td->state = STATE_READY;
-            // turn off the XMIT interrupt
-			uart_device_disable(channel, XMIT);
-            // write the data
+   	        Task_descriptor *td = ks->event_blocks[transmit_event];
+           	// write the data
 			/*debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); */
-			if (channel == COM2) {
-				*pdata = td->ch;
+
+			vint * uart1_flag = (vint *) UART1_FLAG;
+			if (channel == COM1) bwprintf(COM2, "CTS = %d\r\n", *uart1_flag & CTS_MASK);
+
+			if ((channel == COM1) && (!td->is_ch_transmitted)) {
+				fifo_put(&ks->uart1_putc_q, td->ch);
+				td->is_ch_transmitted = 1;
+				bwprintf(COM2, "td %d inserted %d, is_ch_transmitted = %d\r\n", td->tid, td->ch, td->is_ch_transmitted);
 			}
-			else {
-				vint * uart1_flag = (vint *) UART1_FLAG;
-				if (*uart1_flag & CTS_MASK) {
+
+			if ((channel == COM2) || ((channel == COM1) & (*uart1_flag & CTS_MASK))) {
+				if (channel == COM1) bwprintf(COM2, "new CTS = %d\r\n", *uart1_flag & CTS_MASK);
+        		// turn off the XMIT interrupt
+				uart_device_disable(channel, XMIT);
+ 
+				if ((channel == COM1) && (!is_fifo_empty(&ks->uart1_putc_q))) {
+					uint8 *extract;
+					fifo_get(&ks->uart1_putc_q, extract);
+					bwprintf(COM2, "pop %d\r\n", *extract);
+					*pdata = *extract;
+				}
+				else {
 					*pdata = td->ch;
 				}
+
+	            // notify events await on transmit ready
+    	   	    ks->event_blocks[transmit_event] = NULL;
+        	   	ks->blocked_on_event[transmit_event] = 0;
+           		td->state = STATE_READY;
+            	insert_task(td, &(ks->ready_queue));
 			}
-            /*debug(DEBUG_UART_IRQ, ">>>>>>>>>>>>>>>>>>>>>Wake up xmit notifier %d, ", td->tid); */
-            /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
-            insert_task(td, &(ks->ready_queue));
-        }
-	}
+		}
+        /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
+    }
 }

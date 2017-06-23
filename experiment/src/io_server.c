@@ -24,6 +24,7 @@ void io_server_receive_start(int channel)
 	Io_server ioServer;
     initialize(&ioServer);
     
+	int i;
 	while(1) {
 		vint requester;
 		Delivery request;
@@ -31,11 +32,13 @@ void io_server_receive_start(int channel)
 		Receive(&requester, &request, sizeof(request));
         debug(DEBUG_UART_IRQ, "io server receive request, type=%d", request.type);
         vint* character; 
-
+		
+		i++;
 		switch(request.type) {
             case RECEIVE_RDY:
                 debug(DEBUG_UART_IRQ, "io server %s", "RCV RDY request");
                 Reply(requester, &reply_msg, sizeof(reply_msg));
+				if (channel == COM1) irq_printf(COM2, "train\r\n");
                 if(!is_fifo_empty(&ioServer.get_q)){
                     vint client; 
                     vint result = fifo_get(&ioServer.get_q, &client); // character might cause error
@@ -44,6 +47,7 @@ void io_server_receive_start(int channel)
                     debug(DEBUG_UART_IRQ, "Client is  %d", client);
                     Delivery reply_client_msg;
                     reply_client_msg.data = rcv_data;
+					if (channel == COM1) irq_printf(COM2, "rdy%d\r\n", i);
                     Reply(client, &reply_client_msg, sizeof(reply_client_msg));
                 }
                 else{
@@ -58,10 +62,12 @@ void io_server_receive_start(int channel)
                     vint result = fifo_get(&ioServer.receive_q, &rcv_data); // character might cause error
                     Delivery reply_client_msg;
                     reply_client_msg.data = rcv_data;
+					if (channel == COM1) irq_printf(COM2, "getc rel\r\n");
                     Reply(requester, &reply_client_msg, sizeof(reply_client_msg));
                 } else{
                     debug(DEBUG_UART_IRQ, "Fifo %s", "receive_q is empty");
                     fifo_put(&ioServer.get_q, requester);
+					if (channel == COM1) irq_printf(COM2, "getc blk\r\n");
                 }
                 break;
 		}
@@ -112,6 +118,7 @@ void io_server_transmit_start(int channel)
             case PUTC:
                 debug(DEBUG_UART_IRQ, "enter IO SERVER, REQUEST PUTC, put data = %d", request.data);
 				fifo_put(&ioServer.transmit_q, request.data);	// transmit_q is not empty
+                if (channel == COM1) irq_printf(COM2, "putc put %d\r\n", request.data);
 				debug(DEBUG_UART_IRQ, "xmit_not_waiting = %d, transmit_q is_empty = %d", xmit_not_waiting, is_fifo_empty(&ioServer.transmit_q));
 				reply_msg.data = 0;
                 Reply(requester, &reply_msg, sizeof(reply_msg));
@@ -120,6 +127,7 @@ void io_server_transmit_start(int channel)
 					debug(DEBUG_UART_IRQ, "inside if xmit_not_waiting = %d", xmit_not_waiting);
 	                vint result = fifo_get(&ioServer.transmit_q, &character); // character might cause error
                     debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, character);
+                	if (channel == COM1) irq_printf(COM2, "putc get %d\r\n", character);
 					reply_msg.data = character;
                     Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
 					xmit_not_waiting = 0;
@@ -130,6 +138,7 @@ void io_server_transmit_start(int channel)
                 printf_buf = request.data_arr;
 				if (channel == COM1) {
                 	while(*printf_buf != 127){
+						if (channel == COM1) irq_printf(COM2, "printf put %d\r\n", *printf_buf);
                     	fifo_put(&ioServer.transmit_q, *printf_buf++);
                 	}
 				} else {
@@ -141,6 +150,7 @@ void io_server_transmit_start(int channel)
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 				if (xmit_not_waiting) {
 	                vint result = fifo_get(&ioServer.transmit_q, &character); // character might cause error
+					if (channel == COM1) irq_printf(COM2, "printf get %d\r\n", character);
                     debug(DEBUG_UART_IRQ, "result = %d, reply data is %d", result, character);
 					reply_msg.data = character;
                     Reply(transmit_notifier, &reply_msg, sizeof(reply_msg));
@@ -168,6 +178,7 @@ int Getc(int channel)
     request.type = GETC;
     Delivery reply_msg;
     Send(io_server_id, &request, sizeof(request), &reply_msg, sizeof(reply_msg) );
+	if (channel == COM1) irq_printf(COM2, "rcv %d\r\n", reply_msg.data);
     return reply_msg.data;
 }
 

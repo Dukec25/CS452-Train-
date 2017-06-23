@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include <irq.h>
+#include <fifo.h>
 
 #define IDLE_TASK	4
 
@@ -23,6 +24,7 @@ static void ks_initialize(Kernel_state *ks)
 	ks->send_block.mask = 0;
 	ks->reply_block.mask = 0;
 	ks->receive_block.mask = 0;
+	fifo_init(&ks->uart1_putc_q);
 	int e = 0;
 	for (e = 0; e < NUM_EVENTS; e++) {
 		ks->event_blocks[e] = NULL;
@@ -53,6 +55,7 @@ void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Tas
 	td->spsr = USR; // hardcoded to user mode, not flag bit set
 	td->is_entry_from_hwi = 0;
 	td->ch = -1;
+	td->is_ch_transmitted = 0;
 	// assign memory to the first task
 	td->sp = (vint *) (TASK_START_LOCATION + (tid + 1) * TASK_SIZE); 
 	// assign lr to point to the function pointer
