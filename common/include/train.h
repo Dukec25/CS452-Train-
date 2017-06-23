@@ -67,8 +67,7 @@ typedef enum {
 	SW, 		/* Throw the given switch to straight (S) or curved (C). */
 	GO, 		/* Start the train controller */
 	STOP,		/* Stop the train controller */
-	SENSOR, 	/* Dump sensor modules */
-    SHUTDOWN	/* Shutdown */
+	SENSOR 		/* Dump sensor modules */
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;

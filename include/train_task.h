@@ -11,6 +11,8 @@
 #include <kernel.h>
 #include <name_server.h>
 #include <calculation.h>
+#include <fifo.h>
+#include <lifo.h>
 
 void train_task_startup();
 void clock_task();
@@ -18,4 +20,49 @@ void sensor_initialization();
 void sensor_task();
 void train_task();
 
+typedef enum Handshake {
+	HANDSHAKE_AKG,
+	HANDSHAKE_SHUTDOWN
+} Handshake;
+
+/* Train */
+typedef struct Train_server {
+	int sensor_reader_tid;
+	int is_shutdown;
+	uint16 sensor_data[SENSOR_GROUPS];
+	Lifo_t last_triggered_sensors;	
+	fifo_t cmd_fifo;
+} Train_server;
+void train_server();
+void sensor_reader_task();
+
+
+/* Cli */
+typedef enum {
+	CLI_TRAIN_COMMAND,
+	CLI_UPDATE_TRAIN,
+	CLI_UPDATE_SENSOR,
+	CLI_UPDATE_SWITCH,
+	CLI_UPDATE_CLOCK,
+	CLI_SHUTDOWN
+} Cli_request_type;
+typedef struct Cli_request {
+	Cli_request_type type;
+	Command cmd;
+	Train train_update;
+	Switch switch_update;
+	Sensor sensor_update;
+	Clock clock_update;
+} Cli_request;
+typedef struct Cli_server {
+	fifo_t cmd_fifo;
+	fifo_t status_update_fifo;
+	int cli_io_tid;
+	int cli_clock_tid;
+	int is_shutdown;
+} Cli_server;
+
+void cli_server();
+void cli_clock_task();
+void cli_io_task();
 #endif // __TRAIN_TASK__

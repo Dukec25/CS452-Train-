@@ -76,17 +76,17 @@ void cli_user_input(Command_buffer *command_buffer)
 	irq_printf(COM2, "> %s", command_buffer->data);
 }
 
-void cli_update_clock(Clock *pclock)
+void cli_update_clock(Clock clock)
 {
 	irq_save();
 	// Place clock
 	irq_pos(CLOCK_ROW, CLOCK_COL);
-    irq_printf(COM2, "%s%d:%s%d:%d",
-                     pclock->min < 100 ? (pclock->min < 10 ? "00" : "0") : "",
-                     pclock->min,
-                     pclock->sec < 10 ? "0" : "",
-                     pclock->sec,
-                     pclock->tenth_sec);
+	irq_printf(COM2, "%s%d:%s%d:%d",
+					 clock.min < 100 ? (clock.min < 10 ? "00" : "0") : "",
+					 clock.min,
+					 clock.sec < 10 ? "0" : "",
+					 clock.sec,
+					 clock.tenth_sec);
 	irq_restore();
 }
 

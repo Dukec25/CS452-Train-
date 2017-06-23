@@ -51,7 +51,7 @@ void cli_user_input(Command_buffer *command_buffer);
 /*
  * Update the digital clock in the command line interface
  */
-void cli_update_clock(Clock *pclock);
+void cli_update_clock(Clock clock);
 
 /*
  * Update the train status in the command line interface
