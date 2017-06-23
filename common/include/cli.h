@@ -56,16 +56,16 @@ void cli_update_clock(Clock *pclock);
 /*
  * Update the train status in the command line interface
  */
-void cli_update_train(char id, char speed);
+void cli_update_train(Train train);
 
 /*
  * Update the switch status in the command line interface
  */
-void cli_update_switch(char id, char state);
+void cli_update_switch(Switch sw);
 
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(char group, char id, int updates);
+void cli_update_sensor(Sensor sensor, int updates);
 
 #endif // __CLI_H__

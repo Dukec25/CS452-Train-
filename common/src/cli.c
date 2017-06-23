@@ -90,31 +90,28 @@ void cli_update_clock(Clock *pclock)
 	irq_restore();
 }
 
-void cli_update_train(char id, char speed)
+void cli_update_train(Train train)
 {
 	irq_save();
-	// Place train
 	irq_pos(TRAIN_ROW, TRAIN_COL);
-	irq_printf(COM2, "tr %d %s%d", id, speed < 10 ? "0" : "", speed);
+	irq_printf(COM2, "tr %d %s%d", train.id, train.speed < 10 ? "0" : "", train.speed);
 	irq_restore();
 }
 
-void cli_update_switch(char id, char state)
+void cli_update_switch(Switch sw)
 {
 	irq_save();
-	// Place state
-	irq_pos(SWITCH_ROW + id - 1, RIGHT_BORDER - 1);
-	Putc(COM2, toupper(state));
+	irq_pos(SWITCH_ROW + sw.id - 1, RIGHT_BORDER - 1);
+	Putc(COM2, toupper(sw.state));
 	irq_restore();
 }
 
-void cli_update_sensor(char group, char id, int updates)
+void cli_update_sensor(Sensor sensor, int updates)
 {
-	// Save screen
 	irq_save();
-	// Place sensor
-	irq_pos(SENSOR_ROW + updates % SENSORS_PER_COL, SENSOR_COL + (updates / SENSORS_PER_COL % SENSORS_PER_ROW) * SENSOR_INDENT_WIDTH);
-	irq_printf(COM2, "%c%s%d", SENSOR_LABEL_BASE + group, id < 10 ? "0" : "", id);
-	// Restore screen setup
+	int row = SENSOR_ROW + updates % SENSORS_PER_COL;
+	int col = SENSOR_COL + (updates / SENSORS_PER_COL % SENSORS_PER_ROW) * SENSOR_INDENT_WIDTH;
+	irq_pos(row, col);
+	irq_printf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);
 	irq_restore();
 }
