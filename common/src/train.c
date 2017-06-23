@@ -141,6 +141,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 				if (num_buffer_pos != 0) {
 					// at the end of a number
 					args[argc++] = atoi(num_buffer);
+					irq_printf(COM2, "args[argc] = %d\r\n", args[argc - 1]);
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;
@@ -154,17 +155,20 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		}
 	}
 	else {
+		assert(0, "%s", "unknown cmd");
 		return -1;
 	}
 
+	irq_printf(COM2, "parsed %d %d\r\n", args[0], args[1]);
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
-		if (pcmd->arg1 > MAX_SPEED) {
+		if (args[1] > MAX_SPEED) {
+			assert(0, "unknown speed %d", args[1]);
 			return -1;
 		}
-		ptrain->speed = pcmd->arg1;
-		ptrain->id = pcmd->arg0;
+		ptrain->speed = args[1];
+		ptrain->id = args[0];
 		pcmd->type = TR;
 		break;
 	case 'r':
@@ -172,6 +176,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		break;
 	case 's':
 		if (switch_state_to_byte(pcmd->arg1) == -1 ||  switch_id_to_byte(pcmd->arg0) == -1) {
+			assert(0, "unknown sw %d %d", pcmd->arg0, pcmd->arg1);
 			return -1;
 		}
 		pcmd->type = SW;
