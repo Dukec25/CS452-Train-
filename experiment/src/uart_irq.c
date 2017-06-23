@@ -159,23 +159,23 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 			/*debug(DEBUG_UART_IRQ, "!!!!!! write data %d", td->ch); */
 
 			vint * uart1_flag = (vint *) UART1_FLAG;
-			if (channel == COM1) bwprintf(COM2, "CTS = %d\r\n", *uart1_flag & CTS_MASK);
+			//if (channel == COM1) bwprintf(COM2, "CTS = %d\r\n", *uart1_flag & CTS_MASK);
 
 			if ((channel == COM1) && (!td->is_ch_transmitted)) {
 				fifo_put(&ks->uart1_putc_q, td->ch);
 				td->is_ch_transmitted = 1;
-				bwprintf(COM2, "td %d inserted %d, is_ch_transmitted = %d\r\n", td->tid, td->ch, td->is_ch_transmitted);
+				//bwprintf(COM2, "td %d inserted %d, is_ch_transmitted = %d\r\n", td->tid, td->ch, td->is_ch_transmitted);
 			}
 
 			if ((channel == COM2) || ((channel == COM1) & (*uart1_flag & CTS_MASK))) {
-				if (channel == COM1) bwprintf(COM2, "new CTS = %d\r\n", *uart1_flag & CTS_MASK);
+				//if (channel == COM1) bwprintf(COM2, "new CTS = %d\r\n", *uart1_flag & CTS_MASK);
         		// turn off the XMIT interrupt
 				uart_device_disable(channel, XMIT);
  
 				if ((channel == COM1) && (!is_fifo_empty(&ks->uart1_putc_q))) {
 					uint8 *extract;
 					fifo_get(&ks->uart1_putc_q, extract);
-					bwprintf(COM2, "pop %d\r\n", *extract);
+					//bwprintf(COM2, "pop %d\r\n", *extract);
 					*pdata = *extract;
 				}
 				else {

@@ -285,7 +285,7 @@ void first_task()
     tid = Create(PRIOR_MEDIUM, clock_server_notifier);
     debug(DEBUG_K4, "created taskId = %d", tid);
 
-	tid = Create(PRIOR_MEDIUM, train_task_startup);
+	tid = Create(PRIOR_HIGH, train_task_startup);
     debug(DEBUG_K4, "created taskId = %d", tid);
 
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/

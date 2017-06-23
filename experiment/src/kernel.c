@@ -189,7 +189,7 @@ void k_await_event(int event_type, char ch, Task_descriptor *td, Kernel_state *k
 		uart_device_enable(COM1, XMIT);
         td->ch = ch;
 		td->is_ch_transmitted = 0;
-		bwprintf(COM2, "td %d, wait %d, is_ch_transmitted = %d\r\n", td->tid, ch, td->is_ch_transmitted);
+		//bwprintf(COM2, "td %d, wait %d, is_ch_transmitted = %d\r\n", td->tid, ch, td->is_ch_transmitted);
     } else if(event_type == XMIT_UART2_RDY) {
 		uart_device_enable(COM2, XMIT);
         td->ch = ch;
