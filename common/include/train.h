@@ -5,26 +5,29 @@
 
 /* Train */
 #define TRAINS 80
+typedef struct Train {
+	char id;
+	int speed;
+} Train;
 typedef enum {
 	MIN_SPEED = 0,
 	MAX_SPEED = 14,
 	REVERSE = 15,
 	START = 96,
 	HALT = 97
-} TRAIN_STATE;
+} Train_state;
 
 /* Switches */
 #define NUM_SWITCHES 22
+typedef struct Switch {
+	char id;
+	char state;
+} Switch;
 typedef enum {
 	SOLENOID_OFF = 32,
 	STRAIGHT = 33, 
 	CURVE = 34
 } SWITCH_STATE;
-
-typedef struct Calibration_package {
-    vint *stop_sensor;
-    vint *last_stop;
-} Calibration_package;
 
 /*
  * Initialize all switches except switch 19 and 21 to curved
@@ -50,20 +53,25 @@ char switch_state_to_byte(char state);
 #define SENSOR_GROUPS 5
 #define SENSORS_PER_GROUP 16
 #define SENSOR_QUERY 128 + SENSOR_GROUPS
+typedef struct Sensor {
+	int group;
+	int id;
+	int triggered_time;
+} Sensor;
 
 /* Train commands */
 #define COMMAND_SIZE 100
-#define NOP 127
 typedef enum {
-	TR, 	/* Set any train in motion at the desired speed */
-	RV, 	/* The train should reverse direction. */
-	SW, 	/* Throw the given switch to straight (S) or curved (C). */
-	GO, 	/* Start the train controller */
-	STOP,	/* Stop the train controller */
-    ST      /* Specify the stop location for the train */
-} TRAIN_COMMAND;
+	TR, 		/* Set any train in motion at the desired speed */
+	RV, 		/* The train should reverse direction. */
+	SW, 		/* Throw the given switch to straight (S) or curved (C). */
+	GO, 		/* Start the train controller */
+	STOP,		/* Stop the train controller */
+	SENSOR, 	/* Dump sensor modules */
+    SHUTDOWN	/* Shutdown */
+} Train_cmd_type;
 typedef struct {
-	TRAIN_COMMAND type;
+	Train_cmd_type type;
 	char arg0;
 	char arg1;
 } Command;
@@ -72,13 +80,7 @@ typedef struct Command_buffer
 	char data[COMMAND_SIZE];
 	int pos;
 } Command_buffer;
-typedef struct Delay_command
-{
-	TRAIN_COMMAND type;
-	int delay_time;
-	char arg0;
-	char arg1;
-} Delay_command;
+
 /*
  * Clear the command_buffer by fill it with space
  */
@@ -91,11 +93,12 @@ void command_clear(Command_buffer *command_buffer);
  * Returns 1 if the command is 'q'.
  * Returns -1 otherwise.
  */
-int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_speed, Command *pcmd);
+int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd);
 
 /*
- * Based on pcmd, send bytes to train. 
+ * Based on pcmd, send bytes to train.
+ * Excluding SENSOR and SHUTDOWN 
  */
-void command_handle(Command *pcmd, Calibration_package *cali_pkg);
+void command_handle(Command *pcmd);
 
 #endif // __TRAIN_H__

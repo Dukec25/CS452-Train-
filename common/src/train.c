@@ -4,6 +4,8 @@
 #include <string.h>
 #include <user_functions.h>
 #include <kernel.h>
+#include <cursor.h>
+#include <irq_io.h>
 
 #define TWO_WAY_SWITCH_OFFSET 0x01
 #define TWO_WAY_SWITCH_NUM 18
@@ -12,7 +14,9 @@
 
 char switch_id_to_byte(uint8 id)
 {
-	assert(id <= NUM_SWITCHES, "sw: Wrong switch id %d provided!", id);
+	if (id > NUM_SWITCHES) {
+		return -1;
+	}
 	if ( id > TWO_WAY_SWITCH_NUM ) {
 		return THREE_WAY_SWITCH_OFFSET + ( id - TWO_WAY_SWITCH_NUM - 1 );
 	}
@@ -29,10 +33,9 @@ char switch_state_to_byte(char state)
 	case 'C':
 		return CURVE;
 	default:
-		/*assert(0, "sw: Wrong switch state provided! %s", state);*/
 		break;
 	}
-	return 0;
+	return -1;
 }
 
 void initialize_switch()
@@ -60,6 +63,18 @@ void test_initialize_switch()
 		Delay(20);
 	}
 	bwputc(COM1, SOLENOID_OFF); // turn off solenoid
+}
+
+void sensor_initialization()
+{
+	Delay(20);	// delay 0.2 second
+	// clear up any unread sensor data
+	Putc(COM1, SENSOR_QUERY);
+	int group = 0;
+	for (group = 0; group < SENSOR_GROUPS; group++) {
+		Getc(COM1);
+		Getc(COM1);
+	} 
 }
 
 static int is_digit(char c)
@@ -92,7 +107,7 @@ void command_clear(Command_buffer *command_buffer)
 	cli_user_input(command_buffer);
 }
 
-int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_speed, Command *pcmd)
+int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 {
 	char args[10];
 	int argc = 0;
@@ -103,7 +118,7 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 	}
-	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) || !strcmp(command_buffer->data, "sw", 2) || !strcmp(command_buffer->data, "st", 2)) {
+	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) || !strcmp(command_buffer->data, "sw", 2)) {
 		// parse arguments
 		int pos = 2;
 		char num_buffer[10];
@@ -145,114 +160,62 @@ int command_parse(Command_buffer *command_buffer, char *ptrain_id, char *ptrain_
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
-		/*assert(argc == 2, "tr: invalid number of arguments %d", argc);*/
-		*ptrain_speed = pcmd->arg1;
-		*ptrain_id = pcmd->arg0;
+		if (pcmd->arg1 > MAX_SPEED) {
+			return -1;
+		}
+		ptrain->speed = pcmd->arg1;
+		ptrain->id = pcmd->arg0;
 		pcmd->type = TR;
 		break;
 	case 'r':
-		/*assert(argc == 1, "rv: invalid number of arguments %d", argc);*/
 		pcmd->type = RV;
 		break;
 	case 's':
-		/*assert(argc == 2, "sw: invalid number of arguments %d", argc);*/
+		if (switch_state_to_byte(pcmd->arg1) == -1 ||  switch_id_to_byte(pcmd->arg0) == -1) {
+			return -1;
+		}
 		pcmd->type = SW;
 		break;
 	}
 	pcmd->arg0 = args[0];
-	pcmd->arg1 = (pcmd->type == RV) ? *ptrain_speed : args[1];
+	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
 
 	return 0;
 }
 
-void delay_task()
-{
-	int train_task_tid;
-	Delay_command delay_cmd;
-	char reply_msg = 0;
-	int tid = MyTid();
-	debug(DEBUG_K4, "in delay task %d", tid);
-	Receive(&train_task_tid, &delay_cmd, sizeof(delay_cmd));
-	debug(DEBUG_K4, "received command from %d", train_task_tid);
-	Reply(train_task_tid, &reply_msg, sizeof(reply_msg));
-	
-	switch(delay_cmd.type) {
-	case RV:
-    	Delay(delay_cmd.delay_time);
-		debug(DEBUG_K4, "reached time limit %d, begin reverse", delay_cmd.delay_time);
-
-    	irq_printf(COM1, "%c%c", REVERSE, delay_cmd.arg0);
-
-		Delay(delay_cmd.delay_time);
-		debug(DEBUG_K4, "reached time limit %d, begin set speed", delay_cmd.delay_time);
-
-        irq_printf(COM1, "%c%c", delay_cmd.arg1, delay_cmd.arg0);
-		break;
-	case SW:
-		Delay(delay_cmd.delay_time);
-		debug(DEBUG_K4, "reached time limit %d, begin to turn of SOLENOID_OFF", delay_cmd.delay_time);
-
-		Putc(COM1, SOLENOID_OFF);
-		break;
-	}
-	Exit();
-}
-
-void command_handle(Command *pcmd, Calibration_package *calibration_package)
+void command_handle(Command *pcmd)
 {
 	debug(DEBUG_K4, "enter %s", "command_handle");
-	Delay_command delay_cmd;
-	int delay_task_tid = INVALID_TID;
-	char reply_msg;
 
-    // pcmd->type get defined at train.h
+	// pcmd->type get defined at train.h
 	switch(pcmd->type) {
 	case TR:
-		if (pcmd->arg1 <= MAX_SPEED) {
-            irq_printf(COM1, "%c%c", pcmd->arg1, pcmd->arg0);
-            cli_update_train(pcmd->arg0, pcmd->arg1);
-		} else {
-			/*assert(0, "tr: Invalid speed %d", pcmd->arg1);*/
-		}
+		irq_printf(COM1, "%c%c", pcmd->arg1, pcmd->arg0);
 		break;
 	case RV:
-        irq_printf(COM1, "%c%c", 0, pcmd->arg0);
+		irq_printf(COM1, "%c%c", MIN_SPEED, pcmd->arg0);
 
-		delay_task_tid = Create(PRIOR_LOW, delay_task);
-		debug(DEBUG_K4, "delay_task_tid = %d", delay_task_tid);
+		Delay(20);
+		debug(DEBUG_K4, "%s", "reached time limit, begin reverse");
+		irq_printf(COM1, "%c%c", REVERSE, pcmd->arg0);
 
-		delay_cmd.type = RV;
-		delay_cmd.delay_time = 20;
-		delay_cmd.arg0 = pcmd->arg0; // train
-		delay_cmd.arg1 = pcmd->arg1; // speed
+		Delay(20);
+		debug(DEBUG_K4, "%s", "reached time limit, begin set speed");
+		irq_printf(COM1, "%c%c", pcmd->arg1, pcmd->arg0);
 
-		Send(delay_task_tid, &delay_cmd, sizeof(delay_cmd), &reply_msg, sizeof(reply_msg));
 		break;
 	case SW:
-        irq_printf(COM1, "%c%c", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
-
-		delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
-		debug(DEBUG_K4, "delay_task_tid = %d", delay_task_tid);
-
-		delay_cmd.type = SW;
-		delay_cmd.delay_time = 20;
-
-		debug(DEBUG_K4, "sending command to %d", delay_task_tid);
-		Send(delay_task, &delay_cmd, sizeof(delay_cmd), &reply_msg, sizeof(reply_msg));
-	
-        cli_update_switch(pcmd->arg0, pcmd->arg1);
+		irq_printf(COM1, "%c%c", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
+		Delay(20);
+		debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");
+		Putc(COM1, SOLENOID_OFF);
 		break;
 	case GO:
-        /*bwprintf(COM2, "%s", "stuck here?");*/
-        Putc(COM1, START);
-        bwprintf(COM2, "%s", "or here?");
+		Putc(COM1, START);
+		bwprintf(COM2, "%s", "or here?");
 		break;
 	case STOP:
 		Putc(COM1, HALT);
 		break;
-    case ST:
-        // currently only deal with one train, pcmd->arg0 is the number representation of the sensor 
-        *calibration_package->stop_sensor=pcmd->arg0;
-        break;
 	}
 }
