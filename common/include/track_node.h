@@ -13,6 +13,7 @@ typedef enum {
 #define DIR_AHEAD 0
 #define DIR_STRAIGHT 0
 #define DIR_CURVED 1
+#define MAXIMUM_NODE 100
 
 struct track_node;
 typedef struct track_node track_node;
@@ -31,6 +32,7 @@ struct track_node {
   track_node *reverse;  /* same location, but opposite direction */
   track_edge edge[2];
   int buf;  // added by c25du for temp value storage
+  track_node *previous; // added by c25du for track the path for the path search
 };
 
 #endif //__TRACK_NODE_H__
