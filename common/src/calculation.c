@@ -2,7 +2,9 @@
 
 // TODO: deal with the case the input value is invalid 
 int cal_distance(track_node *track, int src, int dest){
-    if(dest < 0 || src < 0 || dest > track_max || src < track_max){
+    /*bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);*/
+
+    if(dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX){
         return 0;
     }
 

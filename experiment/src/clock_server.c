@@ -80,7 +80,7 @@ void clock_server_start()
                 break;
 			case TIME_REQUEST:
                 reply_msg.ticks = cs.ticks;
-                debug(SUBMISSION, "current ticks= %d", cs.ticks);
+                //debug(SUBMISSION, "current ticks= %d", cs.ticks);
                 Reply(requester, &reply_msg, sizeof(reply_msg));
 		 		break;
 			case DELAY_REQUEST:

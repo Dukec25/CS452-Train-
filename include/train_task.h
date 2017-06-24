@@ -12,7 +12,6 @@
 #include <name_server.h>
 #include <calculation.h>
 #include <fifo.h>
-#include <lifo.h>
 
 void train_task_startup();
 void clock_task();
@@ -25,17 +24,9 @@ typedef enum Handshake {
 	HANDSHAKE_SHUTDOWN
 } Handshake;
 
-/* Train */
-typedef struct Train_server {
-	int sensor_reader_tid;
-	int is_shutdown;
-	uint16 sensor_data[SENSOR_GROUPS];
-	Lifo_t last_triggered_sensors;	
-	fifo_t cmd_fifo;
-} Train_server;
+
 void train_server();
 void sensor_reader_task();
-
 
 /* Cli */
 typedef enum {

@@ -59,6 +59,17 @@ typedef struct Sensor {
 	int triggered_time;
 } Sensor;
 
+/* Train */
+#define SENSOR_LIFO_SIZE 1000
+typedef struct Train_server {
+	int sensor_reader_tid;
+	int is_shutdown;
+	fifo_t cmd_fifo;
+	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
+	int sensor_lifo_top;
+    int switches_status[NUM_SWITCHES];
+} Train_server;
+
 /* Train commands */
 #define COMMAND_SIZE 100
 typedef enum {
@@ -98,6 +109,6 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd);
  * Based on pcmd, send bytes to train.
  * Excluding SENSOR and SHUTDOWN 
  */
-void command_handle(Command *pcmd);
+void command_handle(Command *pcmd, Train_server *train_server);
 
 #endif // __TRAIN_H__

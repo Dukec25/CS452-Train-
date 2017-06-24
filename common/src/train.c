@@ -46,7 +46,7 @@ void initialize_switch()
 		bwputc(COM1, switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C')); // state
 		bwputc(COM1, switch_id_to_byte( sw )); // switch
 		bw_pos(SWITCH_ROW + sw - 1, RIGHT_BORDER - 1);
-		bwputc(COM2, (sw == 16 || sw == 10 || sw == 15|| sw == 19 || sw == 21) ? 'S' : 'C');
+		bwputc(COM2, (sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 		Delay(20);
 	}
 	bwputc(COM1, SOLENOID_OFF); // turn off solenoid
@@ -183,7 +183,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	return 0;
 }
 
-void command_handle(Command *pcmd)
+void command_handle(Command *pcmd, Train_server *train_server)
 {
 	debug(DEBUG_K4, "enter %s", "command_handle");
 
@@ -206,6 +206,7 @@ void command_handle(Command *pcmd)
 		break;
 	case SW:
 		irq_printf(COM1, "%c%c", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
+        train_server->switches_status[pcmd->arg0-1] = switch_state_to_byte(pcmd->arg1);
 		Delay(20);
 		debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");
 		Putc(COM1, SOLENOID_OFF);
