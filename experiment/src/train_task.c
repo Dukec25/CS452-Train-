@@ -3,6 +3,10 @@ void train_task_startup()
 {
 	irq_io_tasks_cluster();
 
+	cli_startup();
+	initialize_switch();
+	sensor_initialization();
+
 	int tid;
 
 	tid = Create(PRIOR_MEDIUM, cli_server);
@@ -17,27 +21,22 @@ void train_task_startup()
 void train_server()
 {
 	Train_server train_server;
+
 	fifo_init(&train_server.cmd_fifo);
-	lifo_init(&train_server.last_triggered_sensors);
+	train_server.sensor_lifo_top = -1;
+
 	train_server.is_shutdown = 0;
 	char sensor_group = 0;
-	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
-		train_server.sensor_data[sensor_group] = 0;
-	}
 
 	int result = RegisterAs("TRAIN_SERVER");
 	int cli_server_tid = INVALID_TID;
 	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
 		cli_server_tid = WhoIs("CLI_SERVER");
 	}
-	irq_printf(COM2, "cli_server %d\r\n", cli_server_tid);
-
-//	Putc(COM1, START); // switches won't work without start command
-//	initialize_switch();
-//	sensor_initialization();
+//	irq_printf(COM2, "cli_server %d\r\n", cli_server_tid);
 
 	train_server.sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
-	irq_printf(COM2, "sensor_reader_tid %d\r\n", train_server.sensor_reader_tid);
+//	irq_printf(COM2, "sensor_reader_tid %d\r\n", train_server.sensor_reader_tid);
 
 	Handshake cli_server_handshake = HANDSHAKE_AKG;
 	Handshake requester_handshake = HANDSHAKE_AKG;
@@ -61,26 +60,26 @@ void train_server()
 		Cli_request cli_update_request;
 		switch (cmd->type) {
 		case TR:
-			irq_printf(COM2, "handle tr cmd\r\n");
+			//irq_printf(COM2, "handle tr cmd\r\n");
 			command_handle(cmd);
 			cli_update_request.type = CLI_UPDATE_TRAIN;
 			cli_update_request.train_update.id = cmd->arg0; 
 			cli_update_request.train_update.speed = cmd->arg1;
-			irq_printf(COM2, "send tr update\r\n");
+			//irq_printf(COM2, "send tr update\r\n");
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &cli_server_handshake, sizeof(cli_server_handshake));
 			break;
 		case RV:
-			irq_printf(COM2, "handle rv cmd\r\n");
+			//irq_printf(COM2, "handle rv cmd\r\n");
 			command_handle(cmd);
-			irq_printf(COM2, "sent rv cmd\r\n");
+			//irq_printf(COM2, "sent rv cmd\r\n");
 			break;
 		case SW:
-			irq_printf(COM2, "handle sw cmd\r\n");
+			//irq_printf(COM2, "handle sw cmd\r\n");
 			command_handle(cmd);
 			cli_update_request.type = CLI_UPDATE_SWITCH;
 			cli_update_request.switch_update.id = cmd->arg0; 
 			cli_update_request.switch_update.state = cmd->arg1;
-			irq_printf(COM2, "send sw update\r\n");
+			//irq_printf(COM2, "send sw update\r\n");
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &cli_server_handshake, sizeof(cli_server_handshake));
 			break;
 		case GO:
@@ -94,20 +93,25 @@ void train_server()
 		}
 
 		if (cmd->type == SENSOR) {
+			uint16 sensor_data[SENSOR_GROUPS];
 			//irq_printf(COM2, "sensor cmd\r\n");
 			Putc(COM1, SENSOR_QUERY);
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				char lower = Getc(COM1);
 				char upper = Getc(COM1);
-				train_server.sensor_data[sensor_group] = upper << 8 | lower;
+				sensor_data[sensor_group] = upper << 8 | lower;
 			}
 			//irq_printf(COM2, "sensor queried\r\n");
 
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
+				if (sensor_data[sensor_group] == 0) {
+					continue;
+				}
+				//irq_printf(COM2, "sensor_data[%d] = %d\r\n", sensor_group, sensor_data[sensor_group]);
 				char bit = 0;
 				for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
 					//sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
-					if (!(train_server.sensor_data[sensor_group] & (0x1 << bit))) {
+					if (!(sensor_data[sensor_group] & (0x1 << bit))) {
 						continue;
 					}
 					Sensor sensor;
@@ -119,24 +123,31 @@ void train_server()
 					else {
 						sensor.id = 8 + 16 - bit;
 					}
-					irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n", sensor.group, sensor.id, sensor.triggered_time);
-					lifo_push(&train_server.last_triggered_sensors, &sensor);
+	
+					Cli_request update_request;
+					update_request.type = CLI_UPDATE_SENSOR;
+					update_request.sensor_update = sensor;
+			//		irq_printf(COM2, "update sensor group = %d, id = %d, time = %d\r\n",
+			//				update_request.sensor_update.group, update_request.sensor_update.id,
+			//				update_request.sensor_update.triggered_time);
+					Send(cli_server_tid, &update_request, sizeof(update_request), &cli_server_handshake, sizeof(cli_server_handshake));
+
+					if (train_server.sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {
+						train_server.sensor_lifo_top += 1;
+						train_server.sensor_lifo[train_server.sensor_lifo_top] = sensor;
+						//irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n",
+						//sensor.group, sensor.id, sensor.triggered_time);
+					}
 				}
 			}
 			
-			if (!is_lifo_empty(&train_server.last_triggered_sensors)) {
-				Cli_request update_request;
-				update_request.type = CLI_UPDATE_SENSOR;
-				Sensor *sensor;
-				lifo_pop(&train_server.last_triggered_sensors, &sensor);
-				irq_printf(COM2, "lifo pop sensor group = %d, id = %d, time = %d\r\n",
-							sensor->group, sensor->id, sensor->triggered_time);	
-				update_request.sensor_update = *sensor;
-				irq_printf(COM2, "update sensor group = %d, id = %d, time = %d\r\n",
-							update_request.sensor_update.group, update_request.sensor_update.id,
-							update_request.sensor_update.triggered_time);
-				Send(cli_server_tid, &update_request, sizeof(update_request), &cli_server_handshake, sizeof(cli_server_handshake));
+			if (train_server.sensor_lifo_top != -1) {
+				Sensor sensor;
+				sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
+				train_server.sensor_lifo_top -= 1;
+				//irq_printf(COM2, "pop sensor group = %d, id = %d, time = %d\r\n", sensor.group, sensor.id, sensor.triggered_time);
 			}
+		
 		}
 	}
 }
@@ -167,8 +178,6 @@ void cli_server()
 	fifo_init(&cli_server.status_update_fifo);
 	cli_server.is_shutdown = 0;
 
-	cli_startup();
-
 	int result = RegisterAs("CLI_SERVER");
 	int train_server_tid = INVALID_TID;
 	while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
@@ -195,7 +204,7 @@ void cli_server()
 		switch (request.type) {
 		case CLI_TRAIN_COMMAND:
 			fifo_put(&cli_server.cmd_fifo, &request);
-			irq_printf(COM2, "cli_server train cmd cli req\r\n");
+			// irq_printf(COM2, "cli_server train cmd cli req\r\n");
 			break;
 
 		case CLI_UPDATE_TRAIN:
@@ -213,11 +222,11 @@ void cli_server()
 		}
 		
 		if (!is_fifo_empty(&cli_server.cmd_fifo)) {
-			irq_printf(COM2, "cli send train cmd\r\n");
+			//irq_printf(COM2, "cli send train cmd\r\n");
 			Cli_request *cli_cmd_request;
 			fifo_get(&cli_server.cmd_fifo, &cli_cmd_request);
 			Command train_cmd = cli_cmd_request->cmd;
-			irq_printf(COM2, "cli get train cmd %d\r\n", train_cmd.type);
+			//irq_printf(COM2, "cli get train cmd %d\r\n", train_cmd.type);
 			Send(train_server_tid, &train_cmd, sizeof(train_cmd), &train_server_handshake, sizeof(train_server_handshake));
 		}
 
@@ -230,17 +239,17 @@ void cli_server()
 				cli_update_clock(update_request->clock_update);
 				break;
 			case CLI_UPDATE_TRAIN:
-				irq_printf(COM2, "cli pop train update req\r\n");
+				//irq_printf(COM2, "cli pop train update req\r\n");
 				cli_update_train(update_request->train_update);
 				break;
 			case CLI_UPDATE_SWITCH:
-				irq_printf(COM2, "cli pop switch update req\r\n");
+				//irq_printf(COM2, "cli pop switch update req\r\n");
 				cli_update_switch(update_request->switch_update);
 				break;
 			case CLI_UPDATE_SENSOR:
-				irq_printf(COM2, "cli pop sensor group = %d, id = %d, time = %d\r\n",
-							update_request->sensor_update.group, update_request->sensor_update.id,
-							update_request->sensor_update.triggered_time);		
+				//irq_printf(COM2, "cli pop sensor group = %d, id = %d, time = %d\r\n",
+				//			update_request->sensor_update.group, update_request->sensor_update.id,
+				//			update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, num_sensor_updates++);
 				break;
 			}
@@ -298,7 +307,7 @@ void cli_io_task()
 		if (c == 'q') {
 			Cli_request cli_request;
 			cli_request.type = CLI_SHUTDOWN;	
-			irq_printf(COM2, "io entered q, send shutdown\r\n");
+			//irq_printf(COM2, "io entered q, send shutdown\r\n");
 			Send(cli_server_tid, &cli_request, sizeof(cli_request), &handshake, sizeof(handshake));
 		}
 		else if (c == '\r') {
@@ -306,12 +315,12 @@ void cli_io_task()
 			// parse command
 			Command cmd;
 			parse_result = command_parse(&command_buffer, &train, &cmd);
-			irq_printf(COM2, "io entered ENTER, parse_result = %d\r\n", parse_result);
+			//irq_printf(COM2, "io entered ENTER, parse_result = %d\r\n", parse_result);
 			if (parse_result != -1) {
 				Cli_request cli_cmd_request;
 				cli_cmd_request.type = CLI_TRAIN_COMMAND;
 				cli_cmd_request.cmd = cmd;
-				irq_printf(COM2, "io entered train cmd, send cmd\r\n");
+				//irq_printf(COM2, "io entered train cmd, send cmd\r\n");
 				Send(cli_server_tid, &cli_cmd_request, sizeof(cli_cmd_request), &handshake, sizeof(handshake));
 			}
 			// clears command_buffer
