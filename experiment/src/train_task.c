@@ -1,4 +1,5 @@
 #include <train_task.h>
+
 void train_task_startup()
 {
 	irq_io_tasks_cluster();
@@ -14,13 +15,22 @@ void train_task_startup()
 	Exit();
 }
 
+int sensor_to_num(int group, int num){
+    return group*16 + num - 1;
+}
+
 void train_server()
 {
 	Train_server train_server;
 	fifo_init(&train_server.cmd_fifo);
 	lifo_init(&train_server.last_triggered_sensors);
 	train_server.is_shutdown = 0;
+    int last_stop = -1;
 	char sensor_group = 0;
+
+    track_node track[TRACK_MAX];
+    init_tracka(track);
+
 	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 		train_server.sensor_data[sensor_group] = 0;
 	}
@@ -119,24 +129,29 @@ void train_server()
 					else {
 						sensor.id = 8 + 16 - bit;
 					}
-					irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n", sensor.group, sensor.id, sensor.triggered_time);
+					/*irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n", sensor.group, sensor.id, sensor.triggered_time);*/
+                    int current_location = sensor_to_num(sensor.group, sensor.id);
+                    int distance = cal_distance(track, last_stop, current_location);
+                    irq_printf(COM2, "distance = %d\r\n", distance);
+
+
 					lifo_push(&train_server.last_triggered_sensors, &sensor);
 				}
 			}
 			
-			if (!is_lifo_empty(&train_server.last_triggered_sensors)) {
-				Cli_request update_request;
-				update_request.type = CLI_UPDATE_SENSOR;
-				Sensor *sensor;
-				lifo_pop(&train_server.last_triggered_sensors, &sensor);
-				irq_printf(COM2, "lifo pop sensor group = %d, id = %d, time = %d\r\n",
-							sensor->group, sensor->id, sensor->triggered_time);	
-				update_request.sensor_update = *sensor;
-				irq_printf(COM2, "update sensor group = %d, id = %d, time = %d\r\n",
-							update_request.sensor_update.group, update_request.sensor_update.id,
-							update_request.sensor_update.triggered_time);
-				Send(cli_server_tid, &update_request, sizeof(update_request), &cli_server_handshake, sizeof(cli_server_handshake));
-			}
+			/*if (!is_lifo_empty(&train_server.last_triggered_sensors)) {*/
+				/*Cli_request update_request;*/
+				/*update_request.type = CLI_UPDATE_SENSOR;*/
+				/*Sensor *sensor;*/
+				/*lifo_pop(&train_server.last_triggered_sensors, &sensor);*/
+                /*irq_printf(COM2, "lifo pop sensor group = %d, id = %d, time = %d\r\n",*/
+                            /*sensor->group, sensor->id, sensor->triggered_time);	*/
+                /*update_request.sensor_update = *sensor;*/
+                /*irq_printf(COM2, "update sensor group = %d, id = %d, time = %d\r\n",*/
+                            /*update_request.sensor_update.group, update_request.sensor_update.id,*/
+                            /*update_request.sensor_update.triggered_time);*/
+                /*Send(cli_server_tid, &update_request, sizeof(update_request), &cli_server_handshake, sizeof(cli_server_handshake));*/
+			/*}*/
 		}
 	}
 }
@@ -405,11 +420,6 @@ void sensor_task() {
 						Putc(COM1, 0); 	 	// stop	
 						Putc(COM1, 69); 	// train
 					}
-					//if(last_stop != -1){
-						//[>int b = cal_distance(tracka, last_stop, group*16-1 + actual_id);<]
-						//[>Putc(COM2, b);<]
-						//last_stop = group*16-1 + actual_id ;
-					//}
 				}
 			}
 		}
