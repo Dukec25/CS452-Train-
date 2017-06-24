@@ -20,7 +20,7 @@ void train_server()
 	fifo_init(&train_server.cmd_fifo);
 	lifo_init(&train_server.last_triggered_sensors);
 	train_server.is_shutdown = 0;
-	int sensor_group = 0;
+	char sensor_group = 0;
 	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 		train_server.sensor_data[sensor_group] = 0;
 	}
@@ -94,34 +94,32 @@ void train_server()
 		}
 
 		if (cmd->type == SENSOR) {
-			irq_printf(COM2, "sensor cmd\r\n");
+			//irq_printf(COM2, "sensor cmd\r\n");
 			Putc(COM1, SENSOR_QUERY);
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				char lower = Getc(COM1);
 				char upper = Getc(COM1);
 				train_server.sensor_data[sensor_group] = upper << 8 | lower;
 			}
-			irq_printf(COM2, "sensor queried\r\n");
+			//irq_printf(COM2, "sensor queried\r\n");
 
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
-				int id = 0;
-				for (id = 0; id < SENSORS_PER_GROUP; id++) {
+				char bit = 0;
+				for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
 					//sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
-					if (!(train_server.sensor_data[sensor_group] & (0x1 << id))) {
+					if (!(train_server.sensor_data[sensor_group] & (0x1 << bit))) {
 						continue;
 					}
-					int actual_id; 
-					if (id + 1 <= 8){
-						actual_id = 8 - id;
+					Sensor sensor;
+					sensor.group = sensor_group;
+					sensor.triggered_time = Time();
+					if (bit + 1 <= 8) {
+						sensor.id = 8 - bit;
 					}
 					else {
-						actual_id = 8 + 16 - id;
+						sensor.id = 8 + 16 - bit;
 					}
-					Sensor sensor;
-					sensor.triggered_time = Time();
-					sensor.group = sensor_group;
-					sensor.id = actual_id;
-					irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n", sensor_group, actual_id, sensor.triggered_time);
+					irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n", sensor.group, sensor.id, sensor.triggered_time);
 					lifo_push(&train_server.last_triggered_sensors, &sensor);
 				}
 			}
@@ -131,8 +129,12 @@ void train_server()
 				update_request.type = CLI_UPDATE_SENSOR;
 				Sensor *sensor;
 				lifo_pop(&train_server.last_triggered_sensors, &sensor);
+				irq_printf(COM2, "lifo pop sensor group = %d, id = %d, time = %d\r\n",
+							sensor->group, sensor->id, sensor->triggered_time);	
 				update_request.sensor_update = *sensor;
-				irq_printf(COM2, "send sensor update\r\n");
+				irq_printf(COM2, "update sensor group = %d, id = %d, time = %d\r\n",
+							update_request.sensor_update.group, update_request.sensor_update.id,
+							update_request.sensor_update.triggered_time);
 				Send(cli_server_tid, &update_request, sizeof(update_request), &cli_server_handshake, sizeof(cli_server_handshake));
 			}
 		}
@@ -236,7 +238,9 @@ void cli_server()
 				cli_update_switch(update_request->switch_update);
 				break;
 			case CLI_UPDATE_SENSOR:
-				//irq_printf(COM2, "cli pop sensor update req\r\n");
+				irq_printf(COM2, "cli pop sensor group = %d, id = %d, time = %d\r\n",
+							update_request->sensor_update.group, update_request->sensor_update.id,
+							update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, num_sensor_updates++);
 				break;
 			}

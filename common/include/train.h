@@ -54,8 +54,8 @@ char switch_state_to_byte(char state);
 #define SENSORS_PER_GROUP 16
 #define SENSOR_QUERY 128 + SENSOR_GROUPS
 typedef struct Sensor {
-	int group;
-	int id;
+	char group;
+	char id;
 	int triggered_time;
 } Sensor;
 

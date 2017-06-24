@@ -39,7 +39,7 @@ int Delay(int ticks)
 
 int Time()
 {
-	debug(SUBMISSION, "Enter %s", "Primitive TIME");
+//	debug(SUBMISSION, "Enter %s", "Primitive TIME");
     vint clock_server_tid = WhoIs("CLOCK_SERVER");
     Clock_server_message send_msg;
     Clock_server_message reply_msg;
