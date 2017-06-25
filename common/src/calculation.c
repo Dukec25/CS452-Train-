@@ -13,13 +13,13 @@ int cal_distance(track_node *track, int src, int dest){
         return temp->buf;
     }
     else{
-        return -1;
+        return 0;
     }
 }
 
 // TODO: deal with the case the input value is invalid 
 track_node* find_path(track_node *track, int src, int dest){
-    /*bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);*/
+    bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);
 
     if(dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX){
         return NULL;

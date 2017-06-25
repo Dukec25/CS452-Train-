@@ -144,9 +144,9 @@ void train_server()
 					}
 
                     int current_location = sensor_to_num(sensor.group, sensor.id);
-                    /*irq_printf(COM2, "current_location = %d\r\n", current_location);*/
-                    /*int distance = cal_distance(track, last_stop, current_location);*/
-                    /*irq_printf(COM2, "distance = %d\r\n", distance);*/
+                    irq_printf(COM2, "current_location = %d\r\n", current_location);
+                    int distance = cal_distance(track, last_stop, current_location);
+                    irq_printf(COM2, "distance = %d\r\n", distance);
                     last_stop = current_location;
 	
 					Cli_request update_request;
