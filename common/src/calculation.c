@@ -19,7 +19,7 @@ int cal_distance(track_node *track, int src, int dest){
 
 // TODO: deal with the case the input value is invalid 
 track_node* find_path(track_node *track, int src, int dest){
-    bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);
+    /*bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);*/
 
     if(dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX){
         return NULL;
@@ -39,7 +39,7 @@ track_node* find_path(track_node *track, int src, int dest){
             return temp;
         }
 
-        if(temp->type = NODE_EXIT){
+        if(temp->type == NODE_EXIT){
             continue; 
         }
         else if (temp->type == NODE_BRANCH){
@@ -57,7 +57,7 @@ track_node* find_path(track_node *track, int src, int dest){
         }
     }
 
-    return -1; // error
+    return NULL;
 }
 
 void switches_need_changes(int src, track_node *node, Train_server *train_server){
