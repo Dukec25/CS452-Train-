@@ -111,7 +111,11 @@ void train_server()
 			break;
 		}
 
-		if (cmd->type == SENSOR) {
+        if(cmd->type == BR){
+            bwprintf(COM2, "get triggered");
+            // hardcode the state as number for now to test
+            choose_destination(track, last_stop, cmd->arg0, &train_server);  
+        } else if (cmd->type == SENSOR) {
 			uint16 sensor_data[SENSOR_GROUPS];
 			//irq_printf(COM2, "sensor cmd\r\n");
 			Putc(COM1, SENSOR_QUERY);
@@ -144,7 +148,7 @@ void train_server()
 					}
 
                     int current_location = sensor_to_num(sensor.group, sensor.id);
-                    irq_printf(COM2, "current_location = %d\r\n", current_location);
+                    /*irq_printf(COM2, "current_location = %d\r\n", current_location);*/
                     int distance = cal_distance(track, last_stop, current_location);
                     irq_printf(COM2, "distance = %d\r\n", distance);
                     last_stop = current_location;

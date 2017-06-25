@@ -1,6 +1,7 @@
 #include <calculation.h>
 
 void choose_destination(track_node *track, int src, int dest, Train_server *train_server){
+    bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);
     switches_need_changes(src, temp, train_server);
@@ -19,7 +20,6 @@ int cal_distance(track_node *track, int src, int dest){
 
 // TODO: deal with the case the input value is invalid 
 track_node* find_path(track_node *track, int src, int dest){
-    bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);
 
     if(dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX){
         return NULL;
@@ -61,6 +61,7 @@ track_node* find_path(track_node *track, int src, int dest){
 }
 
 void switches_need_changes(int src, track_node *node, Train_server *train_server){
+    bwprintf(COM2, "get into switches need change");
     while(node->num != src){
         if(node->previous->type != NODE_BRANCH){
             node = node->previous;
@@ -70,14 +71,17 @@ void switches_need_changes(int src, track_node *node, Train_server *train_server
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 if(train_server->switches_status[sensor_id-1] != STRAIGHT){
                     // flip the switches 
-                    irq_printf(COM1, "%c%c", switch_state_to_byte(STRAIGHT), switch_id_to_byte(sensor_id));
+                    irq_printf(COM1, "%c%c", STRAIGHT, switch_id_to_byte(sensor_id));
+                    train_server->switches_status[sensor_id-1] = STRAIGHT;
                     Delay(20);
                     Putc(COM1, SOLENOID_OFF);
                 }
             } else{
                 if(train_server->switches_status[sensor_id-1] != CURVE){
                     // flip the switches 
-                    irq_printf(COM1, "%c%c", switch_state_to_byte(CURVE), switch_id_to_byte(sensor_id));
+                    bwprintf(COM2, "%d sensor:%d\r\n", 0, sensor_id);
+                    irq_printf(COM1, "%c%c", CURVE, switch_id_to_byte(sensor_id));
+                    train_server->switches_status[sensor_id-1] = CURVE;
                     Delay(20);
                     Putc(COM1, SOLENOID_OFF);
                 }
