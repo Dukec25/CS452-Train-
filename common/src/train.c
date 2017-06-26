@@ -209,6 +209,7 @@ void command_handle(Command *pcmd, Train_server *train_server)
 		break;
 	case SW:
 		irq_printf(COM1, "%c%c", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
+        // track switches status
         train_server->switches_status[pcmd->arg0-1] = switch_state_to_byte(pcmd->arg1);
 		Delay(20);
 		debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");

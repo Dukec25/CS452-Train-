@@ -2,6 +2,7 @@
 #define __TRAIN_H__
 #include <define.h>
 #include <fifo.h>
+#include <clock.h>
 
 /* Train */
 #define TRAINS 80
@@ -92,6 +93,31 @@ typedef struct Command_buffer
 	int pos;
 } Command_buffer;
 
+/* Cli */
+typedef enum {
+	CLI_TRAIN_COMMAND,
+	CLI_UPDATE_TRAIN,
+	CLI_UPDATE_SENSOR,
+	CLI_UPDATE_SWITCH,
+	CLI_UPDATE_CLOCK,
+	CLI_SHUTDOWN
+} Cli_request_type;
+typedef struct Cli_request {
+	Cli_request_type type;
+	Command cmd;
+	Train train_update;
+	Switch switch_update;
+	Sensor sensor_update;
+	Clock clock_update;
+    Switch br_update[10];
+} Cli_request;
+typedef struct Cli_server {
+	fifo_t cmd_fifo;
+	fifo_t status_update_fifo;
+	int cli_io_tid;
+	int cli_clock_tid;
+	int is_shutdown;
+} Cli_server;
 /*
  * Clear the command_buffer by fill it with space
  */

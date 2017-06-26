@@ -8,8 +8,8 @@
 #include <train.h>
 
 int cal_distance(track_node *track, int src, int dest);
-void choose_destination(track_node *track, int src, int dest, Train_server *train_server);
+int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request);
 track_node* find_path(track_node *track, int src, int dest);
-void switches_need_changes(int src, track_node *node, Train_server *train_server);
+int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request);
 
 #endif //__CALCULATION_H__

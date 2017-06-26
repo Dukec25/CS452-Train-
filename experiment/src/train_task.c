@@ -112,9 +112,15 @@ void train_server()
 		}
 
         if(cmd->type == BR){
-            bwprintf(COM2, "get triggered");
             // hardcode the state as number for now to test
-            choose_destination(track, last_stop, cmd->arg0, &train_server);  
+            int num_switch = choose_destination(track, last_stop, cmd->arg0, &train_server, &cli_update_request);  
+            cli_update_request.type = CLI_UPDATE_SWITCH;
+            int i;
+            for(i=0; i<num_switch; i++){
+                cli_update_request.switch_update.id = cli_update_request.br_update[i].id; 
+                cli_update_request.switch_update.state = cli_update_request.br_update[i].state;
+                Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &cli_server_handshake, sizeof(cli_server_handshake));
+            }
         } else if (cmd->type == SENSOR) {
 			uint16 sensor_data[SENSOR_GROUPS];
 			//irq_printf(COM2, "sensor cmd\r\n");

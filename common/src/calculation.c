@@ -1,10 +1,10 @@
 #include <calculation.h>
 
-void choose_destination(track_node *track, int src, int dest, Train_server *train_server){
+int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request){
     bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);
-    switches_need_changes(src, temp, train_server);
+    return switches_need_changes(src, temp, train_server, update_request);
 }
 
 int cal_distance(track_node *track, int src, int dest){
@@ -60,35 +60,46 @@ track_node* find_path(track_node *track, int src, int dest){
     return NULL;
 }
 
-void switches_need_changes(int src, track_node *node, Train_server *train_server){
+int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request){
     bwprintf(COM2, "get into switches need change");
+    int idx = 0; // br_update size is 10
     while(node->num != src){
         if(node->previous->type != NODE_BRANCH){
             node = node->previous;
             continue;
         } else {
-            int sensor_id = node->previous->num;
+            int node_id = node->previous->num;
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
-                if(train_server->switches_status[sensor_id-1] != STRAIGHT){
+                if(train_server->switches_status[node_id-1] != STRAIGHT){
                     // flip the switches 
-                    irq_printf(COM1, "%c%c", STRAIGHT, switch_id_to_byte(sensor_id));
-                    train_server->switches_status[sensor_id-1] = STRAIGHT;
+                    irq_printf(COM1, "%c%c", STRAIGHT, switch_id_to_byte(node_id));
+                    train_server->switches_status[node_id-1] = STRAIGHT;
                     Delay(20);
                     Putc(COM1, SOLENOID_OFF);
+                    cli_update_switch(update_request->switch_update);
+                    
+                    // update switches UI
+                    update_request->br_update[idx].id = node_id;
+                    update_request->br_update[idx++].state = 's';
                 }
             } else{
-                if(train_server->switches_status[sensor_id-1] != CURVE){
+                if(train_server->switches_status[node_id-1] != CURVE){
                     // flip the switches 
-                    bwprintf(COM2, "%d sensor:%d\r\n", 0, sensor_id);
-                    irq_printf(COM1, "%c%c", CURVE, switch_id_to_byte(sensor_id));
-                    train_server->switches_status[sensor_id-1] = CURVE;
+                    /*bwprintf(COM2, "%d sensor:%d\r\n", 0, node_id);*/
+                    irq_printf(COM1, "%c%c", CURVE, switch_id_to_byte(node_id));
+                    train_server->switches_status[node_id-1] = CURVE;
                     Delay(20);
                     Putc(COM1, SOLENOID_OFF);
+
+                    // update switches UI
+                    update_request->br_update[idx].id = node_id;
+                    update_request->br_update[idx++].state = 'c';
                 }
             }
             node = node->previous;
         }
     }
+    return idx;
 }
 
 // initialization 
