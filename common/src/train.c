@@ -118,7 +118,8 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 	}
-	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) || !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "br", 2)) {
+	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
+			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "br", 2)) {
 		// parse arguments
 		int pos = 2;
 		char num_buffer[10];
@@ -176,9 +177,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		}
 		pcmd->type = SW;
 		break;
-    case 'b':
-        pcmd->type = BR;
-        break;
+	case 'b':
+		pcmd->type = BR;
+		break;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];

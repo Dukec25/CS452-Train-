@@ -7,6 +7,13 @@
 #include <define.h>
 #include <train.h>
 
+typedef struct Calibration_package {
+	int src;
+	int dest;
+	int distance;
+	int velocity;
+} Calibration_package;
+
 int cal_distance(track_node *track, int src, int dest);
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request);
 track_node* find_path(track_node *track, int src, int dest);

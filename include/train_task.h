@@ -12,6 +12,7 @@
 #include <name_server.h>
 #include <calculation.h>
 #include <fifo.h>
+#include <calculation.h>
 
 void train_task_startup();
 void clock_task();
@@ -27,7 +28,6 @@ typedef enum Handshake {
 
 void train_server();
 void sensor_reader_task();
-
 
 void cli_server();
 void cli_clock_task();

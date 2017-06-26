@@ -5,7 +5,8 @@ void train_task_startup()
 	irq_io_tasks_cluster();
 
 	cli_startup();
-    bwputc(COM1, START); // switches won't work without start command
+	cli_track_startup();
+	bwputc(COM1, START); // switches won't work without start command
 
 	initialize_switch();
 	sensor_initialization();
@@ -21,31 +22,32 @@ void train_task_startup()
 	Exit();
 }
 
-int sensor_to_num(int group, int num){
-    return group*16 + num - 1;
+int sensor_to_num(int group, int num)
+{
+	return group * 16 + num - 1;
 }
 
 void train_server()
 {
 	Train_server train_server;
 
-    // initialization 
+	// initialization 
 	fifo_init(&train_server.cmd_fifo);
 	train_server.sensor_lifo_top = -1;
 	train_server.is_shutdown = 0;
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
-        // be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
+		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
-    train_server.switches_status;
+	train_server.switches_status;
 
-    int last_stop = -1;
+	int last_stop = -1;
 	char sensor_group = 0;
 
-    track_node track[TRACK_MAX];
-    init_tracka(track);
+	track_node track[TRACK_MAX];
+	init_tracka(track);
 
 	int result = RegisterAs("TRAIN_SERVER");
 	int cli_server_tid = INVALID_TID;
@@ -60,6 +62,7 @@ void train_server()
 	Handshake cli_server_handshake = HANDSHAKE_AKG;
 	Handshake requester_handshake = HANDSHAKE_AKG;
 
+	iny num_sensor_polls = 0;
 	while(!train_server.is_shutdown) {
 		int requester_tid = INVALID_TID;
 		Command request;
@@ -131,7 +134,7 @@ void train_server()
 				sensor_data[sensor_group] = upper << 8 | lower;
 			}
 			//irq_printf(COM2, "sensor queried\r\n");
-
+			num_sensor_polls++;
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				if (sensor_data[sensor_group] == 0) {
 					continue;
@@ -153,16 +156,47 @@ void train_server()
 						sensor.id = 8 + 16 - bit;
 					}
 
-                    int current_location = sensor_to_num(sensor.group, sensor.id);
-                    /*irq_printf(COM2, "current_location = %d\r\n", current_location);*/
-                    int distance = cal_distance(track, last_stop, current_location);
-                    irq_printf(COM2, "distance = %d\r\n", distance);
-                    last_stop = current_location;
-	
-					Cli_request update_request;
-					update_request.type = CLI_UPDATE_SENSOR;
-					update_request.sensor_update = sensor;
-					Send(cli_server_tid, &update_request, sizeof(update_request), &cli_server_handshake, sizeof(cli_server_handshake));
+					// Send sensor update
+					Cli_request sensor_update_request;
+					sensor_update_request.type = CLI_UPDATE_SENSOR;
+					sensor_update_request.sensor_update = sensor;
+					Send(cli_server_tid, &sensor_update_request, sizeof(sensor_update_request),
+						 &cli_server_handshake, sizeof(cli_server_handshake));
+				
+					// distance	
+					int current_location = sensor_to_num(sensor.group, sensor.id);
+					int distance = cal_distance(track, last_stop, current_location);
+
+					// velcoity
+					int start_time = 0; 
+					while (train_server.sensor_lifo_top != -1) {
+						Sensor last_sensor;
+						last_sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
+						train_server.sensor_lifo_top -= 1;
+						if (sensor_to_num(last_sensor.group, last_sensor.id) == last_stop) {
+							start_time = last_sensor.triggered_time;
+							break;
+						}
+						//irq_printf(COM2, "pop sensor group = %d, id = %d, time = %d\r\n",
+						//					sensor.group, sensor.id, sensor.triggered_time);
+					}
+					int end_time = sensor.triggered_time;
+					int velocity = distance / (end_time - start_time);
+
+					// Send calibration update
+					if (distance != 0) {
+						//irq_printf(COM2, "last_stop = %d, current_location = %d\r\n", last_stop, current_location);
+						//irq_printf(COM2, "distance = %d\r\n", distance);
+						//irq_printf(COM2, "velocity = %d\r\n", velocity);
+						Cli_request calibration_update_request;
+						calibration_update_request.type = CLI_UPDATE_CALIBRATION;
+						calibration_update_request.calibration_update.src = last_stop;
+						calibration_update_request.calibration_update.dest = current_location;
+						calibration_update_request.calibration_update.distance = distance;
+						calibration_update_request.calibration_update.velocity = end_time - start_time;
+						Send(cli_server_tid, &calibration_update_request, sizeof(calibration_update_request),
+							 &cli_server_handshake, sizeof(cli_server_handshake));
+					}
 
 					if (train_server.sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {
 						train_server.sensor_lifo_top += 1;
@@ -170,16 +204,9 @@ void train_server()
 						//irq_printf(COM2, "insert sensor group = %d, id = %d, time = %d\r\n",
 						//sensor.group, sensor.id, sensor.triggered_time);
 					}
+					last_stop = current_location;
 				}
-			}
-			
-			if (train_server.sensor_lifo_top != -1) {
-				Sensor sensor;
-				sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
-				train_server.sensor_lifo_top -= 1;
-				//irq_printf(COM2, "pop sensor group = %d, id = %d, time = %d\r\n", sensor.group, sensor.id, sensor.triggered_time);
-			}
-		
+			}		
 		}
 	}
 }
@@ -222,6 +249,7 @@ void cli_server()
 	Handshake requester_handshake = HANDSHAKE_AKG;
 
 	int num_sensor_updates = 0;
+	int num_track_updates = 0;
 	do {
 		int requester_tid = INVALID_TID;
 		Cli_request request;
@@ -239,6 +267,7 @@ void cli_server()
 		case CLI_UPDATE_SENSOR:
 		case CLI_UPDATE_SWITCH:
 		case CLI_UPDATE_CLOCK:
+		case CLI_UPDATE_CALIBRATION:
 			fifo_put(&cli_server.status_update_fifo, &request);
 			// if (request.type != CLI_UPDATE_CLOCK) irq_printf(COM2, "update cli req %d\r\n", request.type);
 			break;
@@ -279,6 +308,12 @@ void cli_server()
 				//			update_request->sensor_update.group, update_request->sensor_update.id,
 				//			update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, num_sensor_updates++);
+				break;
+			case CLI_UPDATE_CALIBRATION:
+				//irq_printf(COM2, "cli pop calibration update req\r\n");
+				cli_update_track(update_request->calibration_update.src, update_request->calibration_update.dest,
+								 update_request->calibration_update.distance, update_request->calibration_update.velocity,
+								 num_track_updates++);
 				break;
 			}
 		}
@@ -361,140 +396,3 @@ void cli_io_task()
 	}
 	Exit();
 }
-
-/*
-void train_task_startup()
-{
-//	cli_startup();
-	irq_io_tasks_cluster();
-
-//	Putc(COM1, START); // switches won't work without start command
-//	test_initialize_switch();
-//	initialize_switch();
-//	sensor_initialization();
-//	debug(DEBUG_K4, "%s", "initialized switches");
-
-	int tid;
-//	tid  = Create(PRIOR_LOW, clock_task);
-//	debug(DEBUG_K4, "created clock_task taskId = %d", tid);
-
-	tid = Create(PRIOR_LOW, sensor_task);
-	debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
-
-//   tid = Create(PRIOR_LOW, test_task);
-//	debug(DEBUG_K4, "created train_task taskId = %d", tid);
-	
-	tid = Create(PRIOR_LOW, train_task);
-	debug(DEBUG_K4, "created train_task taskId = %d", tid);
-	
-	Exit();
-}
-*/
-
-/*
-void sensor_task() {
-
-	int updates = 0;
-
-	vint register_result = RegisterAs("SENSOR_TASK");
-	vint requester;
-	Calibration_package cali_pkg;
-	Delivery reply_msg;
-	Receive(&requester, &cali_pkg, sizeof(cali_pkg));
-	Reply(requester, &reply_msg, sizeof(reply_msg));
-
-	track_node tracka[TRACK_MAX];
-	init_tracka(tracka);
-
-	while (1) {
-		irq_printf(COM2, "%s", "sensor");
-		//debug(SUBMISSION, "%s", "sensor is printing");
-		//irq_printf(COM2, "%s", "sensor is printing");
-		Delay(20);	// delay 0.2 second
-		Putc(COM1, SENSOR_QUERY);
-		//irq_printf(COM2, "%s", "after SENSOR_QUERY\r\n");
-		int sensor_data[SENSOR_GROUPS];
-		int group = 0;
-		for (group = 0; group < SENSOR_GROUPS; group++) {
-			char lower = Getc(COM1);
-		   // Putc(COM1, 0); // speed
-			char upper = Getc(COM1);
-			sensor_data[group] = upper << 8 | lower;
-		}
-
-		for (group = 0; group < SENSOR_GROUPS; group++) {
-			int id = 0;
-			for (id = 0; id < SENSORS_PER_GROUP; id++) {
-				// irq_printf(COM2, "%s", "Sensor group  "); 
-				if (sensor_data[group] & (0x1 << id)) {
-					int actual_id; 
-					if( id + 1 <= 8){
-						actual_id = 8 - id;
-					} else{
-						actual_id = 8 + 16 - id;
-					}
-					//sensor_data actually looks like 
-					// 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
-					cli_update_sensor(group, actual_id, updates++);
-					//irq_printf(COM2, "%s", "sensor is printing");
-					
-					if(group*16-1 + actual_id  == *(cali_pkg.stop_sensor)){
-						Putc(COM1, 0); 	 	// stop	
-						Putc(COM1, 69); 	// train
-					}
-				}
-			}
-		}
-	}
-	Exit();
-}
-*/
-
-/*
-void train_task() {
-	// command
-	Command_buffer command_buffer;
-	command_buffer.pos = 0;
-	char train_id = 0;
-	char train_speed = 0;
-
-	vint stop_sensor = -1;
-	vint last_stop = -1;
-
-	Calibration_package calibration_package;
-	calibration_package.stop_sensor = &stop_sensor;
-	calibration_package.last_stop = &last_stop;
-
-	int sensor_task_tid = WhoIs("SENSOR_TASK");
-	Delivery reply_msg;
-	Send(sensor_task_tid, &calibration_package, sizeof(Calibration_package), &reply_msg, sizeof(reply_msg));
-
-	while(1) {
-		// user I/O and send command to train
-		char c = Getc(COM2);
-		if (c == 'q') {
-			// user hits 'q', exit
-			irq_printf(COM2, "user hits q, terminate the program");	
-			Terminate();
-			break;
-		}
-		else if (c == '\r') {
-			// user hits ENTER
-			// parse command
-			Command cmd;
-			int result = command_parse(&command_buffer, &train_id, &train_speed, &cmd);
-			if (result != -1) {
-				// user entered a valid command, sends command to train and updates user interface
-				// command_handle is within common/src/train.c
-			  	command_handle(&cmd, &calibration_package);
-			}
-			// clears command_buffer
-			command_clear(&command_buffer);
-		}
-		else {
-			command_buffer.data[command_buffer.pos++] = c;
-//			Putc(COM2, c);
-		}
-	}
-	Exit();
-}*/
