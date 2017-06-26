@@ -4,20 +4,6 @@
 #include <fifo.h>
 #include <clock.h>
 
-/* Train */
-#define TRAINS 80
-typedef struct Train {
-	char id;
-	int speed;
-} Train;
-typedef enum {
-	MIN_SPEED = 0,
-	MAX_SPEED = 14,
-	REVERSE = 15,
-	START = 96,
-	HALT = 97
-} Train_state;
-
 /* Switches */
 #define NUM_SWITCHES 22
 typedef struct Switch {
@@ -64,14 +50,52 @@ void sensor_initialization();
 int sensor_to_num(Sensor sensor);
 Sensor num_to_sensor(int num);
 
+/* Calibration */
+typedef struct Calibration_package {
+	int src;
+	int dest;
+	int distance;
+	int time;
+	int velocity;
+} Calibration_package;
+#define MAX_NUM_CALIBRATIONS	3
+typedef struct Velocity_node {
+	int src;
+	int num_velocity;
+	Calibration_package calibration[MAX_NUM_CALIBRATIONS]; 
+} Velocity_node;
+typedef struct Velocity_data {
+	Velocity_node velocity_node[SENSOR_GROUPS * SENSORS_PER_GROUP]; 
+} Velocity_data;
+int velocity_initialization(Velocity_data *velocity_data); 
+int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
+
 /* Train */
+#define TRAINS 80
+typedef struct Train {
+	char id;
+	int speed;
+} Train;
+typedef enum {
+	MIN_SPEED = 0,
+	MAX_SPEED = 14,
+	REVERSE = 15,
+	START = 96,
+	HALT = 97
+} Train_state;
 #define SENSOR_LIFO_SIZE 1000
 typedef struct Train_server {
 	int sensor_reader_tid;
 	int is_shutdown;
 	fifo_t cmd_fifo;
+	
+	Train train;
+
 	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
 	int sensor_lifo_top;
+	int last_stop;
+	int num_sensor_polls;
+
     int switches_status[NUM_SWITCHES];
 } Train_server;
 
@@ -84,6 +108,7 @@ typedef enum {
 	GO, 		/* Start the train controller */
 	STOP,		/* Stop the train controller */
     BR,         /* Flip the switches to get the train from one point to another */
+	SDC,		/* Stop train to measure stopping distance */
 	SENSOR 		/* Dump sensor modules */
 } Train_cmd_type;
 typedef struct {
@@ -97,18 +122,10 @@ typedef struct Command_buffer
 	int pos;
 } Command_buffer;
 
-/* Calibration */
-typedef struct Calibration_package {
-	int src;
-	int dest;
-	int distance;
-	int time;
-	int velocity;
-} Calibration_package;
-
 /* Cli */
 typedef enum {
 	CLI_TRAIN_COMMAND,
+	CLI_STOP_DISTANCE_COLLECTOR,
 	CLI_UPDATE_TRAIN,
 	CLI_UPDATE_SENSOR,
 	CLI_UPDATE_SWITCH,

@@ -33,13 +33,14 @@ void train_server()
 	fifo_init(&train_server.cmd_fifo);
 	train_server.sensor_lifo_top = -1;
 	train_server.is_shutdown = 0;
+	train_server.last_stop = -1;
+	train_server.num_sensor_polls = 0;
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
-	int last_stop = -1;
 	char sensor_group = 0;
 
 	track_node track[TRACK_MAX];
@@ -55,10 +56,16 @@ void train_server()
 	train_server.sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
 	dump(SUBMISSION, "sensor_reader_tid %d", train_server.sensor_reader_tid);
 
+	int stopping_distance_tid = Create(PRIOR_MEDIUM, stopping_distance_collector_task);
+	dump(SUBMISSION, "stopping_distance_tid %d", stopping_distance_tid);
+	vint train_server_address = (vint) &train_server_address;
+	Handshake stopping_distance_handshake = HANDSHAKE_AKG;
+	dump(SUBMISSION, "train_server sending train_server_address = 0x%x", train_server_address);	 
+	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address),
+		 &stopping_distance_handshake, sizeof(stopping_distance_handshake));
+ 
 	Handshake cli_server_handshake = HANDSHAKE_AKG;
 	Handshake requester_handshake = HANDSHAKE_AKG;
-
-	int num_sensor_polls = 0;
 	while(!train_server.is_shutdown) {
 		int requester_tid = INVALID_TID;
 		Command request;
@@ -103,13 +110,16 @@ void train_server()
 		case STOP:
 			command_handle(cmd, &train_server);
 			break;
+		case SDC:
+			Send(stopping_distance_tid, &cmd, sizeof(cmd), &stopping_distance_handshake, sizeof(stopping_distance_handshake));
+			break;
 		default:
 			break;
 		}
 
         if(cmd->type == BR){
             // hardcode the state as number for now to test
-            int num_switch = choose_destination(track, last_stop, cmd->arg0, &train_server, &cli_update_request);  
+            int num_switch = choose_destination(track, train_server.last_stop, cmd->arg0, &train_server, &cli_update_request);  
             cli_update_request.type = CLI_UPDATE_SWITCH;
             int i;
             for(i=0; i<num_switch; i++){
@@ -126,8 +136,8 @@ void train_server()
 				char upper = Getc(COM1);
 				sensor_data[(int) sensor_group] = upper << 8 | lower;
 			}
-			dump(SUBMISSION, "%s", "sensor queried");
-			num_sensor_polls++;
+			train_server.num_sensor_polls++;
+			dump(SUBMISSION, "sensor queried, num_sensor_polls = %d", train_server.num_sensor_polls);
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				if (sensor_data[(int) sensor_group] == 0) {
 					continue;
@@ -142,7 +152,7 @@ void train_server()
 					Sensor sensor;
 					sensor.group = sensor_group;
 					sensor.triggered_time = Time();
-					sensor.triggered_poll = num_sensor_polls;
+					sensor.triggered_poll = train_server.num_sensor_polls;
 					if (bit + 1 <= 8) {
 						sensor.id = 8 - bit;
 					}
@@ -159,7 +169,7 @@ void train_server()
 				
 					// distance	
 					int current_location = sensor_to_num(sensor);
-					int distance = cal_distance(track, last_stop, current_location);
+					int distance = cal_distance(track, train_server.last_stop, current_location);
 
 					// velcoity
 					int start_time = 0;
@@ -170,7 +180,7 @@ void train_server()
 						train_server.sensor_lifo_top -= 1;
 						dump(SUBMISSION, "pop sensor group = %d, id = %d, time = %d",
 										 sensor.group, sensor.id, sensor.triggered_time);
-						if (sensor_to_num(last_sensor) == last_stop) {
+						if (sensor_to_num(last_sensor) == train_server.last_stop) {
 							start_time = last_sensor.triggered_time;
 							start_poll = last_sensor.triggered_poll;
 							break;
@@ -185,10 +195,10 @@ void train_server()
 					// Send calibration update
 					if (distance != 0) {
 						dump(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
-										 last_stop, current_location, distance, time, poll, velocity);
+										 train_server.last_stop, current_location, distance, time, poll, velocity);
 						Cli_request calibration_update_request;
 						calibration_update_request.type = CLI_UPDATE_CALIBRATION;
-						calibration_update_request.calibration_update.src = last_stop;
+						calibration_update_request.calibration_update.src = train_server.last_stop;
 						calibration_update_request.calibration_update.dest = current_location;
 						calibration_update_request.calibration_update.distance = distance;
 						calibration_update_request.calibration_update.time = time;
@@ -203,7 +213,7 @@ void train_server()
 						dump(SUBMISSION, "insert sensor group = %d, id = %d, time = %d",
 										 sensor.group, sensor.id, sensor.triggered_time);
 					}
-					last_stop = current_location;
+					train_server.last_stop = current_location;
 				}
 			}		
 		}
@@ -226,6 +236,41 @@ void sensor_reader_task()
 		Send(train_server_tid, &train_cmd, sizeof(&train_cmd), &handshake, sizeof(handshake));
 	}
 	Exit();
+}
+
+void stopping_distance_collector_task()
+{
+	int train_server_tid = INVALID_TID;
+	vint train_server_address;
+	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
+	Train_server *train_server = (Train_server *) train_server_address;
+	dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
+
+	// E12
+	Sensor stop_sensor;
+	stop_sensor.group = 4;
+	stop_sensor.id = 12;
+	int stop = sensor_to_num(stop_sensor);
+
+	int iteration = 0;
+	int num_runs = 10;
+
+	Handshake handshake = HANDSHAKE_AKG;
+	while (handshake != HANDSHAKE_SHUTDOWN) {
+		Command sdc_cmd;
+		Receive(&train_server_tid, &sdc_cmd, sizeof(sdc_cmd));
+		handshake = HANDSHAKE_AKG;
+		Reply(train_server_tid, &handshake, sizeof(handshake));
+	
+		if (train_server->last_stop == stop) {
+			Command tr_cmd;
+			tr_cmd.type = TR;
+			tr_cmd.arg0 = train_server->train.id;
+			tr_cmd.arg1 = MIN_SPEED;
+			dump(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg1);
+			Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
+		}
+	}
 }
 
 void cli_server()
@@ -258,6 +303,7 @@ void cli_server()
 
 		switch (request.type) {
 		case CLI_TRAIN_COMMAND:
+		case CLI_STOP_DISTANCE_COLLECTOR:
 			fifo_put(&cli_server.cmd_fifo, &request);
 			dump(SUBMISSION, "%s", "cli_server train cmd cli req");
 			break;
@@ -379,7 +425,11 @@ void cli_io_task()
 			dump(SUBMISSION, "io entered ENTER, parse_result = %d", parse_result);
 			if (parse_result != -1) {
 				Cli_request cli_cmd_request;
-				cli_cmd_request.type = CLI_TRAIN_COMMAND;
+				if (cmd.type != SDC) {
+					cli_cmd_request.type = CLI_TRAIN_COMMAND;
+				} else {
+					cli_cmd_request.type = CLI_STOP_DISTANCE_COLLECTOR;
+				}
 				cli_cmd_request.cmd = cmd;
 				dump(SUBMISSION, "%s", "io entered train cmd, send cmd");
 				Send(cli_server_tid, &cli_cmd_request, sizeof(cli_cmd_request), &handshake, sizeof(handshake));

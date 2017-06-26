@@ -90,6 +90,18 @@ Sensor num_to_sensor(int num)
 	return sensor;
 }
 
+int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
+{
+	Velocity_node velocity = velocity_data->velocity_node[src];
+	int i;
+	for (i = 0; i < velocity.num_velocity; i++) {
+		if (velocity.calibration[i].dest == dest) {
+			return velocity.calibration[i].velocity;
+		}
+	}
+	return 0;
+}
+
 static int is_digit(char c)
 {
 	return (c >= '0' && c <= '9');
@@ -130,6 +142,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	}
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
+	}
+	else if (!strcmp(command_buffer->data, "sdc", 2)) {
+		pcmd->type = SDC;
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "br", 2)) {
@@ -234,6 +249,8 @@ void command_handle(Command *pcmd, Train_server *train_server)
 		break;
 	case STOP:
 		Putc(COM1, HALT);
+		break;
+	default:
 		break;
 	}
 }

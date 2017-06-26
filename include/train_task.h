@@ -28,6 +28,7 @@ typedef enum Handshake {
 
 void train_server();
 void sensor_reader_task();
+void stopping_distance_collector_task();
 
 void cli_server();
 void cli_clock_task();
