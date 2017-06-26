@@ -93,6 +93,14 @@ typedef struct Command_buffer
 	int pos;
 } Command_buffer;
 
+/* Calibration */
+typedef struct Calibration_package {
+	int src;
+	int dest;
+	int distance;
+	int velocity;
+} Calibration_package;
+
 /* Cli */
 typedef enum {
 	CLI_TRAIN_COMMAND,
@@ -100,6 +108,7 @@ typedef enum {
 	CLI_UPDATE_SENSOR,
 	CLI_UPDATE_SWITCH,
 	CLI_UPDATE_CLOCK,
+	CLI_UPDATE_CALIBRATION,
 	CLI_SHUTDOWN
 } Cli_request_type;
 typedef struct Cli_request {
@@ -109,6 +118,7 @@ typedef struct Cli_request {
 	Switch switch_update;
 	Sensor sensor_update;
 	Clock clock_update;
+	Calibration_package calibration_update;
     Switch br_update[10];
 } Cli_request;
 typedef struct Cli_server {

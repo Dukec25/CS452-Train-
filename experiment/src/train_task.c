@@ -62,7 +62,7 @@ void train_server()
 	Handshake cli_server_handshake = HANDSHAKE_AKG;
 	Handshake requester_handshake = HANDSHAKE_AKG;
 
-	iny num_sensor_polls = 0;
+	int num_sensor_polls = 0;
 	while(!train_server.is_shutdown) {
 		int requester_tid = INVALID_TID;
 		Command request;
