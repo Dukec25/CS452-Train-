@@ -1,9 +1,11 @@
 #include <calculation.h>
 #include <user_functions.h>
 #include <cli.h>
+#include <log.h>
+#include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request){
-    bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);
+    dump(SUBMISSION, "src = %d, dest=%d \r\n", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);
     return switches_need_changes(src, temp, train_server, update_request);
@@ -65,7 +67,7 @@ track_node* find_path(track_node *track, int src, int dest)
 }
 
 int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request){
-    bwprintf(COM2, "get into switches need change");
+    dump(SUBMISSION, "%s", "get into switches need change");
     int idx = 0; // br_update size is 10
     while(node->num != src){
         if(node->previous->type != NODE_BRANCH){
@@ -89,7 +91,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
             } else{
                 if(train_server->switches_status[node_id-1] != CURVE){
                     // flip the switches 
-                    /*bwprintf(COM2, "%d sensor:%d\r\n", 0, node_id);*/
+                    dump(SUBMISSION, "%d sensor:%d\r\n", 0, node_id);
                     irq_printf(COM1, "%c%c", CURVE, switch_id_to_byte(node_id));
                     train_server->switches_status[node_id-1] = CURVE;
                     Delay(20);
