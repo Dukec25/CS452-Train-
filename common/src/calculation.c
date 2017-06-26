@@ -1,4 +1,6 @@
 #include <calculation.h>
+#include <user_functions.h>
+#include <cli.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request){
     bwprintf(COM2, "src = %d, dest=%d \r\n", src, dest);

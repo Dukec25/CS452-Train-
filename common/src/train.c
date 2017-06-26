@@ -77,6 +77,19 @@ void sensor_initialization()
 	} 
 }
 
+int sensor_to_num(Sensor sensor)
+{
+	return sensor.group * SENSORS_PER_GROUP + sensor.id - 1;
+}
+
+Sensor num_to_sensor(int num)
+{
+	Sensor sensor;
+	sensor.group = num / SENSORS_PER_GROUP;
+	sensor.id = num % SENSORS_PER_GROUP - 1;
+	return sensor;
+}
+
 static int is_digit(char c)
 {
 	return (c >= '0' && c <= '9');

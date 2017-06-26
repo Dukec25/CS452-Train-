@@ -60,6 +60,9 @@ typedef struct Sensor {
 	int triggered_time;
 	int triggered_poll;
 } Sensor;
+void sensor_initialization();
+int sensor_to_num(Sensor sensor);
+Sensor num_to_sensor(int num);
 
 /* Train */
 #define SENSOR_LIFO_SIZE 1000
@@ -130,6 +133,7 @@ typedef struct Cli_server {
 	int cli_clock_tid;
 	int is_shutdown;
 } Cli_server;
+
 /*
  * Clear the command_buffer by fill it with space
  */

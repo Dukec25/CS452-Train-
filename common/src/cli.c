@@ -168,11 +168,9 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 //	int node_col = TRACK_DATA_COL + updates / TRACK_DATA_PER_COL % TRACK_DATA_PER_ROW * TRACK_DATA_LENGTH;
 //	irq_pos(node_row, node_col);
 	irq_pos(updates % 60, TRACK_DATA_COL + updates / 60 % 6 * TRACK_DATA_LENGTH);	
-	char src_group = calibration_pkg.src / SENSORS_PER_GROUP + SENSOR_LABEL_BASE;
-	char src_id = calibration_pkg.src % SENSORS_PER_GROUP + 1;
-	char dest_group = calibration_pkg.dest / SENSORS_PER_GROUP + SENSOR_LABEL_BASE;
-	char dest_id = calibration_pkg.dest % SENSORS_PER_GROUP + 1;
-	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src_group, src_id, dest_group, dest_id,
+	Sensor src = num_to_sensor(calibration_pkg.src);
+	Sensor dest = num_to_sensor(calibration_pkg.dest);
+	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src.group, src.id, dest.group, dest.id,
 										 calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
 	irq_restore();
 }

@@ -3,8 +3,8 @@
 #include <define.h>
 #include <debug.h>
 
-#define DUMP_INDEX		0x50000 - 4
-#define DUMP_ADDRESS	0x50000
+#define DUMP_INDEX		0x80000 - 4
+#define DUMP_ADDRESS	0x80000
 
 int dump_putc(char c);
 void dump_putw(int n, char fc, char *bf);
