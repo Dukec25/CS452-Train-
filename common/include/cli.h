@@ -5,8 +5,8 @@
 #include <clock.h>
 #include <train.h>
 
-#define WIDTH 44
-#define HEIGHT 32
+#define WIDTH 46
+#define HEIGHT 30
 #define RIGHT_COL_WIDTH 9
 #define SENSOR_LABEL_BASE 'A'
 
@@ -26,13 +26,13 @@
 #define TRAIN_ROW		STATUS_BORDER - 1
 #define TRAIN_COL		MIDDLE_BORDER + 1
 /* Sensor */
-#define SENSOR_LABEL_ROW	LABEL_BORDER - 1
-#define SENSOR_ROW			LABEL_BORDER + 2
-#define SENSOR_COL			LEFT_BORDER + 2
-#define SENSORS_PER_ROW		4
-#define SENSORS_PER_COL		22
-#define SENSOR_LABEL_BASE	'A'
-#define SENSOR_INDENT_WIDTH	8
+#define SENSOR_LABEL_ROW		LABEL_BORDER - 1
+#define SENSOR_ROW				LABEL_BORDER + 2
+#define SENSOR_COL				LEFT_BORDER + 2
+#define SENSOR_LABEL_BASE		'A'
+#define SENSOR_LABEL_WIDTH		3
+#define SENSOR_INDENT_WIDTH 	7
+#define SENSOR_INDENT_HEIGHT	1
 /* Switch */
 #define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
 #define SWITCH_ROW			LABEL_BORDER + 1
@@ -87,7 +87,7 @@ void cli_update_switch(Switch sw);
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(Sensor sensor, int updates);
+void cli_update_sensor(Sensor sensor, Sensor last_sensor, int updates);
 
 /*
  * Update the track A display

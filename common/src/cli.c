@@ -50,6 +50,14 @@ void cli_startup()
 	// Place sensors
 	bw_pos(SENSOR_LABEL_ROW, SENSOR_COL);
 	bwputstr(COM2, "Sensors");
+	int sensor_num;
+	for (sensor_num = 0; sensor_num < SENSOR_GROUPS * SENSORS_PER_GROUP; sensor_num++) {
+		Sensor sensor = num_to_sensor(sensor_num);
+		int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;
+		int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH;
+		bw_pos(row, col);
+		bwprintf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);
+	}
 
 	// Place switches
 	bw_pos(SWITCH_LABEL_ROW, SWITCH_COL);
@@ -151,13 +159,17 @@ void cli_update_switch(Switch sw)
 	irq_restore();
 }
 
-void cli_update_sensor(Sensor sensor, int updates)
+void cli_update_sensor(Sensor sensor, Sensor last_sensor, int updates)
 {
 	irq_save();
-	int row = SENSOR_ROW + updates % SENSORS_PER_COL;
-	int col = SENSOR_COL + (updates / SENSORS_PER_COL % SENSORS_PER_ROW) * SENSOR_INDENT_WIDTH;
+	int last_row = SENSOR_ROW + last_sensor.id * SENSOR_INDENT_HEIGHT;
+	int last_col = SENSOR_COL + last_sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;
+	irq_pos(last_row, last_col);
+	irq_printf(COM2, "%s", "  ");
+	int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;
+	int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;
 	irq_pos(row, col);
-	irq_printf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);
+	irq_printf(COM2, "%s", "<-");
 	irq_restore();
 }
 
@@ -170,7 +182,7 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 	irq_pos(updates % 60, TRACK_DATA_COL + updates / 60 % 6 * TRACK_DATA_LENGTH);	
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
-	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src.group, src.id, dest.group, dest.id,
+	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,
 										 calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
 	irq_restore();
 }

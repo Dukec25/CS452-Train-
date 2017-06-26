@@ -86,7 +86,7 @@ Sensor num_to_sensor(int num)
 {
 	Sensor sensor;
 	sensor.group = num / SENSORS_PER_GROUP;
-	sensor.id = num % SENSORS_PER_GROUP - 1;
+	sensor.id = num % SENSORS_PER_GROUP + 1;
 	return sensor;
 }
 
@@ -143,7 +143,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 	}
-	else if (!strcmp(command_buffer->data, "sdc", 2)) {
+	else if (!strcmp(command_buffer->data, "sdc", 3)) {
 		pcmd->type = SDC;
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
