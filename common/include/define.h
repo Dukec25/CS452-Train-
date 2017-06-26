@@ -30,7 +30,7 @@ typedef unsigned int size_t;
 #define NULL	0
 
 /* debug */
-#define DEBUG	1400
+#define DEBUG	13
 #define LOG		13
 
 #endif //__DEFINE_H__
