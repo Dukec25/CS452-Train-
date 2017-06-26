@@ -38,7 +38,7 @@
 #define SWITCH_ROW			LABEL_BORDER + 1
 #define SWITCH_COL 			MIDDLE_BORDER + 1
 /* Track */
-#define TRACK_DATA_WIDTH 			90
+#define TRACK_DATA_WIDTH 			100
 #define TRACK_DATA_LEFT_BORDER 		RIGHT_BORDER
 #define TRACK_DATA_RIGHT_BORDER 	RIGHT_BORDER + TRACK_DATA_WIDTH
 #define TRACK_DATA_UPPER_BORDER 	UPPER_BORDER
@@ -52,7 +52,7 @@
 #define TRACK_DATA_PER_ROW			5
 #define TRACK_DATA_PER_COL			26
 #define TRACK_LABEL_LENGTH			7
-#define TRACK_DATA_LENGTH			18
+#define TRACK_DATA_LENGTH			20
 
 /*
  * Draw the initial command line interface
@@ -92,6 +92,5 @@ void cli_update_sensor(Sensor sensor, int updates);
 /*
  * Update the track A display
  */
-void cli_update_track(int src, int dest, int distance, int velocity, int updates);
-
+void cli_update_track(Calibration_package calibration_pkg, int updates);
 #endif // __CLI_H__

@@ -149,6 +149,7 @@ void train_server()
 					Sensor sensor;
 					sensor.group = sensor_group;
 					sensor.triggered_time = Time();
+					sensor.triggered_poll = num_sensor_polls;
 					if (bit + 1 <= 8) {
 						sensor.id = 8 - bit;
 					}
@@ -168,20 +169,23 @@ void train_server()
 					int distance = cal_distance(track, last_stop, current_location);
 
 					// velcoity
-					int start_time = 0; 
+					int start_time = 0;
+					int start_poll = 0; 
 					while (train_server.sensor_lifo_top != -1) {
 						Sensor last_sensor;
 						last_sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
 						train_server.sensor_lifo_top -= 1;
 						if (sensor_to_num(last_sensor.group, last_sensor.id) == last_stop) {
 							start_time = last_sensor.triggered_time;
+							start_poll = last_sensor.triggered_poll;
 							break;
 						}
 						//irq_printf(COM2, "pop sensor group = %d, id = %d, time = %d\r\n",
 						//					sensor.group, sensor.id, sensor.triggered_time);
 					}
 					int end_time = sensor.triggered_time;
-					int velocity = distance / (end_time - start_time);
+					int end_poll = sensor.triggered_poll;
+					int velocity = distance / (20 * (end_poll - start_poll));
 
 					// Send calibration update
 					if (distance != 0) {
@@ -193,7 +197,8 @@ void train_server()
 						calibration_update_request.calibration_update.src = last_stop;
 						calibration_update_request.calibration_update.dest = current_location;
 						calibration_update_request.calibration_update.distance = distance;
-						calibration_update_request.calibration_update.velocity = end_time - start_time;
+						calibration_update_request.calibration_update.time = end_time - start_time;
+						calibration_update_request.calibration_update.velocity = velocity; 
 						Send(cli_server_tid, &calibration_update_request, sizeof(calibration_update_request),
 							 &cli_server_handshake, sizeof(cli_server_handshake));
 					}
@@ -311,9 +316,7 @@ void cli_server()
 				break;
 			case CLI_UPDATE_CALIBRATION:
 				//irq_printf(COM2, "cli pop calibration update req\r\n");
-				cli_update_track(update_request->calibration_update.src, update_request->calibration_update.dest,
-								 update_request->calibration_update.distance, update_request->calibration_update.velocity,
-								 num_track_updates++);
+				cli_update_track(update_request->calibration_update, num_track_updates++);
 				break;
 			}
 		}

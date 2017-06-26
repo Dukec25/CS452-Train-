@@ -161,17 +161,18 @@ void cli_update_sensor(Sensor sensor, int updates)
 	irq_restore();
 }
 
-void cli_update_track(int src, int dest, int distance, int velocity, int updates)
+void cli_update_track(Calibration_package calibration_pkg, int updates)
 {
 	irq_save();
 //	int node_row = TRACK_DATA_ROW + updates % TRACK_DATA_PER_COL;
 //	int node_col = TRACK_DATA_COL + updates / TRACK_DATA_PER_COL % TRACK_DATA_PER_ROW * TRACK_DATA_LENGTH;
 //	irq_pos(node_row, node_col);
-	irq_pos(updates, TRACK_DATA_COL);	
-	char src_group = src / SENSORS_PER_GROUP + SENSOR_LABEL_BASE;
-	char src_id = src % SENSORS_PER_GROUP + 1;
-	char dest_group = dest / SENSORS_PER_GROUP + SENSOR_LABEL_BASE;
-	char dest_id = dest % SENSORS_PER_GROUP + 1;
-	irq_printf(COM2, "%c%d->%c%d,%d,%d", src_group, src_id, dest_group, dest_id, distance, velocity);
+	irq_pos(updates % 60, TRACK_DATA_COL + updates / 60 % 6 * TRACK_DATA_LENGTH);	
+	char src_group = calibration_pkg.src / SENSORS_PER_GROUP + SENSOR_LABEL_BASE;
+	char src_id = calibration_pkg.src % SENSORS_PER_GROUP + 1;
+	char dest_group = calibration_pkg.dest / SENSORS_PER_GROUP + SENSOR_LABEL_BASE;
+	char dest_id = calibration_pkg.dest % SENSORS_PER_GROUP + 1;
+	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src_group, src_id, dest_group, dest_id,
+										 calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
 	irq_restore();
 }

@@ -58,6 +58,7 @@ typedef struct Sensor {
 	char group;
 	char id;
 	int triggered_time;
+	int triggered_poll;
 } Sensor;
 
 /* Train */
@@ -98,6 +99,7 @@ typedef struct Calibration_package {
 	int src;
 	int dest;
 	int distance;
+	int time;
 	int velocity;
 } Calibration_package;
 
