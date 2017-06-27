@@ -3,6 +3,13 @@
 #include <log.h>
 #include <user_functions.h>
 
+/*void test_sensor(int num){*/
+    /*char group = num/16 + 'A';*/
+    /*int id = num%16 + 1; */
+    /*bwprintf(COM2, "%c", group);*/
+    /*bwprintf(COM2, "%d\r\n", id);*/
+/*}*/
+
 void train_task_startup()
 {
 	irq_io_tasks_cluster();
@@ -173,6 +180,8 @@ void train_server()
 					// distance	
 					int current_location = sensor_to_num(sensor);
 					int distance = cal_distance(track, train_server.last_stop, current_location);
+                    int next_location = predict_next(track, current_location, &train_server);
+                    /*test_sensor(next_location);*/
 
 					// velcoity
 					int start_time = 0;
