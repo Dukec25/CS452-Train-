@@ -108,7 +108,7 @@ typedef enum {
 	GO, 		/* Start the train controller */
 	STOP,		/* Stop the train controller */
     BR,         /* Flip the switches to get the train from one point to another */
-	SDC,		/* Stop train to measure stopping distance */
+	DC,			/* Stop train to measure stopping distance */
 	SENSOR 		/* Dump sensor modules */
 } Train_cmd_type;
 typedef struct {
@@ -125,7 +125,6 @@ typedef struct Command_buffer
 /* Cli */
 typedef enum {
 	CLI_TRAIN_COMMAND,
-	CLI_STOP_DISTANCE_COLLECTOR,
 	CLI_UPDATE_TRAIN,
 	CLI_UPDATE_SENSOR,
 	CLI_UPDATE_SWITCH,

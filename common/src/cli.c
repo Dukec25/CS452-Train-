@@ -176,10 +176,7 @@ void cli_update_sensor(Sensor sensor, Sensor last_sensor, int updates)
 void cli_update_track(Calibration_package calibration_pkg, int updates)
 {
 	irq_save();
-//	int node_row = TRACK_DATA_ROW + updates % TRACK_DATA_PER_COL;
-//	int node_col = TRACK_DATA_COL + updates / TRACK_DATA_PER_COL % TRACK_DATA_PER_ROW * TRACK_DATA_LENGTH;
-//	irq_pos(node_row, node_col);
-	irq_pos(updates % 60, TRACK_DATA_COL + updates / 60 % 6 * TRACK_DATA_LENGTH);	
+	irq_pos(updates % 22, TRACK_DATA_COL);	
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
 	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,

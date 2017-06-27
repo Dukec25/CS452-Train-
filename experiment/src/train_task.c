@@ -8,7 +8,7 @@ void train_task_startup()
 	irq_io_tasks_cluster();
 
 	cli_startup();
-/*	cli_track_startup();
+//	cli_track_startup();
 	bwputc(COM1, START); // switches won't work without start command
 
 	initialize_switch();
@@ -21,7 +21,7 @@ void train_task_startup()
 
 	tid = Create(PRIOR_MEDIUM, train_server);
 	dump(SUBMISSION, "created train_task taskId = %d", tid);
-*/	
+	
 	Exit();
 }
 
@@ -61,7 +61,7 @@ void train_server()
 
 	int stopping_distance_tid = Create(PRIOR_MEDIUM, stopping_distance_collector_task);
 	dump(SUBMISSION, "stopping_distance_tid %d", stopping_distance_tid);
-	vint train_server_address = (vint) &train_server_address;
+	vint train_server_address = (vint) &train_server;
 	dump(SUBMISSION, "train_server sending train_server_address = 0x%x", train_server_address);	 
 	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address), &requester_handshake, sizeof(requester_handshake));
 
@@ -89,6 +89,8 @@ void train_server()
 			cli_update_request.type = CLI_UPDATE_TRAIN;
 			cli_update_request.train_update.id = cmd->arg0; 
 			cli_update_request.train_update.speed = cmd->arg1;
+			train_server.train.id = cmd->arg0;
+			train_server.train.speed = cmd->arg1;
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &cli_server_handshake, sizeof(cli_server_handshake));
 			break;
 		case RV:
@@ -113,9 +115,9 @@ void train_server()
 			break;
 		}
 
-		if (cmd->type == SDC) {
-			debug(SUBMISSION, "%s", "handle sdc cmd");
-			Send(stopping_distance_tid, &cmd, sizeof(cmd), &requester_handshake, sizeof(requester_handshake));
+		if (cmd->type == DC) {
+			//debug(SUBMISSION, "train_server handle dc cmd, %d, %d", cmd->arg0, cmd->arg1);
+			Send(stopping_distance_tid, cmd, sizeof(*cmd), &requester_handshake, sizeof(requester_handshake));
 		}
         else if(cmd->type == BR){
             // hardcode the state as number for now to test
@@ -250,30 +252,31 @@ void stopping_distance_collector_task()
 	Train_server *train_server = (Train_server *) train_server_address;
 	dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
 
-	// E12
-	Sensor stop_sensor;
-	stop_sensor.group = 4;
-	stop_sensor.id = 12;
-	int stop = sensor_to_num(stop_sensor);
-
-	int iteration = 0;
-	int num_runs = 10;
-
 	while (handshake != HANDSHAKE_SHUTDOWN) {
-		Command sdc_cmd;
-		Receive(&train_server_tid, &sdc_cmd, sizeof(sdc_cmd));
+		Command dc_cmd;
+		Receive(&train_server_tid, &dc_cmd, sizeof(dc_cmd));
 		handshake = HANDSHAKE_AKG;
 		Reply(train_server_tid, &handshake, sizeof(handshake));
-		debug(SUBMISSION, "%s", "receive sdc cmd");
-	
-		if (train_server->last_stop == stop) {
-			Command tr_cmd;
-			tr_cmd.type = TR;
-			tr_cmd.arg0 = train_server->train.id;
-			tr_cmd.arg1 = MIN_SPEED;
-			debug(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg1);
-			Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
+//		debug(SUBMISSION, "receive dc cmd %d %d", dc_cmd.arg0, dc_cmd.arg1);
+
+		Sensor stop_sensor;
+		stop_sensor.group = toupper(dc_cmd.arg0) - SENSOR_LABEL_BASE;
+		stop_sensor.id = dc_cmd.arg1;
+		int stop = sensor_to_num(stop_sensor);
+		debug(SUBMISSION, "receive dc cmd, start stop at %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
+
+		int last_stop = train_server->last_stop;
+		while (last_stop != stop) {
+			last_stop = train_server->last_stop;
+			Pass();
 		}
+		debug(SUBMISSION, "stopping_distance current stop = %d\r\n", last_stop);
+		Command tr_cmd;
+		tr_cmd.type = TR;
+		tr_cmd.arg0 = train_server->train.id;
+		tr_cmd.arg1 = MIN_SPEED;
+		debug(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg0);
+		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
 	}
 }
 
@@ -290,7 +293,7 @@ void cli_server()
 		train_server_tid = WhoIs("TRAIN_SERVER");
 	}
 
-	cli_server.cli_clock_tid = Create(PRIOR_LOW, cli_clock_task); 
+	cli_server.cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); 
 	cli_server.cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
 
 	Handshake train_server_handshake = HANDSHAKE_AKG;
@@ -308,7 +311,6 @@ void cli_server()
 
 		switch (request.type) {
 		case CLI_TRAIN_COMMAND:
-		case CLI_STOP_DISTANCE_COLLECTOR:
 			fifo_put(&cli_server.cmd_fifo, &request);
 			dump(SUBMISSION, "%s", "cli_server put train cmd cli req");
 			break;
@@ -428,11 +430,7 @@ void cli_io_task()
 			parse_result = command_parse(&command_buffer, &train, &cmd);
 			if (parse_result != -1) {
 				Cli_request cli_cmd_request;
-				if (cmd.type != SDC) {
-					cli_cmd_request.type = CLI_TRAIN_COMMAND;
-				} else {
-					cli_cmd_request.type = CLI_STOP_DISTANCE_COLLECTOR;
-				}
+				cli_cmd_request.type = CLI_TRAIN_COMMAND;
 				cli_cmd_request.cmd = cmd;
 				dump(SUBMISSION, "%s", "io entered train cmd, send cmd");
 				Send(cli_server_tid, &cli_cmd_request, sizeof(cli_cmd_request), &handshake, sizeof(handshake));

@@ -120,6 +120,11 @@ static int is_state(char c)
 	}
 }
 
+static int is_alpha(char c)
+{
+	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+}
+
 void command_clear(Command_buffer *command_buffer)
 {
 	int i = 0;
@@ -139,15 +144,15 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 
 	if (!strcmp(command_buffer->data, "go", 2)) {
 		pcmd->type = GO;
+		return 0;
 	}
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
-	}
-	else if (!strcmp(command_buffer->data, "sdc", 3)) {
-		pcmd->type = SDC;
+		return 0;
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
-			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "br", 2)) {
+			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "br", 2) ||
+			 !strcmp(command_buffer->data, "dc", 2)) {
 		// parse arguments
 		int pos = 2;
 		char num_buffer[10];
@@ -161,7 +166,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 				// current char is a digit
 				num_buffer[num_buffer_pos++] = command_buffer->data[pos];
 			}
-			else if (is_state(command_buffer->data[pos])) {
+			else if (is_alpha(command_buffer->data[pos])) {
 				// current char is a switch state
 				args[argc++] = command_buffer->data[pos];
 			}
@@ -208,6 +213,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	case 'b':
 		pcmd->type = BR;
 		break;
+	case 'd':
+		pcmd->type = DC;
+		//debug(SUBMISSION, "parse DC cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
