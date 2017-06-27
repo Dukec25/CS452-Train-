@@ -4,6 +4,7 @@
 #include <time.h>
 #include <irq.h>
 #include <fifo.h>
+#include <uart_irq.h>
 
 #define IDLE_TASK	4
 
@@ -204,6 +205,7 @@ int activate(Task_descriptor *td)
 	td->state = STATE_ACTIVE;
 	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
+    /*bwprintf(COM2, "%d %d", td->lr, td->sp);*/
     /*debug(SUBMISSION, "%x", td->lr);*/
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
@@ -373,7 +375,7 @@ int main()
 					k_my_tid(td, &ks);
 					break;
 				case 4:
-					k_exit(td, &ks);
+                    k_exit(td, &ks);
 					break;
 				case 5:
 					k_my_parent_tid(td, &ks);
@@ -392,11 +394,31 @@ int main()
 					k_await_event(arg0, arg1, td, &ks);
 					break;
                 case 10:
-                    ks.ready_queue.mask = 0;
+                    while(ks.ready_queue.mask){
+                        td = schedule(&ks);
+                        k_exit(td, &ks);
+                    }
+                    while(ks.send_block.mask){
+                        td = pull_highest_priority_task(&(ks.send_block));
+                        td->state = STATE_ZOMBIE;
+                        remove_task(td, &(ks.send_block));
+                    }
+                    while(ks.receive_block.mask){
+                        td = pull_highest_priority_task(&(ks.receive_block));
+                        td->state = STATE_ZOMBIE;
+                        remove_task(td, &(ks.receive_block));
+                    }
+                    while(ks.reply_block.mask){
+                        td = pull_highest_priority_task(&(ks.reply_block));
+                        td->state = STATE_ZOMBIE;
+                        remove_task(td, &(ks.reply_block));
+                    }
                     break;
 			}
 	}
     irq_disable();
+    uart_device_disable(COM1, RCV);
+    uart_device_disable(COM2, RCV);
 
 	// idle task measurement
 	elapsed_time = timer4_read() - elapsed_time;
@@ -405,5 +427,6 @@ int main()
 //	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
 //	long long fraction = (idle_task_time * 100) / elapsed_time;
 //	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
+	clear_everything();
 	return 0;
 }

@@ -12,11 +12,11 @@ void train_task_startup()
 
 	int tid;
 
-	tid = Create(PRIOR_MEDIUM, cli_server);
-	debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
+    tid = Create(PRIOR_MEDIUM, cli_server);
+    debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
 
-	tid = Create(PRIOR_MEDIUM, train_server);
-	debug(DEBUG_K4, "created train_task taskId = %d", tid);
+	/*tid = Create(PRIOR_MEDIUM, train_server);*/
+	/*debug(DEBUG_K4, "created train_task taskId = %d", tid);*/
 	
 	Exit();
 }
@@ -211,9 +211,9 @@ void cli_server()
 
 	int result = RegisterAs("CLI_SERVER");
 	int train_server_tid = INVALID_TID;
-	while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
-		train_server_tid = WhoIs("TRAIN_SERVER");
-	}
+	/*while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {*/
+		/*train_server_tid = WhoIs("TRAIN_SERVER");*/
+	/*}*/
 
 	cli_server.cli_clock_tid = Create(PRIOR_LOW, cli_clock_task); 
 	cli_server.cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
@@ -261,29 +261,31 @@ void cli_server()
 		if (!is_fifo_empty(&cli_server.status_update_fifo)) {
 			Cli_request *update_request;
 			fifo_get(&cli_server.status_update_fifo, &update_request);
+            Terminate();
 			switch (update_request->type) {
 			case CLI_UPDATE_CLOCK:
-				// irq_printf(COM2, "cli pop clock update req\r\n");
+                irq_printf(COM2, "cli pop clock update req\r\n");
 				cli_update_clock(update_request->clock_update);
 				break;
 			case CLI_UPDATE_TRAIN:
-				//irq_printf(COM2, "cli pop train update req\r\n");
+                irq_printf(COM2, "cli pop train update req\r\n");
 				cli_update_train(update_request->train_update);
 				break;
 			case CLI_UPDATE_SWITCH:
-				//irq_printf(COM2, "cli pop switch update req\r\n");
+                irq_printf(COM2, "cli pop switch update req\r\n");
 				cli_update_switch(update_request->switch_update);
 				break;
 			case CLI_UPDATE_SENSOR:
-				//irq_printf(COM2, "cli pop sensor group = %d, id = %d, time = %d\r\n",
-				//			update_request->sensor_update.group, update_request->sensor_update.id,
-				//			update_request->sensor_update.triggered_time);		
+                irq_printf(COM2, "cli pop sensor group = %d, id = %d, time = %d\r\n",
+                            update_request->sensor_update.group, update_request->sensor_update.id,
+                            update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, num_sensor_updates++);
 				break;
 			}
 		}
+        Terminate();
 	} while (!cli_server.is_shutdown);
-	Terminate();
+    Terminate();
 }
 
 void cli_clock_task()
@@ -361,140 +363,3 @@ void cli_io_task()
 	}
 	Exit();
 }
-
-/*
-void train_task_startup()
-{
-//	cli_startup();
-	irq_io_tasks_cluster();
-
-//	Putc(COM1, START); // switches won't work without start command
-//	test_initialize_switch();
-//	initialize_switch();
-//	sensor_initialization();
-//	debug(DEBUG_K4, "%s", "initialized switches");
-
-	int tid;
-//	tid  = Create(PRIOR_LOW, clock_task);
-//	debug(DEBUG_K4, "created clock_task taskId = %d", tid);
-
-	tid = Create(PRIOR_LOW, sensor_task);
-	debug(DEBUG_K4, "created sensor_task taskId = %d", tid);
-
-//   tid = Create(PRIOR_LOW, test_task);
-//	debug(DEBUG_K4, "created train_task taskId = %d", tid);
-	
-	tid = Create(PRIOR_LOW, train_task);
-	debug(DEBUG_K4, "created train_task taskId = %d", tid);
-	
-	Exit();
-}
-*/
-
-/*
-void sensor_task() {
-
-	int updates = 0;
-
-	vint register_result = RegisterAs("SENSOR_TASK");
-	vint requester;
-	Calibration_package cali_pkg;
-	Delivery reply_msg;
-	Receive(&requester, &cali_pkg, sizeof(cali_pkg));
-	Reply(requester, &reply_msg, sizeof(reply_msg));
-
-	track_node tracka[TRACK_MAX];
-	init_tracka(tracka);
-
-	while (1) {
-		irq_printf(COM2, "%s", "sensor");
-		//debug(SUBMISSION, "%s", "sensor is printing");
-		//irq_printf(COM2, "%s", "sensor is printing");
-		Delay(20);	// delay 0.2 second
-		Putc(COM1, SENSOR_QUERY);
-		//irq_printf(COM2, "%s", "after SENSOR_QUERY\r\n");
-		int sensor_data[SENSOR_GROUPS];
-		int group = 0;
-		for (group = 0; group < SENSOR_GROUPS; group++) {
-			char lower = Getc(COM1);
-		   // Putc(COM1, 0); // speed
-			char upper = Getc(COM1);
-			sensor_data[group] = upper << 8 | lower;
-		}
-
-		for (group = 0; group < SENSOR_GROUPS; group++) {
-			int id = 0;
-			for (id = 0; id < SENSORS_PER_GROUP; id++) {
-				// irq_printf(COM2, "%s", "Sensor group  "); 
-				if (sensor_data[group] & (0x1 << id)) {
-					int actual_id; 
-					if( id + 1 <= 8){
-						actual_id = 8 - id;
-					} else{
-						actual_id = 8 + 16 - id;
-					}
-					//sensor_data actually looks like 
-					// 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
-					cli_update_sensor(group, actual_id, updates++);
-					//irq_printf(COM2, "%s", "sensor is printing");
-					
-					if(group*16-1 + actual_id  == *(cali_pkg.stop_sensor)){
-						Putc(COM1, 0); 	 	// stop	
-						Putc(COM1, 69); 	// train
-					}
-				}
-			}
-		}
-	}
-	Exit();
-}
-*/
-
-/*
-void train_task() {
-	// command
-	Command_buffer command_buffer;
-	command_buffer.pos = 0;
-	char train_id = 0;
-	char train_speed = 0;
-
-	vint stop_sensor = -1;
-	vint last_stop = -1;
-
-	Calibration_package calibration_package;
-	calibration_package.stop_sensor = &stop_sensor;
-	calibration_package.last_stop = &last_stop;
-
-	int sensor_task_tid = WhoIs("SENSOR_TASK");
-	Delivery reply_msg;
-	Send(sensor_task_tid, &calibration_package, sizeof(Calibration_package), &reply_msg, sizeof(reply_msg));
-
-	while(1) {
-		// user I/O and send command to train
-		char c = Getc(COM2);
-		if (c == 'q') {
-			// user hits 'q', exit
-			irq_printf(COM2, "user hits q, terminate the program");	
-			Terminate();
-			break;
-		}
-		else if (c == '\r') {
-			// user hits ENTER
-			// parse command
-			Command cmd;
-			int result = command_parse(&command_buffer, &train_id, &train_speed, &cmd);
-			if (result != -1) {
-				// user entered a valid command, sends command to train and updates user interface
-				// command_handle is within common/src/train.c
-			  	command_handle(&cmd, &calibration_package);
-			}
-			// clears command_buffer
-			command_clear(&command_buffer);
-		}
-		else {
-			command_buffer.data[command_buffer.pos++] = c;
-//			Putc(COM2, c);
-		}
-	}
-	Exit();
-}*/

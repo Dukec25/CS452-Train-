@@ -63,6 +63,13 @@ void uart_irq_disable(int channel)
 	*vic2_int_enbl_clr |= uart_irq_mask(channel);
 }
 
+void clear_everything(){
+	vint *vic2_int_enbl_clr = (vint *) VIC2_INT_ENBL_CLR;
+	*vic2_int_enbl_clr = 0xFFFFFFFF;
+	vint *vic2_int_enbl = (vint *) VIC2_INT_ENBL;
+	*vic2_int_enbl = 0;
+}
+
 void uart_device_enable(int channel, UART_IRQ_TYPE type)
 {
 	debug(DEBUG_UART_IRQ, "enter uart_device_enable, channel = %d, type = %d", channel, type);

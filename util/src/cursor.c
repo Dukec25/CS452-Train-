@@ -33,7 +33,6 @@ void irq_cls()
 void irq_pos(int row, int col)
 {
 	irq_printf(COM2, "%c[%d;%dH", ESC, row, col);
-    debug(DEBUG_K4, "after %s", "weird command");
 }
 void irq_save()
 {

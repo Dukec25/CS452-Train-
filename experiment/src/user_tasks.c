@@ -83,34 +83,33 @@ void clock_server_notifier(){
 void idle_task()
 {
 	debug(DEBUG_UART_IRQ, "enter %s", "idle_task");
-//	debug(SUBMISSION, "%s", "idle_task");
     uint32 tid = MyTid();
 
 	int i, j = 0;
     vint *uart1_error = (vint *) UART1_ERROR;
     while(1){
 
-        if(*uart1_error & FE_MASK){
-            debug(SUBMISSION, "%s", "frame error");
-        }
-        if(*uart1_error & PE_MASK){
-            debug(SUBMISSION, "%s", "parity error");
-        }
-        if(*uart1_error & BE_MASK){
-            debug(SUBMISSION, "%s", "break error");
-        }
-        if(*uart1_error & OE_MASK){
-            debug(SUBMISSION, "%s", "overrun error");
-        }
+        /*if(*uart1_error & FE_MASK){*/
+            /*debug(SUBMISSION, "%s", "frame error");*/
+        /*}*/
+        /*if(*uart1_error & PE_MASK){*/
+            /*debug(SUBMISSION, "%s", "parity error");*/
+        /*}*/
+        /*if(*uart1_error & BE_MASK){*/
+            /*debug(SUBMISSION, "%s", "break error");*/
+        /*}*/
+        /*if(*uart1_error & OE_MASK){*/
+            /*debug(SUBMISSION, "%s", "overrun error");*/
+        /*}*/
         
-        /*bwprintf(COM2, "%s", "id");*/
-        /*Putc(COM2, 'A');*/
-        /*irq_printf(COM2, "golden retriever is the best\r\n");*/
-        /*debug(SUBMISSION, "%s", "idle_task");*/
-	/*for (i = 0; i < 300000; i++) {*/
-        /*debug(SUBMISSION, "i = %d", i);*/
-        /*Pass();*/
-		/*j += 2;*/
+        /*[>bwprintf(COM2, "%s", "id");<]*/
+        /*[>Putc(COM2, 'A');<]*/
+        /*[>irq_printf(COM2, "golden retriever is the best\r\n");<]*/
+        /*[>debug(SUBMISSION, "%s", "idle_task");<]*/
+	/*[>for (i = 0; i < 300000; i++) {<]*/
+        /*[>debug(SUBMISSION, "i = %d", i);<]*/
+        /*[>Pass();<]*/
+		/*[>j += 2;<]*/
 	}
 	/*debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);*/
     /*Exit();*/
