@@ -139,3 +139,12 @@ void Memcpy(void *destination, const void *source, size_t num)
 		}
 	}
 }
+
+void *memset(void *s, int c, unsigned int n)
+{
+  unsigned char *p = s;
+  while (n --> 0) {*p++ = (unsigned char)c;}
+  return s;
+}
+
+
