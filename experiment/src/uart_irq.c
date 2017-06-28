@@ -133,13 +133,6 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 	debug(DEBUG_UART_IRQ, "channel = %d, *uart_intr = 0x%x", channel, *uart_intr);
 	
 	vint uart_intr_value = *uart_intr;
-    vint * uart1_flag = (vint *) UART1_FLAG;
-
-    if (uart_intr_value & 0x1) {
-        bwprintf(COM2, "clear to send %d\r\n", (*uart1_flag & CTS_MASK));
-        *uart_intr = 0; 
-    }
-
 	if (uart_intr_value & uart_receive_irq_mask()) {
         //debug(SUBMISSION, "handle rcv interupt %s", "");
         // receive interrupt
@@ -157,7 +150,6 @@ void uart_irq_handle(int channel, Kernel_state *ks)
         }
     }
 	if (uart_intr_value & uart_transmit_irq_mask()) {
-        /*bwprintf(COM2, "ready to send %d\r\n", (*uart1_flag & CTS_MASK));*/
         debug(DEBUG_UART_IRQ, "handle xmit interrupt %s", "");
 
 		// new transmit interrupt handling 
@@ -197,6 +189,6 @@ void uart_irq_handle(int channel, Kernel_state *ks)
             	insert_task(td, &(ks->ready_queue));
 			}
 		}
-    } 
-    /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
+        /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
+    }
 }

@@ -18,9 +18,4 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
  */
 int predict_next(track_node *track, int src, Train_server *train_server);
 
-typedef struct sensor_distance {
-    int sensor_id;
-    int distance;
-} sensor_distance;
-
 #endif //__CALCULATION_H__
