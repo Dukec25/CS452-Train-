@@ -157,7 +157,35 @@ void train_server()
 		}
 
 		// handle DC, PARK, and SENSOR
-		if (cmd.type == DC) {
+		if (cmd.type == BR) {
+			// parse destination
+			Sensor stop_sensor;
+			stop_sensor.group = toupper(cmd.arg0) - SENSOR_LABEL_BASE;
+			stop_sensor.id = cmd.arg1;
+			int stop = sensor_to_num(stop_sensor);
+			debug(SUBMISSION, "train_server handle BR: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
+	
+			// flip switches such that the train can arrive at the stop
+			debug(SUBMISSION, "%s", "train_server handle BR: br start");
+            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server);
+			debug(SUBMISSION, "train_server handle BR: flip %d switches start", num_switch);
+            int i;
+            for(i = 0; i < num_switch; i++) {
+				Command sw_cmd = get_sw_command(train_server.br_update[i].id, train_server.br_update[i].state);
+
+				// push sw_cmd request onto the fifo
+				int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
+				if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
+					if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
+						cmd_fifo_put_next = 0;
+					}
+				}
+				train_server.cmd_fifo[train_server.cmd_fifo_head] = sw_cmd;
+				train_server.cmd_fifo_head = cmd_fifo_put_next;
+            }
+			debug(SUBMISSION, "train_server handle BR: %d br done", num_switch);
+		}
+		else if (cmd.type == DC) {
 			//debug(SUBMISSION, "train_server handle dc cmd, %d, %d", cmd.arg0, cmd.arg1);
 			Send(stopping_distance_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
 		}
