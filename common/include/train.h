@@ -3,6 +3,7 @@
 #include <define.h>
 #include <fifo.h>
 #include <clock.h>
+#include <track_data.h>
 
 /* Switches */
 #define NUM_SWITCHES 22
@@ -58,16 +59,22 @@ typedef struct Calibration_package {
 	int time;
 	int velocity;
 } Calibration_package;
-#define MAX_NUM_CALIBRATIONS	3
+
+/* Velocity */
+#define VELOCITY_DATA_LENGTH	80
+#define MAX_NUM_VELOCITIES		3
 typedef struct Velocity_node {
 	int src;
 	int num_velocity;
-	Calibration_package calibration[MAX_NUM_CALIBRATIONS]; 
+	int dest[MAX_NUM_VELOCITIES];
+	int velocity[MAX_NUM_VELOCITIES];
 } Velocity_node;
 typedef struct Velocity_data {
-	Velocity_node velocity_node[SENSOR_GROUPS * SENSORS_PER_GROUP]; 
+	Velocity_node node[TRACK_MAX];	// [mm] / [tick] = [mm] / [10 ms]  
+	int stopping_distance;	// mm
 } Velocity_data;
-int velocity_initialization(Velocity_data *velocity_data); 
+int track_node_name_to_num(char *name);
+int velocity14_initialization(Velocity_data *velocity_data); 
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
 
 /* Train */
@@ -107,7 +114,7 @@ typedef enum {
 	SW, 		/* Throw the given switch to straight (S) or curved (C). */
 	GO, 		/* Start the train controller */
 	STOP,		/* Stop the train controller */
-    BR,         /* Flip the switches to get the train from one point to another */
+    PARK,       /* Flip the switches to get the train from one point to another such that train park at a sensor */
 	DC,			/* Stop train to measure stopping distance */
 	SENSOR 		/* Dump sensor modules */
 } Train_cmd_type;
@@ -137,7 +144,11 @@ typedef struct Cli_request {
 	Command cmd;
 	Train train_update;
 	Switch switch_update;
+
 	Sensor sensor_update;
+	int	last_sensor_update;
+	int next_sensor_update;
+
 	Clock clock_update;
 	Calibration_package calibration_update;
     Switch br_update[10];

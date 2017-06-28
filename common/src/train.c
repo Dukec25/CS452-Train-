@@ -12,6 +12,30 @@
 #define THREE_WAY_SWITCH_OFFSET 0x99
 #define THREE_WAY_SWITCH_NUM 4
 
+static int is_digit(char c)
+{
+	return (c >= '0' && c <= '9');
+}
+
+static int is_state(char c)
+{
+	switch(c) {
+	case 'c':
+	case 'C':
+	case 's':
+	case 'S':
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static int is_alpha(char c)
+{
+	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+}
+
+
 char switch_id_to_byte(uint8 id)
 {
 	if (id > NUM_SWITCHES) {
@@ -90,39 +114,383 @@ Sensor num_to_sensor(int num)
 	return sensor;
 }
 
-int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
+int track_node_name_to_num(char *name)
 {
-	Velocity_node velocity = velocity_data->velocity_node[src];
-	int i;
-	for (i = 0; i < velocity.num_velocity; i++) {
-		if (velocity.calibration[i].dest == dest) {
-			return velocity.calibration[i].velocity;
+	char group_buf[10];
+	int group_idx = 0;
+	char id_buf[10];
+	int id_idx = 0;
+	int idx = 0;
+	while(name[idx] != '\0') {
+		if (is_alpha(name[idx])) {
+			group_buf[group_idx++] = name[idx];
+		}
+		else {
+			id_buf[id_idx++] = name[idx];
+		}
+		idx++;
+	}
+	//debug(SUBMISSION, "name = %s, group_buf = %s, id_buf = %s", name, group_buf, id_buf);
+
+	int num = -1;
+	int id = atoi(id_buf);
+	if (group_idx == 1) {
+		// A1 - E16
+		Sensor sensor;
+		sensor.group = group_buf[0] - SENSOR_LABEL_BASE;
+		sensor.id = id;
+		num = sensor_to_num(sensor);
+	}
+	else if (group_idx == 2) {
+		// BR, MR, EN, EX
+		if ((!strcmp(group_buf, "BR", 2)) && (id <= 18)) {
+			// BR1 - 18
+			int offset = SENSORS_PER_GROUP * SENSOR_GROUPS;
+			int base = 1;
+			num = offset + 2 * (id - base);
+		}
+		else if ((!strcmp(group_buf, "MR", 2)) && (id <= 18)) {
+			// MR1 - 18
+			int offset = SENSORS_PER_GROUP * SENSOR_GROUPS;
+			int base = 1;
+			num = offset + 2 * (id - base) + 1;
+		}
+		else if ((!strcmp(group_buf, "BR", 2)) && (id <= 156)) {
+			// BR153 - 156
+			int offset = SENSORS_PER_GROUP * SENSOR_GROUPS + 18 * 2;
+			int base = 153;
+			num = offset + 2 * (id - base);
+		}
+		else if ((!strcmp(group_buf, "MR", 2)) && (id <= 156)) {
+			// MR153 - 156
+			int offset = SENSORS_PER_GROUP * SENSOR_GROUPS + 18 * 2;
+			int base = 153;
+			num = offset + 2 * (id - base) + 1;
+		}
+		else if ((!strcmp(group_buf, "EN", 2)) && (id <= 10)) {
+			// EN1 - 10
+			int offset = SENSORS_PER_GROUP * SENSOR_GROUPS + 18 * 2 + 4 * 2;
+			int base = 1;
+			num = offset + 2 * (id - base);
+		}
+		else if ((!strcmp(group_buf, "EX", 2)) && (id <= 10)) {
+			// EX1 - 10
+			int offset = SENSORS_PER_GROUP * SENSOR_GROUPS + 18 * 2 + 4 * 2;
+			int base = 1;
+			num = offset + 2 * (id - base) + 1;
 		}
 	}
-	return 0;
+	//debug(SUBMISSION, "num = %d", num);
+	return num; 
 }
-
-static int is_digit(char c)
+ 
+int velocity14_initialization(Velocity_data *velocity_data)
 {
-	return (c >= '0' && c <= '9');
+	velocity_data->stopping_distance = 940;
+
+	int index;
+
+	index = track_node_name_to_num("A3");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C11");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("A4");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B16");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B1");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D14");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B3");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C2");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B4");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C9");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B6");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C12");
+	velocity_data->node[index].velocity[0] = 5;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B13");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D2");
+	velocity_data->node[index].velocity[0] = 8;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("E2");
+	velocity_data->node[index].velocity[1] = 7;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("B14");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D16");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B15");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("A3");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("B16");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C10");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("C5");
+	velocity_data->node[index].velocity[1] = 7;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("C1");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B4");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("C2");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D2");
+	velocity_data->node[index].velocity[0] = 8;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("E2");
+	velocity_data->node[index].velocity[1] = 6;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("C5");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D12");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("E11");
+	velocity_data->node[index].velocity[1] = 6;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("C9");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B15");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("C10");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B1");
+	velocity_data->node[index].velocity[0] = 2;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("B3");
+	velocity_data->node[index].velocity[1] = 7;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("C11");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E16");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("C12");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("A4");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+	debug(SUBMISSION, "C12 index = %d, dest = %d", index, track_node_name_to_num("A4"));
+
+	index = track_node_name_to_num("C14");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("A4");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D1");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B14");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("C1");
+	velocity_data->node[index].velocity[1] = 6;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("D2");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E4");
+	velocity_data->node[index].velocity[0] = 10;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D4");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B6");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D5");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E6");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D6");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E10");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D8");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E8");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D10");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D5");
+	velocity_data->node[index].velocity[0] = 5;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
+	velocity_data->node[index].velocity[1] = 6;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("D12");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E11");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D14");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E14");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D15");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B13");
+	velocity_data->node[index].velocity[0] = 10;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("D16");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E14");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E1");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("B14");
+	velocity_data->node[index].velocity[0] = 5;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("C1");
+	velocity_data->node[index].velocity[1] = 6;
+	velocity_data->node[index].num_velocity = 2;
+
+	index = track_node_name_to_num("E2");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E15");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E3");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D1");
+	velocity_data->node[index].velocity[0] = 10;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E4");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E5");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E5");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D6");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E6");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D1");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("C4");
+	velocity_data->node[index].velocity[1] = 7;
+	velocity_data->node[index].dest[2] = track_node_name_to_num("E3");
+	velocity_data->node[index].velocity[2] = 7;
+	velocity_data->node[index].num_velocity = 3;
+
+	index = track_node_name_to_num("E8");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C14");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E9");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D5");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
+	velocity_data->node[index].velocity[1] = 5;
+	velocity_data->node[index].num_velocity = 2;
+	
+	index = track_node_name_to_num("E10");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E13");
+	velocity_data->node[index].velocity[0] = 9;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E11");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D10");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E13");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D15");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E14");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E9");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E15");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("C12");
+	velocity_data->node[index].velocity[0] = 7;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("E16");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("E1");
+	velocity_data->node[index].velocity[0] = 10;
+	velocity_data->node[index].num_velocity = 1;
+
+	index = track_node_name_to_num("MR9");
+	velocity_data->node[index].src = index;
+	velocity_data->node[index].dest[0] = track_node_name_to_num("D5");
+	velocity_data->node[index].velocity[0] = 6;
+	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
+	velocity_data->node[index].velocity[1] = 5;
+	velocity_data->node[index].num_velocity = 2;
 }
-
-static int is_state(char c)
+ 
+int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
-	switch(c) {
-	case 'c':
-	case 'C':
-	case 's':
-	case 'S':
-		return 1;
-	default:
-		return 0;
+	debug(SUBMISSION, "velocity_lookup %d, %d, src = %d", src, dest, velocity_data->node[src].src);
+	int i;
+	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
+		debug(SUBMISSION, "velocity_lookup dest = %d", velocity_data->node[src].dest[i]);
+		if (velocity_data->node[src].dest[i] == dest) {
+			return velocity_data->node[src].velocity[i];
+		}
 	}
-}
-
-static int is_alpha(char c)
-{
-	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+	return -1;
 }
 
 void command_clear(Command_buffer *command_buffer)
@@ -151,7 +519,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		return 0;
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
-			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "br", 2) ||
+			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "park", 4) ||
 			 !strcmp(command_buffer->data, "dc", 2)) {
 		// parse arguments
 		int pos = 2;
@@ -210,8 +578,8 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		}
 		pcmd->type = SW;
 		break;
-	case 'b':
-		pcmd->type = BR;
+	case 'p':
+		pcmd->type = PARK;
 		break;
 	case 'd':
 		pcmd->type = DC;

@@ -13,4 +13,5 @@ char toupper(char c);
 int strcmp(char *str1, char *str2, size_t num);
 int strlen(char *str);
 void Memcpy(void *destination, const void *source, size_t num);
+void *memset(void *s, int c, unsigned int n);
 #endif // __STRING_H__

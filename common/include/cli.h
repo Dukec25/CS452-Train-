@@ -33,6 +33,8 @@
 #define SENSOR_LABEL_WIDTH		3
 #define SENSOR_INDENT_WIDTH 	7
 #define SENSOR_INDENT_HEIGHT	1
+#define SENSOR_PREDICTION_ROW	BOTTOM_BORDER - 2
+#define SENSOR_PREDICTION_COL	SENSOR_COL
 /* Switch */
 #define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
 #define SWITCH_ROW			LABEL_BORDER + 1
@@ -87,7 +89,7 @@ void cli_update_switch(Switch sw);
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(Sensor sensor, Sensor last_sensor, int updates);
+void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
 
 /*
  * Update the track A display
