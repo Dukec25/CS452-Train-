@@ -202,26 +202,18 @@ void train_server()
 			int stop = sensor_to_num(stop_sensor);
 			debug(SUBMISSION, "train_server handle PARK: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
 
-			/*
-			// flip switches such that the train can arrive at the stop
-			debug(SUBMISSION, "%s", "train_server handle PARK: br start");
-            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server);
-			debug(SUBMISSION, "train_server handle PARK: flip %d switches start", num_switch);
-            for(i = 0; i < num_switch; i++) {
-				Command sw_cmd = get_sw_command(train_server.br_update[i].id, train_server.br_update[i].state);
-
-				// push sw_cmd request onto the fifo
-				int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
-				if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
-					if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
-						cmd_fifo_put_next = 0;
-					}
+			// push br_cmd request onto the fifo
+			debug(SUBMISSION, "%s", "train_server handle PARK: push br start");
+			Command br_cmd = get_br_command(cmd.arg0, cmd.arg1);
+			int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
+			if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
+				if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
+					cmd_fifo_put_next = 0;
 				}
-				train_server.cmd_fifo[train_server.cmd_fifo_head] = sw_cmd;
-				train_server.cmd_fifo_head = cmd_fifo_put_next;
-            }
-			debug(SUBMISSION, "train_server handle PARK: %d br done", num_switch);
-			*/
+			}
+			train_server.cmd_fifo[train_server.cmd_fifo_head] = br_cmd;
+			train_server.cmd_fifo_head = cmd_fifo_put_next;
+			debug(SUBMISSION, "%s", "train_server handle PARK: push br done");
 
 			// retrieve stopping distance
 			int stopping_distance = velocity_data.stopping_distance;

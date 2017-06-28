@@ -114,6 +114,7 @@ typedef struct Command_buffer
 Command get_sw_command(char id, char state);
 Command get_sensor_command();
 Command get_tr_stop_command(char id);
+Command get_br_command(char group, char id);
 /*
  * Clear the command_buffer by fill it with space
  */

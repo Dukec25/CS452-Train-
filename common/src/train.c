@@ -537,6 +537,15 @@ Command get_tr_stop_command(char id)
 	return tr_stop_cmd;
 }
 
+Command get_br_command(char group, char id);
+{
+	Command br_cmd;
+	br_cmd.type = BR;
+	br_cmd.arg0 = group;
+	br_cmd.arg1 = id;
+	return br_cmd;
+}
+
 void command_clear(Command_buffer *command_buffer)
 {
 	int i = 0;
@@ -626,6 +635,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	case 'b':
 		pcmd->type = BR;
 		debug(SUBMISSION, "parse BR cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
+		break;
 	case 'd':
 		pcmd->type = DC;
 		break;
