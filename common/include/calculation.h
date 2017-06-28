@@ -2,6 +2,7 @@
 #define __CALCULATION_H__
 #include <track_node.h>
 #include <train_task.h>
+#include <string.h>
 
 int cal_distance(track_node *track, int src, int dest);
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server);

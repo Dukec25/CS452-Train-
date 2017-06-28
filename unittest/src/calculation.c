@@ -41,8 +41,10 @@ track_node* find_path(track_node *track, int src, int dest)
 
 		debug(SUBMISSION, "visit %s", temp->name);
 
-        if (temp->num == track[dest].num) {
-            return temp;
+        if (strlen(temp->name) == strlen(track[dest].name)){
+            if (!strcmp(temp->name, track[dest].name, strlen(temp->name))) {
+                return temp;
+            }
         }
 
         if (temp->type == NODE_EXIT) {
@@ -141,16 +143,26 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
     int accumulated_distance = 0;
     
     while(1){
-        fifo_get(&queue, &node);
-        node = node->previous;
+        track_node *cur_node;
+        fifo_get(&queue, &cur_node);
+        node = cur_node->previous;
 		debug(SUBMISSION, "visit %s", node->name);
 
         if(node->type == NODE_BRANCH){
+
             // change this to string comparison in the future 
-            if(node->edge[DIR_STRAIGHT].dest->num == node->num){
-				debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
-                stop_distance -= node->edge[DIR_STRAIGHT].dist; 
-                accumulated_distance += node->edge[DIR_STRAIGHT].dist;
+            if (strlen(temp->num) == strlen(track[dest].num)){
+                if (!strcmp(temp->num, track[dest].num, strlen(temp->num))) {
+                    return temp;
+                }
+            }
+
+            if (strlen(node->edge[DIR_STRAIGHT].dest->name) == strlen(cur_node->name)){
+                if (!strcmp(node->edge[DIR_STRAIGHT].dest->name, cur_node->name, strlen(node->name))) {
+                    debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
+                    stop_distance -= node->edge[DIR_STRAIGHT].dist; 
+                    accumulated_distance += node->edge[DIR_STRAIGHT].dist;
+                }
             } else{
 				debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);
                 stop_distance -= node->edge[DIR_CURVED].dist;
