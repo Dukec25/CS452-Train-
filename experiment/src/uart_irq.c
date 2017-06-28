@@ -108,7 +108,7 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	}
 }
 
-void uart_irq_handle(int channel, Kernel_state *ks, int *cts_send)
+void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
 {
     // check UART interrupt status
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_handle"); 
@@ -138,7 +138,7 @@ void uart_irq_handle(int channel, Kernel_state *ks, int *cts_send)
     if(channel == COM1){
         if (uart_intr_value & 0x1) {
             int cts = *uart1_flag & CTS_MASK;
-            /*bwprintf(COM2, "%d", cts);*/
+            bwprintf(COM2, "%d", cts);
             switch(*cts_send){
                 case -1: 
                     if(cts == 0){
@@ -148,6 +148,8 @@ void uart_irq_handle(int channel, Kernel_state *ks, int *cts_send)
                     if(cts){
                         *cts_send = 1;
                     } 
+                    break;
+                case 1:
                     break;
                 default:
                     break;

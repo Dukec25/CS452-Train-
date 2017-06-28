@@ -28,7 +28,7 @@
 
 void irq_enable();
 void irq_disable();
-void irq_handle(Kernel_state *ks, int *cts_send);
+void irq_handle(Kernel_state *ks, vint *cts_send);
 
 void timer3_enable();
 void timer3_clear();

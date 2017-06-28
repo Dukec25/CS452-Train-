@@ -66,7 +66,7 @@ track_node* find_path(track_node *track, int src, int dest)
     return NULL;
 }
 
-int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request){
+int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request, ){
     dump(SUBMISSION, "%s", "get into switches need change");
     int idx = 0; // br_update size is 10
     while(node->num != src){

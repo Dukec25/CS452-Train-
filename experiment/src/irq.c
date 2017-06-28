@@ -39,7 +39,7 @@ void irq_disable()
     uart_irq_disable(COM1);
 }
 
-void irq_handle(Kernel_state *ks, int *cts_send)
+void irq_handle(Kernel_state *ks, vint *cts_send)
 {
 //	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
