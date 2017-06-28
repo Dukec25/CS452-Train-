@@ -46,6 +46,7 @@ typedef struct Sensor {
 	char id;
 	int triggered_time;
 	int triggered_poll;
+	int hit;
 } Sensor;
 void sensor_initialization();
 int sensor_to_num(Sensor sensor);
@@ -74,8 +75,9 @@ typedef struct Velocity_data {
 	int stopping_distance;	// mm
 } Velocity_data;
 int track_node_name_to_num(char *name);
-int velocity14_initialization(Velocity_data *velocity_data); 
+void velocity14_initialization(Velocity_data *velocity_data); 
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
+void velocity_update(int src, int dest, int new_velocity, int hit, Velocity_data *velocity_data);
 
 /* Train */
 #define TRAINS 80

@@ -162,7 +162,7 @@ int track_node_name_to_num(char *name)
 	return num; 
 }
  
-int velocity14_initialization(Velocity_data *velocity_data)
+void velocity14_initialization(Velocity_data *velocity_data)
 {
 	int i;
 	for (i = 0; i < TRACK_MAX; i++) {
@@ -464,13 +464,6 @@ int velocity14_initialization(Velocity_data *velocity_data)
  
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
-
-	if (velocity_data->node[src].num_velocity == 0) {
-		//debug(SUBMISSION, "velocity_lookup src = %c%d, velocity = %d",
-		//	num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id, -1);
-		return -1;
-	}
-
 	int i;
 	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
 		if (velocity_data->node[src].dest[i] == dest) {
@@ -483,6 +476,38 @@ int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 		}
 	}
 	return -1;
+}
+
+void velocity_update(int src, int dest, int new_velocity, int hit, Velocity_data *velocity_data)
+{
+	int is_found = 0;
+	int dest_idx = -1;
+
+	int i;
+	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
+		if (velocity_data->node[src].dest[i] == dest) {
+			is_found = 1;
+			dest_idx = i;
+		}
+	}
+
+	if (!is_found) {
+		int idx = velocity_data->node[src].num_velocity;
+		velocity_data->node[src].dest[idx] = dest;
+		velocity_data->node[src].velocity[idx] = new_velocity;
+		velocity_data->node[src].num_velocity++;
+	}
+	else {
+		int old_velocity = velocity_data->node[src].velocity[dest_idx];
+		if (new_velocity != old_velocity) {
+			if (((new_velocity + hit * old_velocity) % (hit + 1)) >= ((hit + 1) / 2)) {
+				velocity_data->node[src].velocity[dest_idx] = 1 + (new_velocity + hit * old_velocity) / (hit + 1);
+			}
+			else {
+				velocity_data->node[src].velocity[dest_idx] = (new_velocity + hit * old_velocity) / (hit + 1);
+			}
+		}
+	}
 }
 
 void command_clear(Command_buffer *command_buffer)
