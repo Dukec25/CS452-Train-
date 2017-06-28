@@ -106,6 +106,8 @@ int track_node_name_to_num(char *name)
 		}
 		idx++;
 	}
+	group_buf[group_idx] = '\0';
+	id_buf[id_idx] = '\0';
 	//debug(SUBMISSION, "name = %s, group_buf = %s, id_buf = %s", name, group_buf, id_buf);
 
 	int num = -1;
@@ -464,25 +466,19 @@ int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
 
 	if (velocity_data->node[src].num_velocity == 0) {
-		debug(SUBMISSION, "velocity_lookup src = %c%d, velocity = %d",
-		num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id, -1);
+		//debug(SUBMISSION, "velocity_lookup src = %c%d, velocity = %d",
+		//	num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id, -1);
 		return -1;
-	}
-
-	if (velocity_data->node[src].num_velocity == 1) {
-		debug(SUBMISSION, "velocity_lookup src = %c%d, velocity = %d",
-		num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id, velocity_data->node[src].velocity[0]);
-		return velocity_data->node[src].velocity[0];
 	}
 
 	int i;
 	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
 		if (velocity_data->node[src].dest[i] == dest) {
-			debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
-			num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id,
-			num_to_sensor(velocity_data->node[src].dest[i]).group + SENSOR_LABEL_BASE,
-			num_to_sensor(velocity_data->node[src].dest[i]).id,
-			velocity_data->node[src].velocity[0]);
+			//debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
+			//	num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id,
+			//	num_to_sensor(velocity_data->node[src].dest[i]).group + SENSOR_LABEL_BASE,
+			//	num_to_sensor(velocity_data->node[src].dest[i]).id,
+			//	velocity_data->node[src].velocity[0]);
 			return velocity_data->node[src].velocity[i];
 		}
 	}

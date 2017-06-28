@@ -177,6 +177,7 @@ void train_server()
 				int sensor_src = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
 				int sensor_dest = park_stops[i].sensor_id;
 				int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
+				sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
 
 				delta += sensor_distance; 
 				weighted_avg_velocity += sensor_distance * sensor_velocity;
