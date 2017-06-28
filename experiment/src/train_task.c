@@ -145,6 +145,8 @@ void train_server()
 			Send(stopping_distance_tid, cmd, sizeof(*cmd), &requester_handshake, sizeof(requester_handshake));
 		}
         else if(cmd->type == PARK) {
+            int i;
+
 			// flag is_park
 			train_server.is_park = 1;
 
@@ -158,7 +160,6 @@ void train_server()
 			// flip switches such that the train can arrive at the stop
             int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server, &cli_update_request);
             cli_update_request.type = CLI_UPDATE_SWITCH;
-            int i;
             for(i=0; i<num_switch; i++) {
                 cli_update_request.switch_update.id = cli_update_request.br_update[i].id; 
                 cli_update_request.switch_update.state = cli_update_request.br_update[i].state;
@@ -171,21 +172,33 @@ void train_server()
 			int stopping_distance = velocity_data.stopping_distance;
 			debug(SUBMISSION, "train_server handle PARK: stopping_distance = %d", stopping_distance);
 
+			Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
+			int num_park_stops = find_stops_by_distance(track, train_server.last_stop, stop, stopping_distance, park_stops);
+
 			// retrieve the sensor_to_deaccelate_train
-			int sensor_to_deaccelate_train; // need to fill in
+			int sensor_to_deaccelate_train = park_stops[num_park_stops - 1].sensor_id; // need to fill in
 			train_server.sensor_to_deaccelate_train = sensor_to_deaccelate_train;
 			debug(SUBMISSION, "train_server handle PARK: sensor_to_deaccelate_train = %d", sensor_to_deaccelate_train);
 
-			// retrieve the delta = the distance between sensor_to_deaccelate_train
-			int delta; // need to fill in
-			debug(SUBMISSION, "train_server handle PARK: delta = %d", delta);
-
+			// calculate the delta = the distance between sensor_to_deaccelate_train
 			// calculate average velocity
-			int avg_velocity; // need to fill in
-			debug(SUBMISSION, "train_server handle PARK: avg_velocity = %d", avg_velocity);
+			int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
+			int delta = 0;
+			int weighted_avg_velocity = 0;
+			for (i = 0; i < num_park_stops; i++) {
+				int sensor_distance = park_stops[i].distance;
+				int sensor_src = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
+				int sensor_dest = park_stops[i].sensor_id;
+				int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, velocity_data);
+
+				delta += sensor_distance; 
+				weighted_avg_velocity += sensor_distance * sensor_velocity;
+			}
+			weighted_avg_velocity /= delta;
+			debug(SUBMISSION, "train_server handle PARK: delta = %d, avg_velocity = %d", delta, weighted_avg_velocity);
 
 			// calculate delay time
-			int park_delay_time = (delta - stopping_distance) / avg_velocity; // in [mm] / ([mm] / [tick]) = [tick]
+			int park_delay_time = (delta - stopping_distance) / weighted_avg_velocity; // in [mm] / ([mm] / [tick]) = [tick]
 			train_server.park_delay_time = park_delay_time;
 			debug(SUBMISSION, "train_server handle PARK: park_delay_time = %d", park_delay_time);
         } else if (cmd->type == SENSOR) {

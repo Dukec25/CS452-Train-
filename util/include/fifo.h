@@ -17,4 +17,5 @@ int fifo_put(fifo_t *pf, void *item);
 int fifo_get(fifo_t *pf, void **pitem);
 int fifo_peek(fifo_t *pf, void **pitem);
 int fifo_get_count(fifo_t *pf);
+int fifo_back(fifo_t *pf, void **pitem);
 #endif // __FIFO_H__
