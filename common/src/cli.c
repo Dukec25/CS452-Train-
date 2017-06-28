@@ -240,8 +240,8 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
 	irq_pos(updates % HEIGHT + 1, TRACK_DATA_COL);	
-	irq_printf(COM2, "%c%d->%c%d,%d,%d [10ms],%d [mm/10ms]",
+	irq_printf(COM2, "%c%d->%c%d,%d,%d[10ms],%d[10ms]",
 				src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,
-				calibration_pkg.distance, calibration_pkg.time, calibration_pkg.distance / calibration_pkg.velocity);
+				calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
 	irq_restore();
 }

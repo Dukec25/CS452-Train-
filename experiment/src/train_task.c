@@ -174,9 +174,11 @@ void train_server()
 			int stop = sensor_to_num(stop_sensor);
 			debug(SUBMISSION, "train_server handle PARK: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
 
+			/*
 			// flip switches such that the train can arrive at the stop
+			debug(SUBMISSION, "%s", "train_server handle PARK: br start");
             int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server);
-			debug(SUBMISSION, "train_server handle PARK: %d br start", num_switch);
+			debug(SUBMISSION, "train_server handle PARK: flip %d switches start", num_switch);
             for(i = 0; i < num_switch; i++) {
 				Command sw_cmd = get_sw_command(train_server.br_update[i].id, train_server.br_update[i].state);
 
@@ -191,6 +193,7 @@ void train_server()
 				train_server.cmd_fifo_head = cmd_fifo_put_next;
             }
 			debug(SUBMISSION, "train_server handle PARK: %d br done", num_switch);
+			*/
 
 			// retrieve stopping distance
 			int stopping_distance = velocity_data.stopping_distance;
@@ -293,11 +296,11 @@ void train_server()
 					}
 
 					// calculate distance, next stop, time, and new_velocity
-					int distance = cal_distance(track, train_server.last_stop, current_stop);
+					int distance = cal_distance(track, last_stop, current_stop);
                     int next_stop = predict_next(track, current_stop, &train_server);
-					int time = last_sensor.triggered_time - sensor.triggered_time;
-					int query = last_sensor.triggered_query - sensor.triggered_query;
-					int new_velocity = (sensor.triggered_time / train_server.num_sensor_query) * query;
+					int time = sensor.triggered_time - last_sensor.triggered_time;
+					int query = sensor.triggered_query - last_sensor.triggered_query;
+					int new_velocity = 19 * query;
 					//debug(SUBMISSION, "last_stop = %d, current_stop = %d, distance = %d, time = %d, query = %d velocity = %d",
 					//				 last_stop, current_stop, distance, time, query, velocity);
 
