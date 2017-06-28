@@ -23,4 +23,6 @@ typedef struct Sensor_dist {
     int distance;
 } Sensor_dist;
 
+fifo_t find_stops_by_distance(track_node *track, int src, int dest, int stop_distance);
+
 #endif //__CALCULATION_H__
