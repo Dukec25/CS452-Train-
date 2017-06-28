@@ -123,6 +123,7 @@ void train_server()
 			dump(SUBMISSION, "%s", "handle tr cmd");
 
 			if (cmd.is_park) {
+				debug(SUBMISSION, "handle park stop: delay %d", train_server.park_delay_time);
 				Delay(train_server.park_delay_time);
 			}
 			command_handle(&cmd);
@@ -203,7 +204,6 @@ void train_server()
 			debug(SUBMISSION, "train_server handle PARK: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
 
 			// push br_cmd request onto the fifo
-			debug(SUBMISSION, "%s", "train_server handle PARK: push br start");
 			Command br_cmd = get_br_command(cmd.arg0, cmd.arg1);
 			int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
 			if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
@@ -225,7 +225,9 @@ void train_server()
 			// retrieve the sensor_to_deaccelate_train
 			int sensor_to_deaccelate_train = park_stops[num_park_stops - 1].sensor_id; // need to fill in
 			train_server.sensor_to_deaccelate_train = sensor_to_deaccelate_train;
-			debug(SUBMISSION, "train_server handle PARK: sensor_to_deaccelate_train = %d", sensor_to_deaccelate_train);
+			debug(SUBMISSION, "train_server handle PARK: sensor_to_deaccelate_train = %c%d",
+							  num_to_sensor(sensor_to_deaccelate_train).group + SENSOR_LABEL_BASE,
+							  num_to_sensor(sensor_to_deaccelate_train).id);
 
 			// calculate the delta = the distance between sensor_to_deaccelate_train
 			// calculate average velocity measured in [tick]
@@ -343,7 +345,9 @@ void train_server()
 		// deaccelerate
 		if (train_server.is_park) {
 			if (train_server.last_stop == train_server.sensor_to_deaccelate_train) {
-				debug(SUBMISSION, "deaccelerate: train just passed %d", train_server.sensor_to_deaccelate_train);
+				debug(SUBMISSION, "deaccelerate: train just passed %d",
+								  num_to_sensor(train_server.sensor_to_deaccelate_train).group + SENSOR_LABEL_BASE,
+								  num_to_sensor(train_server.sensor_to_deaccelate_train).id);
 
 				Command stop_cmd = get_tr_stop_command(train_server.train.id);
 
@@ -356,6 +360,8 @@ void train_server()
 				}
 				train_server.cmd_fifo[train_server.cmd_fifo_head] = stop_cmd;
 				train_server.cmd_fifo_head = cmd_fifo_put_next;
+				debug(SUBMISSION, "deaccelerate: pushed stop_cmd, is_park = %d, delay %d",
+								  stop_cmd.is_park, train_server.park_delay_time);
 
 				// reset
 				train_server.is_park = 0;

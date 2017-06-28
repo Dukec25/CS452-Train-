@@ -573,12 +573,12 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
-			 !strcmp(command_buffer->data, "park", 4) || !strcmp(command_buffer->data, "br", 2)) {
+			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4)) {
 		// parse arguments
-		int pos = 2;
+		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
 		char num_buffer[10];
 		int i = 0;
-		for (i = 0; i < 10; i++){
+		for (i = 0; i < 10; i++) {
 				num_buffer[i] = '\0';
 		}	
 		int num_buffer_pos = 0;
@@ -599,7 +599,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;
-				for (i = 0; i < 10; i++){
+				for (i = 0; i < 10; i++) {
 					num_buffer[i] = '\0';
 				}
 			}
@@ -612,6 +612,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		return -1;
 	}
 
+	debug(SUBMISSION, "parse cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
@@ -634,14 +635,12 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		break;
 	case 'b':
 		pcmd->type = BR;
-		debug(SUBMISSION, "parse BR cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
 		break;
 	case 'd':
 		pcmd->type = DC;
 		break;
 	case 'p':
 		pcmd->type = PARK;
-		debug(SUBMISSION, "parse PARK cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
 		break;
 	}
 	pcmd->arg0 = args[0];
