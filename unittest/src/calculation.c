@@ -11,6 +11,7 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 
 int cal_distance(track_node *track, int src, int dest)
 {
+	debug(SUBMISSION, "%d %d", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);
     if (temp) {
@@ -37,6 +38,8 @@ track_node* find_path(track_node *track, int src, int dest)
     while (!is_fifo_empty(&queue)) {
         track_node *temp;
         fifo_get(&queue, &temp);
+
+		debug(SUBMISSION, "visit %s", temp->name);
 
         if (temp->num == track[dest].num) {
             return temp;
