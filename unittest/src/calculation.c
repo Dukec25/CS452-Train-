@@ -119,6 +119,7 @@ int predict_next(track_node *track, int src, Train_server *train_server){
 }
 
 int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
+    bwprintf(COM2, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);
     track_node *node;
     node = find_path(track, src, dest);
 	
@@ -134,23 +135,28 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
     fifo_put(&queue, node);
 
     int arr_len = 0;
-
+    int accumulated_distance = 0;
+    
     while(1){
         fifo_get(&queue, &node);
         node = node->previous;
 		debug(SUBMISSION, "visit %s", node->name);
 
         if(node->type == NODE_BRANCH){
-            if(node->edge[DIR_STRAIGHT].dest == node){
+            // change this to string comparison in the future 
+            if(node->edge[DIR_STRAIGHT].dest->num == node->num){
 				debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
                 stop_distance -= node->edge[DIR_STRAIGHT].dist; 
+                accumulated_distance += node->edge[DIR_STRAIGHT].dist;
             } else{
 				debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);
                 stop_distance -= node->edge[DIR_CURVED].dist;
+                accumulated_distance += node->edge[DIR_CURVED].dist;
             }
         } else{
 			debug(SUBMISSION, "decrement curve %d", node->edge[DIR_AHEAD].dist);
             stop_distance -= node->edge[DIR_AHEAD].dist;
+            accumulated_distance += node->edge[DIR_AHEAD].dist;
         }
 
         fifo_put(&queue, node);
@@ -159,7 +165,8 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 			debug(SUBMISSION, "add %s", node->name);
             Sensor_dist sensor_dist;
             sensor_dist.sensor_id = node->num;
-            sensor_dist.distance = node->edge[DIR_AHEAD].dist;
+            sensor_dist.distance = accumulated_distance;
+            accumulated_distance = 0;
             ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
