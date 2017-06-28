@@ -16,22 +16,18 @@ typedef enum {
 	STRAIGHT = 33, 
 	CURVE = 34
 } SWITCH_STATE;
-
 /*
  * Initialize all switches except switch 19 and 21 to curved
  */
 void initialize_switch();
-
 /*
  * Test switches initialization buying set switches the opposite state
 */
 void test_initialize_switch();
-
 /*
  * Convert a switch id to a byte to be sent to the train controller
  */
 char switch_id_to_byte(uint8 id);
-
 /*
  * Convert a switch state to a byte to be sent to the train controller
  */
@@ -144,7 +140,6 @@ typedef struct Cli_server {
 	fifo_t status_update_fifo;
 	int cli_io_tid;
 	int cli_clock_tid;
-	int is_shutdown;
 } Cli_server;
 /*
  * Clear the command_buffer by fill it with space
@@ -160,7 +155,7 @@ void command_clear(Command_buffer *command_buffer);
 int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd);
 /*
  * Based on pcmd, send bytes to train.
- * Excluding SENSOR and SHUTDOWN 
+ * Excluding SENSOR, DC, PARK
  */
 void command_handle(Command *pcmd);
 
@@ -169,7 +164,6 @@ void command_handle(Command *pcmd);
 #define COMMAND_FIFO_SIZE	100
 typedef struct Train_server {
 	int sensor_reader_tid;
-	int is_shutdown;
 
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
 	int cmd_fifo_head;
@@ -190,5 +184,4 @@ typedef struct Train_server {
     Switch br_update[10];			// switches to flip such that train can at a sensor 
 } Train_server;
 void train_server_init(Train_server *train_server);
-
 #endif // __TRAIN_H__

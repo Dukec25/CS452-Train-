@@ -517,8 +517,6 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 
 void train_server_init(Train_server *train_server)
 {
-	train_server->is_shutdown = 0;
-
 	train_server->cmd_fifo_head = 0;
 	train_server->cmd_fifo_tail = 0;
 

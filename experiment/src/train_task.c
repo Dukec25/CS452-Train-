@@ -59,12 +59,12 @@ void train_server()
 	dump(SUBMISSION, "train_server sending train_server_address = 0x%x", train_server_address);	 
 	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address), &requester_handshake, sizeof(requester_handshake));
 
-	while(!train_server.is_shutdown) {
+	while(1) {
 		// receive command request
 		int requester_tid = INVALID_TID;
 		Command request;
 		Receive(&requester_tid, &request, sizeof(request));
-		requester_handshake = train_server.is_shutdown ? HANDSHAKE_SHUTDOWN : HANDSHAKE_AKG;
+		requester_handshake = HANDSHAKE_AKG;
 		Reply(requester_tid, &requester_handshake, sizeof(requester_handshake));
 
 		// push command request onto the fifo
@@ -354,8 +354,7 @@ void sensor_reader_task()
 	}
 
 	Handshake handshake = HANDSHAKE_AKG;
- 
-	while (handshake != HANDSHAKE_SHUTDOWN) {
+	while (1) {
 		Delay(20);	// update every 200ms
 		Command train_cmd;
 		train_cmd.type = SENSOR;
@@ -374,7 +373,7 @@ void stopping_distance_collector_task()
 	Train_server *train_server = (Train_server *) train_server_address;
 	dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
 
-	while (handshake != HANDSHAKE_SHUTDOWN) {
+	while (1) {
 		Command dc_cmd;
 		Receive(&train_server_tid, &dc_cmd, sizeof(dc_cmd));
 		handshake = HANDSHAKE_AKG;
@@ -407,7 +406,6 @@ void cli_server()
 	Cli_server cli_server;
 	fifo_init(&cli_server.cmd_fifo);
 	fifo_init(&cli_server.status_update_fifo);
-	cli_server.is_shutdown = 0;
 
 	int result = RegisterAs("CLI_SERVER");
 	int train_server_tid = INVALID_TID;
@@ -422,11 +420,12 @@ void cli_server()
 	Handshake requester_handshake = HANDSHAKE_AKG;
 
 	int num_track_updates = 0;
-	do {
+	int is_shutdown = 0;
+	while(!is_shutdown) {
 		int requester_tid = INVALID_TID;
 		Cli_request request;
 		Receive(&requester_tid, &request, sizeof(request));
-		requester_handshake = cli_server.is_shutdown ? HANDSHAKE_SHUTDOWN : HANDSHAKE_AKG;
+		requester_handshake = HANDSHAKE_AKG;
 		Reply(requester_tid, &requester_handshake, sizeof(requester_handshake));
 
 		switch (request.type) {
@@ -445,7 +444,7 @@ void cli_server()
 			break;
 
 		case CLI_SHUTDOWN:
-			cli_server.is_shutdown = 1;
+			is_shutdown = 1;
 			dump(SUBMISSION, "%s", "shutdown...");
 			break;
 		}
@@ -487,7 +486,7 @@ void cli_server()
 				break;
 			}
 		}
-	} while (!cli_server.is_shutdown);
+	}
 	Terminate();
 }
 
@@ -505,7 +504,7 @@ void cli_clock_task()
 
 	Handshake handshake = HANDSHAKE_AKG;
  
-	while (handshake != HANDSHAKE_SHUTDOWN) {
+	while (1) {
 		Delay(10);	// update every 100ms
 		elapsed_tenth_sec++;
 		clock_update(&clock, elapsed_tenth_sec);
@@ -533,7 +532,7 @@ void cli_io_task()
 
 	Handshake handshake = HANDSHAKE_AKG;
 
-	while(handshake != HANDSHAKE_SHUTDOWN) {
+	while(1) {
 		// user I/O
 		char c = Getc(COM2);
 		if (c == 'q') {
