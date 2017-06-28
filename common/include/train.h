@@ -3,6 +3,7 @@
 #include <define.h>
 #include <fifo.h>
 #include <clock.h>
+#include <track_data.h>
 
 /* Switches */
 #define NUM_SWITCHES 22
@@ -72,7 +73,7 @@ typedef struct Velocity_data {
 	Velocity_node node[TRACK_MAX];	// [mm] / [tick] = [mm] / [10 ms]  
 	int stopping_distance;	// mm
 } Velocity_data;
-int track_node_name_to_num(const char *name);
+int track_node_name_to_num(char *name);
 int velocity14_initialization(Velocity_data *velocity_data); 
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
 
@@ -143,7 +144,11 @@ typedef struct Cli_request {
 	Command cmd;
 	Train train_update;
 	Switch switch_update;
+
 	Sensor sensor_update;
+	int	last_sensor_update;
+	int next_sensor_update;
+
 	Clock clock_update;
 	Calibration_package calibration_update;
     Switch br_update[10];

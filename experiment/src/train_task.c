@@ -16,8 +16,14 @@ void train_task_startup()
 
 	cli_startup();
 //	cli_track_startup();
-	bwputc(COM1, START); // switches won't work without start command
+//	bwputc(COM1, START); // switches won't work without start command
 
+	// velocity4 initialization
+	Velocity_data velocity_data;
+	debug(SUBMISSION, "%s", "velocity14_initialization");
+	velocity14_initialization(&velocity_data);
+	debug(SUBMISSION, "%s", "velocity14_initialization done");
+/*
 	initialize_switch();
 	sensor_initialization();
 
@@ -28,15 +34,14 @@ void train_task_startup()
 
 	tid = Create(PRIOR_MEDIUM, train_server);
 	dump(SUBMISSION, "created train_task taskId = %d", tid);
-	
+*/	
 	Exit();
 }
 
 void train_server()
 {
+	// train_server initialization 
 	Train_server train_server;
-
-	// initialization 
 	fifo_init(&train_server.cmd_fifo);
 	train_server.sensor_lifo_top = -1;
 	train_server.is_shutdown = 0;
@@ -48,10 +53,17 @@ void train_server()
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
-	char sensor_group = 0;
+	// velocity4 initialization
+	Velocity_data velocity_data;
+	debug(SUBMISSION, "%s", "velocity14_initialization");
+	velocity14_initialization(&velocity_data);
+	debug(SUBMISSION, "%s", "velocity14_initialization done");
 
+	// track A initialization
 	track_node track[TRACK_MAX];
 	init_tracka(track);
+
+	char sensor_group = 0;
 
 	int result = RegisterAs("TRAIN_SERVER");
 	int cli_server_tid = INVALID_TID;
@@ -126,9 +138,14 @@ void train_server()
 			//debug(SUBMISSION, "train_server handle dc cmd, %d, %d", cmd->arg0, cmd->arg1);
 			Send(stopping_distance_tid, cmd, sizeof(*cmd), &requester_handshake, sizeof(requester_handshake));
 		}
-        else if(cmd->type == BR){
+        else if(cmd->type == PARK){
             // hardcode the state as number for now to test
-            int num_switch = choose_destination(track, train_server.last_stop, cmd->arg0, &train_server, &cli_update_request);  
+			Sensor stop_sensor;
+			stop_sensor.group = toupper(cmd->arg0) - SENSOR_LABEL_BASE;
+			stop_sensor.id = cmd->arg1;
+			int stop = sensor_to_num(stop_sensor);
+	
+            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server, &cli_update_request);  
             cli_update_request.type = CLI_UPDATE_SWITCH;
             int i;
             for(i=0; i<num_switch; i++){
@@ -170,18 +187,23 @@ void train_server()
 						sensor.id = 8 + 16 - bit;
 					}
 
-					// Send sensor update
-					Cli_request sensor_update_request;
-					sensor_update_request.type = CLI_UPDATE_SENSOR;
-					sensor_update_request.sensor_update = sensor;
-					Send(cli_server_tid, &sensor_update_request, sizeof(sensor_update_request),
-						 &cli_server_handshake, sizeof(cli_server_handshake));
-				
 					// distance	
 					int current_location = sensor_to_num(sensor);
 					int distance = cal_distance(track, train_server.last_stop, current_location);
                     int next_location = predict_next(track, current_location, &train_server);
-                    /*test_sensor(next_location);*/
+    
+					// Send sensor update
+					if (current_location != train_server.last_stop) {
+						Cli_request sensor_update_request;
+						sensor_update_request.type = CLI_UPDATE_SENSOR;
+						sensor_update_request.sensor_update = sensor;
+						sensor_update_request.last_sensor_update = train_server.last_stop;
+						sensor_update_request.next_sensor_update = next_location;
+						Send(cli_server_tid, &sensor_update_request, sizeof(sensor_update_request),
+						 	&cli_server_handshake, sizeof(cli_server_handshake));
+					}
+				
+	                /*test_sensor(next_location);*/
 
 					// velcoity
 					int start_time = 0;
@@ -202,12 +224,13 @@ void train_server()
 					int end_poll = sensor.triggered_poll;
 					int time = end_time - start_time;
 					int poll = end_poll - start_poll;
-					int velocity = distance / (20 * poll);
+					// int velocity = distance / (20 * poll);
+					int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data);
 
 					// Send calibration update
 					if (distance != 0) {
-						dump(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
-										 train_server.last_stop, current_location, distance, time, poll, velocity);
+					//	debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
+					//					 train_server.last_stop, current_location, distance, time, poll, velocity);
 						Cli_request calibration_update_request;
 						calibration_update_request.type = CLI_UPDATE_CALIBRATION;
 						calibration_update_request.calibration_update.src = train_server.last_stop;
@@ -308,8 +331,6 @@ void cli_server()
 	Handshake train_server_handshake = HANDSHAKE_AKG;
 	Handshake requester_handshake = HANDSHAKE_AKG;
 
-	Sensor last_sensor_update;
-	int num_sensor_updates = 0;
 	int num_track_updates = 0;
 	do {
 		int requester_tid = INVALID_TID;
@@ -366,8 +387,7 @@ void cli_server()
 				dump(SUBMISSION, "%s", "cli pop sensor group = %d, id = %d, time = %d",
 							update_request->sensor_update.group, update_request->sensor_update.id,
 							update_request->sensor_update.triggered_time);		
-				cli_update_sensor(update_request->sensor_update, last_sensor_update, num_sensor_updates++);
-				last_sensor_update = update_request->sensor_update;
+				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update);
 				break;
 			case CLI_UPDATE_CALIBRATION:
 				dump(SUBMISSION, "%s", "cli pop calibration update req");

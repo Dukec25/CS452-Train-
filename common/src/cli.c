@@ -159,24 +159,32 @@ void cli_update_switch(Switch sw)
 	irq_restore();
 }
 
-void cli_update_sensor(Sensor sensor, Sensor last_sensor, int updates)
+void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update)
 {
 	irq_save();
+
+	Sensor last_sensor = num_to_sensor(last_sensor_update);
 	int last_row = SENSOR_ROW + last_sensor.id * SENSOR_INDENT_HEIGHT;
 	int last_col = SENSOR_COL + last_sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;
 	irq_pos(last_row, last_col);
 	irq_printf(COM2, "%s", "  ");
+
 	int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;
 	int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;
 	irq_pos(row, col);
 	irq_printf(COM2, "%s", "<-");
+
+	Sensor next_sensor = num_to_sensor(next_sensor_update);
+	irq_pos(SENSOR_PREDICTION_ROW, SENSOR_PREDICTION_COL);
+	irq_printf(COM2, "Next Sensor: %c%s%d", SENSOR_LABEL_BASE + next_sensor.group, next_sensor.id < 10 ? "0" : "", next_sensor.id);
+
 	irq_restore();
 }
 
 void cli_update_track(Calibration_package calibration_pkg, int updates)
 {
 	irq_save();
-	irq_pos(updates % 22, TRACK_DATA_COL);	
+	irq_pos(updates % HEIGHT, TRACK_DATA_COL);	
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
 	irq_printf(COM2, "%c%d->%c%d,%d,%d,%d", src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,
