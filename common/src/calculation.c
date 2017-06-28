@@ -77,26 +77,12 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
             int node_id = node->previous->num;
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    // flip the switches 
-                    irq_printf(COM1, "%c%c", STRAIGHT, switch_id_to_byte(node_id));
-                    train_server->switches_status[node_id-1] = STRAIGHT;
-                    Delay(20);
-                    Putc(COM1, SOLENOID_OFF);
-                    cli_update_switch(update_request->switch_update);
-                    
                     // update switches UI
                     update_request->br_update[idx].id = node_id;
                     update_request->br_update[idx++].state = 's';
                 }
             } else{
                 if(train_server->switches_status[node_id-1] != CURVE){
-                    // flip the switches 
-                    dump(SUBMISSION, "%d sensor:%d\r\n", 0, node_id);
-                    irq_printf(COM1, "%c%c", CURVE, switch_id_to_byte(node_id));
-                    train_server->switches_status[node_id-1] = CURVE;
-                    Delay(20);
-                    Putc(COM1, SOLENOID_OFF);
-
                     // update switches UI
                     update_request->br_update[idx].id = node_id;
                     update_request->br_update[idx++].state = 'c';
