@@ -121,7 +121,13 @@ int predict_next(track_node *track, int src, Train_server *train_server){
 int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
     track_node *node;
     node = find_path(track, src, dest);
-	debug(SUBMISSION, "find_path %s", node->name);
+	
+	track_node *temp = node;
+	while(temp->num != src) {
+		bwprintf(COM2, "%s ", temp->name);
+    	temp = temp->previous;
+	}
+	debug(SUBMISSION, "%s", temp->name);
 
     fifo_t queue; 
     fifo_init(&queue);

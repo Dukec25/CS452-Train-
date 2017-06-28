@@ -133,11 +133,6 @@ void lifo_test()
     }
 }
 
-void fifo_test()
-{
-
-}
-
 void heap_test()
 {
 	// heap test
@@ -241,10 +236,11 @@ void track_test()
 	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 	Sensor sensor_src;
 	sensor_src.group = 'C' - 'A';
-	sensor_src.id = 5;
+	sensor_src.id = 9;
 	Sensor sensor_dest;
-	sensor_dest.group = 'D' - 'A';
-	sensor_dest.id = 11;
+	sensor_dest.group = 'E' - 'A';
+	sensor_dest.id = 13;
+	test_assert(0, "%c%d->%c%d", sensor_src.group + 'A', sensor_src.id, sensor_dest.group + 'A', sensor_dest.id);
 	int num_park_stops = find_stops_by_distance(tracka, sensor_to_num(sensor_src), sensor_to_num(sensor_dest),
 													velocity_data.stopping_distance, park_stops);
 	for (i = 0; i < num_park_stops; i++) {
