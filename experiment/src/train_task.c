@@ -3,27 +3,20 @@
 #include <log.h>
 #include <user_functions.h>
 
-/*void test_sensor(int num){*/
-    /*char group = num/16 + 'A';*/
-    /*int id = num%16 + 1; */
-    /*bwprintf(COM2, "%c", group);*/
-    /*bwprintf(COM2, "%d\r\n", id);*/
-/*}*/
-
 void train_task_startup()
 {
 	irq_io_tasks_cluster();
 
 	cli_startup();
-//	cli_track_startup();
-//	bwputc(COM1, START); // switches won't work without start command
+	cli_track_startup();
+	bwputc(COM1, START); // switches won't work without start command
 
 	// velocity4 initialization
 	Velocity_data velocity_data;
 	debug(SUBMISSION, "%s", "velocity14_initialization");
 	velocity14_initialization(&velocity_data);
 	debug(SUBMISSION, "%s", "velocity14_initialization done");
-/*
+
 	initialize_switch();
 	sensor_initialization();
 
@@ -34,7 +27,7 @@ void train_task_startup()
 
 	tid = Create(PRIOR_MEDIUM, train_server);
 	dump(SUBMISSION, "created train_task taskId = %d", tid);
-*/	
+	
 	Exit();
 }
 
@@ -189,7 +182,7 @@ void train_server()
 				int sensor_distance = park_stops[i].distance;
 				int sensor_src = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
 				int sensor_dest = park_stops[i].sensor_id;
-				int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, velocity_data);
+				int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
 
 				delta += sensor_distance; 
 				weighted_avg_velocity += sensor_distance * sensor_velocity;
