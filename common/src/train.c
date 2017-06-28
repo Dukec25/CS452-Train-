@@ -108,7 +108,6 @@ int track_node_name_to_num(char *name)
 	}
 	group_buf[group_idx] = '\0';
 	id_buf[id_idx] = '\0';
-	//debug(SUBMISSION, "name = %s, group_buf = %s, id_buf = %s", name, group_buf, id_buf);
 
 	int num = -1;
 	int id = atoi(id_buf);
@@ -158,7 +157,6 @@ int track_node_name_to_num(char *name)
 			num = offset + 2 * (id - base) + 1;
 		}
 	}
-	//debug(SUBMISSION, "num = %d", num);
 	return num; 
 }
  
@@ -515,24 +513,30 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 	}
 }
 
-void train_server_init(Train_server *train_server)
+Command get_sw_command(char id, char state)
 {
-	train_server->cmd_fifo_head = 0;
-	train_server->cmd_fifo_tail = 0;
+	Command sw_cmd;
+	sw_cmd.type = SW;
+	sw_cmd.arg0 = id;
+	sw_cmd.arg1 = state;
+	return sw_cmd;
+}
 
-	train_server->sensor_lifo_top = -1;
-	train_server->last_stop = -1;
-	train_server->num_sensor_query = 0;
+Command get_sensor_command()
+{
+	Command sensor_cmd;
+	sensor_cmd.type = SENSOR;
+	return sensor_cmd;
+}
 
-	train_server->is_park = 0;
-	train_server->sensor_to_deaccelate_train = -1;
-	train_server->park_delay_time = -1;
-
-	int sw;
-	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
-		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
-		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
-	}
+Command get_tr_stop_command(char id)
+{
+	Command tr_stop_cmd;
+	tr_stop_cmd.type = TR;
+	tr_stop_cmd.arg0 = id;
+	tr_stop_cmd.arg1 = MIN_SPEED;
+	tr_stop_cmd.is_park = 1;
+	return tr_stop_cmd;
 }
 
 void command_clear(Command_buffer *command_buffer)
@@ -607,9 +611,10 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		if (args[1] > MAX_SPEED) {
 			return -1;
 		}
+		pcmd->type = TR;
 		ptrain->speed = args[1];
 		ptrain->id = args[0];
-		pcmd->type = TR;
+		pcmd->is_park = 0;
 		break;
 	case 'r':
 		pcmd->type = RV;

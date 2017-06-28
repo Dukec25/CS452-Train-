@@ -2,6 +2,11 @@
 #include <debug.h>
 #include <log.h>
 #include <user_functions.h>
+#include <train.h>
+#include <cli.h>
+#include <kernel.h>
+#include <calculation.h>
+#include <name_server.h>
 
 void train_task_startup()
 {
@@ -24,8 +29,30 @@ void train_task_startup()
 	Exit();
 }
 
+void train_server_init(Train_server *train_server)
+{
+	train_server->cmd_fifo_head = 0;
+	train_server->cmd_fifo_tail = 0;
+
+	train_server->sensor_lifo_top = -1;
+	train_server->last_stop = -1;
+	train_server->num_sensor_query = 0;
+
+	train_server->is_park = 0;
+	train_server->sensor_to_deaccelate_train = -1;
+	train_server->park_delay_time = -1;
+
+	int sw;
+	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
+		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
+		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
+	}
+}
+
 void train_server()
 {
+	Handshake handshake = HANDSHAKE_AKG;
+
 	// train_server initialization 
 	Train_server train_server;
 	train_server_init(&train_server);
@@ -38,17 +65,13 @@ void train_server()
 	track_node track[TRACK_MAX];
 	init_tracka(track);
 
-	char sensor_group = 0;
-
-	int result = RegisterAs("TRAIN_SERVER");
+	RegisterAs("TRAIN_SERVER");
 	int cli_server_tid = INVALID_TID;
 	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
 		cli_server_tid = WhoIs("CLI_SERVER");
 	}
 	dump(SUBMISSION, "cli_server %d", cli_server_tid);
 
-	Handshake cli_server_handshake = HANDSHAKE_AKG;
-	Handshake requester_handshake = HANDSHAKE_AKG;
 
 	train_server.sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
 	dump(SUBMISSION, "sensor_reader_tid %d", train_server.sensor_reader_tid);
@@ -57,15 +80,15 @@ void train_server()
 	dump(SUBMISSION, "stopping_distance_tid %d", stopping_distance_tid);
 	vint train_server_address = (vint) &train_server;
 	dump(SUBMISSION, "train_server sending train_server_address = 0x%x", train_server_address);	 
-	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address), &requester_handshake, sizeof(requester_handshake));
+	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	while(1) {
 		// receive command request
-		int requester_tid = INVALID_TID;
+		int requester_tid;
 		Command request;
 		Receive(&requester_tid, &request, sizeof(request));
-		requester_handshake = HANDSHAKE_AKG;
-		Reply(requester_tid, &requester_handshake, sizeof(requester_handshake));
+		handshake = HANDSHAKE_AKG;
+		Reply(requester_tid, &handshake, sizeof(handshake));
 
 		// push command request onto the fifo
 		int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
@@ -98,15 +121,17 @@ void train_server()
 		switch (cmd.type) {
 		case TR:
 			dump(SUBMISSION, "%s", "handle tr cmd");
+
+			if (cmd.is_park) {
+				Delay(train_server.park_delay_time);
+			}
 			command_handle(&cmd);
 
 			train_server.train.id = cmd.arg0;
 			train_server.train.speed = cmd.arg1;
 	
-			cli_update_request.type = CLI_UPDATE_TRAIN;
-			cli_update_request.train_update.id = cmd.arg0; 
-			cli_update_request.train_update.speed = cmd.arg1;
-			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &cli_server_handshake, sizeof(cli_server_handshake));
+			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
+			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
 			break;
 		case RV:
 			dump(SUBMISSION, "%s", "handle rv cmd");
@@ -118,10 +143,8 @@ void train_server()
 
         	train_server.switches_status[cmd.arg0 - 1] = switch_state_to_byte(cmd.arg1);
 
-			cli_update_request.type = CLI_UPDATE_SWITCH;
-			cli_update_request.switch_update.id = cmd.arg0; 
-			cli_update_request.switch_update.state = cmd.arg1;
-			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &cli_server_handshake, sizeof(cli_server_handshake));
+			cli_update_request = get_update_switch_request(cmd.arg0, cmd.arg1);
+			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
 			break;
 		case GO:
 			command_handle(&cmd);
@@ -136,7 +159,7 @@ void train_server()
 		// handle DC, PARK, and SENSOR
 		if (cmd.type == DC) {
 			//debug(SUBMISSION, "train_server handle dc cmd, %d, %d", cmd.arg0, cmd.arg1);
-			Send(stopping_distance_tid, &cmd, sizeof(cmd), &requester_handshake, sizeof(requester_handshake));
+			Send(stopping_distance_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
 		}
         else if(cmd.type == PARK) {
             int i;
@@ -154,11 +177,8 @@ void train_server()
 			// flip switches such that the train can arrive at the stop
             int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server);
 			debug(SUBMISSION, "train_server handle PARK: %d br start", num_switch);
-            for(i=0; i<num_switch; i++) {
-				Command sw_cmd;
-				sw_cmd.type = SW;
-				sw_cmd.arg0 = train_server.br_update[i].id;
-				sw_cmd.arg1 = train_server.br_update[i].state;
+            for(i = 0; i < num_switch; i++) {
+				Command sw_cmd = get_sw_command(train_server.br_update[i].id, train_server.br_update[i].state);
 
 				// push sw_cmd request onto the fifo
 				int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
@@ -210,6 +230,7 @@ void train_server()
 			dump(SUBMISSION, "%s", "sensor cmd");
 			Putc(COM1, SENSOR_QUERY);
 			uint16 sensor_data[SENSOR_GROUPS];
+			int sensor_group = 0;
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				char lower = Getc(COM1);
 				char upper = Getc(COM1);
@@ -241,77 +262,57 @@ void train_server()
 						sensor.id = 8 + 16 - bit;
 					}
 
-					// distance	
-					int current_location = sensor_to_num(sensor);
-					int distance = cal_distance(track, train_server.last_stop, current_location);
-                    int next_location = predict_next(track, current_location, &train_server);
-    
-					// Send sensor update
-					if (current_location != train_server.last_stop) {
-						Cli_request sensor_update_request;
-						sensor_update_request.type = CLI_UPDATE_SENSOR;
-						sensor_update_request.sensor_update = sensor;
-						sensor_update_request.last_sensor_update = train_server.last_stop;
-						sensor_update_request.next_sensor_update = next_location;
-						Send(cli_server_tid, &sensor_update_request, sizeof(sensor_update_request),
-						 	&cli_server_handshake, sizeof(cli_server_handshake));
-					}
-				
-	                /*test_sensor(next_location);*/
-
-					// retrieve last triggered sensor
-					int start_time = 0;
-					int start_query = 0; 
+					int current_stop = sensor_to_num(sensor);
+					int last_stop = train_server.last_stop;
+			
+					// pop off last triggered sensor
+					Sensor last_sensor;
 					while (train_server.sensor_lifo_top != -1) {
-						Sensor last_sensor;
 						last_sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
 						train_server.sensor_lifo_top -= 1;
 						dump(SUBMISSION, "pop sensor group = %d, id = %d, time = %d",
 										 sensor.group, sensor.id, sensor.triggered_time);
-						if (sensor_to_num(last_sensor) == train_server.last_stop) {
-							start_time = last_sensor.triggered_time;
-							start_query = last_sensor.triggered_query;
+						if (sensor_to_num(last_sensor) == last_stop) {
 							break;
 						}
 					}
 
-					// update velocity and send cli request 
-					if (distance != 0) {
-						int end_time = sensor.triggered_time;
-						int end_query = sensor.triggered_query;
-						int time = end_time - start_time;
-						int query = end_query - start_query;
-						int sensor_query_time = end_time / train_server.num_sensor_query;
-						int new_velocity = sensor_query_time * query; // virtual velocity measured in [tick]
-
-						// update velocity_data
-						velocity_update(train_server.last_stop, current_location, new_velocity, &velocity_data);
-
-						// virtual velocity measured in [tick]
-						int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data); 
-
-						//debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, query = %d velocity = %d",
-						//				 train_server.last_stop, current_location, distance, time, query, velocity);
-
-						// Send calibration update
-						Cli_request calibration_update_request;
-						calibration_update_request.type = CLI_UPDATE_CALIBRATION;
-						calibration_update_request.calibration_update.src = train_server.last_stop;
-						calibration_update_request.calibration_update.dest = current_location;
-						calibration_update_request.calibration_update.distance = distance;
-						calibration_update_request.calibration_update.time = time;
-						calibration_update_request.calibration_update.velocity = distance / velocity; 
-						Send(cli_server_tid, &calibration_update_request, sizeof(calibration_update_request),
-							 &cli_server_handshake, sizeof(cli_server_handshake));
-					}
-
+					// push current triggered sensor onto lifo
 					if (train_server.sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {
 						train_server.sensor_lifo_top += 1;
 						train_server.sensor_lifo[train_server.sensor_lifo_top] = sensor;
 						dump(SUBMISSION, "insert sensor group = %d, id = %d, time = %d",
 										 sensor.group, sensor.id, sensor.triggered_time);
 					}
-					train_server.last_stop = current_location;
+
+					// update last triggered sensor
+					train_server.last_stop = current_stop;
+	
+					if (current_stop == last_stop) {
+						continue;
+					}
+
+					// calculate distance, next stop, time, and new_velocity
+					int distance = cal_distance(track, train_server.last_stop, current_stop);
+                    int next_stop = predict_next(track, current_stop, &train_server);
+					int time = last_sensor.triggered_time - sensor.triggered_time;
+					int query = last_sensor.triggered_query - sensor.triggered_query;
+					int new_velocity = (sensor.triggered_time / train_server.num_sensor_query) * query;
+					//debug(SUBMISSION, "last_stop = %d, current_stop = %d, distance = %d, time = %d, query = %d velocity = %d",
+					//				 last_stop, current_stop, distance, time, query, velocity);
+
+					// update velocity_data
+					velocity_update(last_stop, current_stop, new_velocity, &velocity_data);
+
+					// Send sensor update
+					Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
+					Send(cli_server_tid, &update_sensor_request, sizeof(update_sensor_request), &handshake, sizeof(handshake));
+	
+					// Send calibration update
+					int velocity = velocity_lookup(last_stop, current_stop, &velocity_data); 
+					Cli_request update_calibration_request =
+						get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
+					Send(cli_server_tid, &update_calibration_request, sizeof(update_calibration_request), &handshake, sizeof(handshake));
 				}
 			}
 		}
@@ -320,11 +321,8 @@ void train_server()
 		if (train_server.is_park) {
 			if (train_server.last_stop == train_server.sensor_to_deaccelate_train) {
 				debug(SUBMISSION, "deaccelerate: train just passed %d", train_server.sensor_to_deaccelate_train);
-				Delay(train_server.park_delay_time);
-				Command stop_cmd;
-				stop_cmd.type = TR;
-				stop_cmd.arg0 = train_server.train.id;
-				stop_cmd.arg1 = MIN_SPEED;
+
+				Command stop_cmd = get_tr_stop_command(train_server.train.id);
 
 				// push stop_cmd request onto the fifo
 				int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
@@ -356,9 +354,8 @@ void sensor_reader_task()
 	Handshake handshake = HANDSHAKE_AKG;
 	while (1) {
 		Delay(20);	// update every 200ms
-		Command train_cmd;
-		train_cmd.type = SENSOR;
-		Send(train_server_tid, &train_cmd, sizeof(&train_cmd), &handshake, sizeof(handshake));
+		Command sensor_cmd = get_sensor_command();
+		Send(train_server_tid, &sensor_cmd, sizeof(sensor_cmd), &handshake, sizeof(handshake));
 	}
 	Exit();
 }
@@ -392,10 +389,7 @@ void stopping_distance_collector_task()
 			Pass();
 		}
 		debug(SUBMISSION, "stopping_distance current stop = %d\r\n", last_stop);
-		Command tr_cmd;
-		tr_cmd.type = TR;
-		tr_cmd.arg0 = train_server->train.id;
-		tr_cmd.arg1 = MIN_SPEED;
+		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		debug(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg0);
 		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
 	}
@@ -407,7 +401,7 @@ void cli_server()
 	fifo_init(&cli_server.cmd_fifo);
 	fifo_init(&cli_server.status_update_fifo);
 
-	int result = RegisterAs("CLI_SERVER");
+	RegisterAs("CLI_SERVER");
 	int train_server_tid = INVALID_TID;
 	while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
 		train_server_tid = WhoIs("TRAIN_SERVER");
@@ -416,8 +410,7 @@ void cli_server()
 	cli_server.cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); 
 	cli_server.cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
 
-	Handshake train_server_handshake = HANDSHAKE_AKG;
-	Handshake requester_handshake = HANDSHAKE_AKG;
+	Handshake handshake = HANDSHAKE_AKG;
 
 	int num_track_updates = 0;
 	int is_shutdown = 0;
@@ -425,8 +418,8 @@ void cli_server()
 		int requester_tid = INVALID_TID;
 		Cli_request request;
 		Receive(&requester_tid, &request, sizeof(request));
-		requester_handshake = HANDSHAKE_AKG;
-		Reply(requester_tid, &requester_handshake, sizeof(requester_handshake));
+		handshake = HANDSHAKE_AKG;
+		Reply(requester_tid, &handshake, sizeof(handshake));
 
 		switch (request.type) {
 		case CLI_TRAIN_COMMAND:
@@ -445,7 +438,7 @@ void cli_server()
 
 		case CLI_SHUTDOWN:
 			is_shutdown = 1;
-			dump(SUBMISSION, "%s", "shutdown...");
+			bwprintf(COM2, "%s", "shutdown...");
 			break;
 		}
 		
@@ -454,7 +447,7 @@ void cli_server()
 			fifo_get(&cli_server.cmd_fifo, &cli_cmd_request);
 			Command train_cmd = cli_cmd_request->cmd;
 			dump(SUBMISSION, "cli send train cmd %d", train_cmd.type);
-			Send(train_server_tid, &train_cmd, sizeof(train_cmd), &train_server_handshake, sizeof(train_server_handshake));
+			Send(train_server_tid, &train_cmd, sizeof(train_cmd), &handshake, sizeof(handshake));
 		}
 
 		if (!is_fifo_empty(&cli_server.status_update_fifo)) {
@@ -509,10 +502,8 @@ void cli_clock_task()
 		elapsed_tenth_sec++;
 		clock_update(&clock, elapsed_tenth_sec);
 
-		Cli_request cli_update_request;
-		cli_update_request.type = CLI_UPDATE_CLOCK;
-		cli_update_request.clock_update = clock;
-		Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
+		Cli_request update_clock_request = get_update_clock_request(clock);
+		Send(cli_server_tid, &update_clock_request, sizeof(update_clock_request), &handshake, sizeof(handshake));
 	}
 	Exit();
 }
@@ -536,10 +527,8 @@ void cli_io_task()
 		// user I/O
 		char c = Getc(COM2);
 		if (c == 'q') {
-			Cli_request cli_request;
-			cli_request.type = CLI_SHUTDOWN;	
-			dump(SUBMISSION, "%s", "io entered q, send shutdown");
-			Send(cli_server_tid, &cli_request, sizeof(cli_request), &handshake, sizeof(handshake));
+			Cli_request shutdown_request = get_shutdown_request();
+			Send(cli_server_tid, &shutdown_request, sizeof(shutdown_request), &handshake, sizeof(handshake));
 		}
 		else if (c == '\r') {
 			// user hits ENTER
@@ -547,11 +536,9 @@ void cli_io_task()
 			Command cmd;
 			parse_result = command_parse(&command_buffer, &train, &cmd);
 			if (parse_result != -1) {
-				Cli_request cli_cmd_request;
-				cli_cmd_request.type = CLI_TRAIN_COMMAND;
-				cli_cmd_request.cmd = cmd;
+				Cli_request train_cmd_request = get_train_command_request(cmd);
 				dump(SUBMISSION, "%s", "io entered train cmd, send cmd");
-				Send(cli_server_tid, &cli_cmd_request, sizeof(cli_cmd_request), &handshake, sizeof(handshake));
+				Send(cli_server_tid, &train_cmd_request, sizeof(train_cmd_request), &handshake, sizeof(handshake));
 			}
 			// clears command_buffer
 			command_clear(&command_buffer);

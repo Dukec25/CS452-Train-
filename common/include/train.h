@@ -105,42 +105,16 @@ typedef struct {
 	Train_cmd_type type;
 	char arg0;
 	char arg1;
+	int is_park;
 } Command;
 typedef struct Command_buffer
 {
 	char data[COMMAND_SIZE];
 	int pos;
 } Command_buffer;
-
-/* Cli */
-typedef enum {
-	CLI_TRAIN_COMMAND,
-	CLI_UPDATE_TRAIN,
-	CLI_UPDATE_SENSOR,
-	CLI_UPDATE_SWITCH,
-	CLI_UPDATE_CLOCK,
-	CLI_UPDATE_CALIBRATION,
-	CLI_SHUTDOWN
-} Cli_request_type;
-typedef struct Cli_request {
-	Cli_request_type type;
-	Command cmd;
-	Train train_update;
-	Switch switch_update;
-
-	Sensor sensor_update;
-	int	last_sensor_update;
-	int next_sensor_update;
-
-	Clock clock_update;
-	Calibration_package calibration_update;
-} Cli_request;
-typedef struct Cli_server {
-	fifo_t cmd_fifo;
-	fifo_t status_update_fifo;
-	int cli_io_tid;
-	int cli_clock_tid;
-} Cli_server;
+Command get_sw_command(char id, char state);
+Command get_sensor_command();
+Command get_tr_stop_command(char id);
 /*
  * Clear the command_buffer by fill it with space
  */
@@ -159,29 +133,4 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd);
  */
 void command_handle(Command *pcmd);
 
-/* Train server */
-#define SENSOR_LIFO_SIZE	100
-#define COMMAND_FIFO_SIZE	100
-typedef struct Train_server {
-	int sensor_reader_tid;
-
-	Command cmd_fifo[COMMAND_FIFO_SIZE];
-	int cmd_fifo_head;
-	int cmd_fifo_tail;
-
-	Train train;
-
-	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
-	int sensor_lifo_top;
-	int last_stop;	// last sensor converted to num
-	int num_sensor_query;
-
-    int switches_status[NUM_SWITCHES];
-
-	int is_park;					// flag to indicate user entered a PARK cmd
-	int sensor_to_deaccelate_train;	// sensor (converted to num) to start stop the train
-	int park_delay_time;			// time to delay before stop the train, [tick] = [10ms]
-    Switch br_update[10];			// switches to flip such that train can at a sensor 
-} Train_server;
-void train_server_init(Train_server *train_server);
 #endif // __TRAIN_H__

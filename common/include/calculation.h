@@ -6,6 +6,7 @@
 #include <fifo.h>
 #include <define.h>
 #include <train.h>
+#include <train_task.h>
 
 int cal_distance(track_node *track, int src, int dest);
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server);
@@ -22,7 +23,6 @@ typedef struct Sensor_dist {
     int sensor_id;
     int distance;
 } Sensor_dist;
-
 
 /*
  *  Return the length of the Sensor_dist array, the first value in the 
