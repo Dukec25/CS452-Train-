@@ -5,6 +5,7 @@ ASM_OBJ		= build/switch.o
 
 all: build $(ASM_OBJ) $(TARGET_ELF) copy
 
+LIBS 	+= -lcommon
 include ../../common/common.mk
 
 INCLUDE += -I../../include

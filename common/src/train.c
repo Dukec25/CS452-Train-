@@ -537,7 +537,7 @@ Command get_tr_stop_command(char id)
 	return tr_stop_cmd;
 }
 
-Command get_br_command(char group, char id);
+Command get_br_command(char group, char id)
 {
 	Command br_cmd;
 	br_cmd.type = BR;
