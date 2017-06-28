@@ -236,14 +236,16 @@ void track_test()
 	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 	Sensor sensor_src;
 	sensor_src.group = 'C' - 'A';
-	sensor_src.id = 9;
+	sensor_src.id = 10;
 	Sensor sensor_dest;
 	sensor_dest.group = 'E' - 'A';
-	sensor_dest.id = 13;
+	sensor_dest.id = 14;
 	test_assert(0, "%c%d->%c%d", sensor_src.group + 'A', sensor_src.id, sensor_dest.group + 'A', sensor_dest.id);
 	int num_park_stops = find_stops_by_distance(tracka, sensor_to_num(sensor_src), sensor_to_num(sensor_dest),
-													2000, park_stops);
+													960, park_stops);
     bwprintf(COM2, "num_stops=%d\r\n", num_park_stops);
+    bwprintf(COM2, "first_distance=%d\r\n", park_stops[0].distance);
+
 	for (i = 0; i < num_park_stops-1; i++) {
 		int distance = park_stops[i+1].distance;
 		int src = park_stops[i + 1].sensor_id;

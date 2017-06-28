@@ -39,7 +39,7 @@ track_node* find_path(track_node *track, int src, int dest)
         track_node *temp;
         fifo_get(&queue, &temp);
 
-		debug(SUBMISSION, "visit %s", temp->name);
+		/*debug(SUBMISSION, "visit %s", temp->name);*/
 
         if (strlen(temp->name) == strlen(track[dest].name)){
             if (!strcmp(temp->name, track[dest].name, strlen(temp->name))) {
@@ -133,7 +133,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 		bwprintf(COM2, "%s ", temp->name);
     	temp = temp->previous;
 	}
-	debug(SUBMISSION, "%s", temp->name);
+	/*debug(SUBMISSION, "%s", temp->name);*/
 
     fifo_t queue; 
     fifo_init(&queue);
