@@ -126,7 +126,6 @@ void io_test_task(){
         Putc(COM1, 'd');
         Putc(COM1, '\r');
         Putc(COM1, '\n');
-
     }
 	Exit();
 }
@@ -275,19 +274,19 @@ void first_task()
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_K4, "created taskId = %d", tid);
 
-    irq_io_tasks_cluster();
+    /*irq_io_tasks_cluster();*/
 
-    tid = Create(PRIOR_MEDIUM, io_test_task);
+    /*tid = Create(PRIOR_MEDIUM, io_test_task);*/
+    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, clock_server_task);
     debug(DEBUG_K4, "created taskId = %d", tid);
-    /*tid = Create(PRIOR_HIGH, clock_server_task);*/
-    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
 
-    /*tid = Create(PRIOR_MEDIUM, clock_server_notifier);*/
-    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_MEDIUM, clock_server_notifier);
+    debug(DEBUG_K4, "created taskId = %d", tid);
 
-    /*tid = Create(PRIOR_HIGH, train_task_startup);*/
-    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
+    tid = Create(PRIOR_HIGH, train_task_startup);
+    debug(DEBUG_K4, "created taskId = %d", tid);
 
-    debug(SUBMISSION, "%s", "FirstUserTask: exiting");
+    /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
     Exit();
 }

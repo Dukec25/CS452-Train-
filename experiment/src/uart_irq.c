@@ -108,7 +108,7 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	}
 }
 
-void uart_irq_handle(int channel, Kernel_state *ks)
+void uart_irq_handle(int channel, Kernel_state *ks, int *cts_send)
 {
     // check UART interrupt status
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_handle"); 
@@ -135,9 +135,25 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 	vint uart_intr_value = *uart_intr;
     vint * uart1_flag = (vint *) UART1_FLAG;
 
-    if (uart_intr_value & 0x1) {
-        bwprintf(COM2, "clear to send %d\r\n", (*uart1_flag & CTS_MASK));
-        *uart_intr = 0; 
+    if(channel == COM1){
+        if (uart_intr_value & 0x1) {
+            int cts = *uart1_flag & CTS_MASK;
+            /*bwprintf(COM2, "%d", cts);*/
+            switch(*cts_send){
+                case -1: 
+                    if(cts == 0){
+                       *cts_send = 0; 
+                    }
+                case 0:  
+                    if(cts){
+                        *cts_send = 1;
+                    } 
+                    break;
+                default:
+                    break;
+            }
+            *uart_intr = 0; 
+        }
     }
 
 	if (uart_intr_value & uart_receive_irq_mask()) {
@@ -175,7 +191,7 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 				//bwprintf(COM2, "td %d inserted %d, is_ch_transmitted = %d\r\n", td->tid, td->ch, td->is_ch_transmitted);
 			}
 
-			if ((channel == COM2) || ((channel == COM1) & (*uart1_flag & CTS_MASK))) {
+			if ((channel == COM2) || ((channel == COM1) & *cts_send)) {
 				//if (channel == COM1) bwprintf(COM2, "new CTS = %d\r\n", *uart1_flag & CTS_MASK);
         		// turn off the XMIT interrupt
 				uart_device_disable(channel, XMIT);
@@ -195,6 +211,10 @@ void uart_irq_handle(int channel, Kernel_state *ks)
         	   	ks->blocked_on_event[transmit_event] = 0;
            		td->state = STATE_READY;
             	insert_task(td, &(ks->ready_queue));
+
+                if(channel == COM1){
+                    *cts_send = -1;
+                }
 			}
 		}
     } 
