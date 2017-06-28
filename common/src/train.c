@@ -162,10 +162,15 @@ int track_node_name_to_num(char *name)
  
 int velocity14_initialization(Velocity_data *velocity_data)
 {
+	int i;
+	for (i = 0; i < TRACK_MAX; i++) {
+		velocity_data->node[i].src = i;
+		velocity_data->node[i].num_velocity = 0;
+	}
+ 
 	velocity_data->stopping_distance = 940;
 
 	int index;
-
 	index = track_node_name_to_num("A3");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("C11");
@@ -277,7 +282,6 @@ int velocity14_initialization(Velocity_data *velocity_data)
 	velocity_data->node[index].dest[0] = track_node_name_to_num("A4");
 	velocity_data->node[index].velocity[0] = 7;
 	velocity_data->node[index].num_velocity = 1;
-	debug(SUBMISSION, "C12 index = %d, dest = %d", index, track_node_name_to_num("A4"));
 
 	index = track_node_name_to_num("C14");
 	velocity_data->node[index].src = index;
@@ -458,11 +462,27 @@ int velocity14_initialization(Velocity_data *velocity_data)
  
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
-	debug(SUBMISSION, "velocity_lookup %d, %d, src = %d", src, dest, velocity_data->node[src].src);
+
+	if (velocity_data->node[src].num_velocity == 0) {
+		debug(SUBMISSION, "velocity_lookup src = %c%d, velocity = %d",
+		num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id, -1);
+		return -1;
+	}
+
+	if (velocity_data->node[src].num_velocity == 1) {
+		debug(SUBMISSION, "velocity_lookup src = %c%d, velocity = %d",
+		num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id, velocity_data->node[src].velocity[0]);
+		return velocity_data->node[src].velocity[0];
+	}
+
 	int i;
 	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
-		debug(SUBMISSION, "velocity_lookup dest = %d", velocity_data->node[src].dest[i]);
 		if (velocity_data->node[src].dest[i] == dest) {
+			debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
+			num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id,
+			num_to_sensor(velocity_data->node[src].dest[i]).group + SENSOR_LABEL_BASE,
+			num_to_sensor(velocity_data->node[src].dest[i]).id,
+			velocity_data->node[src].velocity[0]);
 			return velocity_data->node[src].velocity[i];
 		}
 	}

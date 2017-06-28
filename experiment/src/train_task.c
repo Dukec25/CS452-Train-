@@ -5,17 +5,14 @@
 
 void train_task_startup()
 {
-	irq_io_tasks_cluster();
-
-	cli_startup();
-	cli_track_startup();
 	bwputc(COM1, START); // switches won't work without start command
+	cli_startup();
 
+	irq_io_tasks_cluster();
 	// velocity4 initialization
-	Velocity_data velocity_data;
-	debug(SUBMISSION, "%s", "velocity14_initialization");
-	velocity14_initialization(&velocity_data);
-	debug(SUBMISSION, "%s", "velocity14_initialization done");
+//	Velocity_data velocity_data;
+//	velocity14_initialization(&velocity_data);
+//	velocity_lookup(78, 43, &velocity_data);
 
 	initialize_switch();
 	sensor_initialization();
@@ -51,9 +48,7 @@ void train_server()
 
 	// velocity4 initialization
 	Velocity_data velocity_data;
-	debug(SUBMISSION, "%s", "velocity14_initialization");
 	velocity14_initialization(&velocity_data);
-	debug(SUBMISSION, "%s", "velocity14_initialization done");
 
 	// track A initialization
 	track_node track[TRACK_MAX];
@@ -175,7 +170,6 @@ void train_server()
 
 			// calculate the delta = the distance between sensor_to_deaccelate_train
 			// calculate average velocity
-			int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
 			int delta = 0;
 			int weighted_avg_velocity = 0;
 			for (i = 0; i < num_park_stops; i++) {
@@ -260,15 +254,15 @@ void train_server()
 							break;
 						}
 					}
-					int end_time = sensor.triggered_time;
-					int end_poll = sensor.triggered_poll;
-					int time = end_time - start_time;
-					int poll = end_poll - start_poll;
-					// int velocity = distance / (20 * poll);
-					int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data);
-
 					// Send calibration update
 					if (distance != 0) {
+						int end_time = sensor.triggered_time;
+						int end_poll = sensor.triggered_poll;
+						int time = end_time - start_time;
+						int poll = end_poll - start_poll;
+						// int velocity = distance / (20 * poll);
+						int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data);
+
 					//	debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
 					//					 train_server.last_stop, current_location, distance, time, poll, velocity);
 						Cli_request calibration_update_request;
