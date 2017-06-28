@@ -47,6 +47,9 @@ void train_server()
 	train_server.is_shutdown = 0;
 	train_server.last_stop = -1;
 	train_server.num_sensor_polls = 0;
+	train_server.is_park = 0;
+	train_server.sensor_to_deaccelate_train = -1;
+	train_server.park_delay_time = -1;
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
@@ -100,6 +103,8 @@ void train_server()
 		Command *cmd;
 		fifo_get(&train_server.cmd_fifo, &cmd);
 		dump(SUBMISSION, "ts get cmd type %d", cmd->type);
+
+		// handle TR, RV, SW, GO, STOP
 		Cli_request cli_update_request;
 		switch (cmd->type) {
 		case TR:
@@ -134,26 +139,55 @@ void train_server()
 			break;
 		}
 
+		// handle DC, PARK, and SENSOR
 		if (cmd->type == DC) {
 			//debug(SUBMISSION, "train_server handle dc cmd, %d, %d", cmd->arg0, cmd->arg1);
 			Send(stopping_distance_tid, cmd, sizeof(*cmd), &requester_handshake, sizeof(requester_handshake));
 		}
-        else if(cmd->type == PARK){
-            // hardcode the state as number for now to test
+        else if(cmd->type == PARK) {
+			// flag is_park
+			train_server.is_park = 1;
+
+			// parse destination
 			Sensor stop_sensor;
 			stop_sensor.group = toupper(cmd->arg0) - SENSOR_LABEL_BASE;
 			stop_sensor.id = cmd->arg1;
 			int stop = sensor_to_num(stop_sensor);
-	
-            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server, &cli_update_request);  
+			debug(SUBMISSION, "train_server handle PARK: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
+
+			// flip switches such that the train can arrive at the stop
+            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server, &cli_update_request);
             cli_update_request.type = CLI_UPDATE_SWITCH;
             int i;
-            for(i=0; i<num_switch; i++){
+            for(i=0; i<num_switch; i++) {
                 cli_update_request.switch_update.id = cli_update_request.br_update[i].id; 
                 cli_update_request.switch_update.state = cli_update_request.br_update[i].state;
                 Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request),
 					 &cli_server_handshake, sizeof(cli_server_handshake));
             }
+			debug(SUBMISSION, "train_server handle PARK: %d br done", num_switch);
+
+			// retrieve stopping distance
+			int stopping_distance = velocity_data.stopping_distance;
+			debug(SUBMISSION, "train_server handle PARK: stopping_distance = %d", stopping_distance);
+
+			// retrieve the sensor_to_deaccelate_train
+			int sensor_to_deaccelate_train; // need to fill in
+			train_server.sensor_to_deaccelate_train = sensor_to_deaccelate_train;
+			debug(SUBMISSION, "train_server handle PARK: sensor_to_deaccelate_train = %d", sensor_to_deaccelate_train);
+
+			// retrieve the delta = the distance between sensor_to_deaccelate_train
+			int delta; // need to fill in
+			debug(SUBMISSION, "train_server handle PARK: delta = %d", delta);
+
+			// calculate average velocity
+			int avg_velocity; // need to fill in
+			debug(SUBMISSION, "train_server handle PARK: avg_velocity = %d", avg_velocity);
+
+			// calculate delay time
+			int park_delay_time = (delta - stopping_distance) / avg_velocity; // in [mm] / ([mm] / [tick]) = [tick]
+			train_server.park_delay_time = park_delay_time;
+			debug(SUBMISSION, "train_server handle PARK: park_delay_time = %d", park_delay_time);
         } else if (cmd->type == SENSOR) {
 			uint16 sensor_data[SENSOR_GROUPS];
 			dump(SUBMISSION, "%s", "sensor cmd");
@@ -250,7 +284,25 @@ void train_server()
 					}
 					train_server.last_stop = current_location;
 				}
-			}		
+			}
+		}
+
+		// deaccelerate
+		if (train_server.is_park) {
+			if (train_server.last_stop == train_server.sensor_to_deaccelate_train) {
+				debug(SUBMISSION, "deaccelerate: train just passed %d", train_server.sensor_to_deaccelate_train);
+				Delay(train_server.park_delay_time);
+				Command stop_cmd;
+				stop_cmd.type = TR;
+				stop_cmd.arg0 = train_server.train.id;
+				stop_cmd.arg1 = MIN_SPEED;
+				fifo_put(&train_server.cmd_fifo, &stop_cmd);
+
+				// reset
+				train_server.is_park = 0;
+				train_server.sensor_to_deaccelate_train = -1;
+				train_server.park_delay_time = -1;
+			}
 		}
 	}
 	Exit();

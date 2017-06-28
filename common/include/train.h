@@ -56,8 +56,8 @@ typedef struct Calibration_package {
 	int src;
 	int dest;
 	int distance;
-	int time;
-	int velocity;
+	int time; // [tick] = [10ms]
+	int velocity; // [mm] / [tick] = [mm] / [10ms]
 } Calibration_package;
 
 /* Velocity */
@@ -70,7 +70,7 @@ typedef struct Velocity_node {
 	int velocity[MAX_NUM_VELOCITIES];
 } Velocity_node;
 typedef struct Velocity_data {
-	Velocity_node node[TRACK_MAX];	// [mm] / [tick] = [mm] / [10 ms]  
+	Velocity_node node[TRACK_MAX];	// [mm] / [tick] = [mm] / [10ms]  
 	int stopping_distance;	// mm
 } Velocity_data;
 int track_node_name_to_num(char *name);
@@ -100,10 +100,14 @@ typedef struct Train_server {
 
 	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
 	int sensor_lifo_top;
-	int last_stop;
+	int last_stop;	// last sensor converted to num
 	int num_sensor_polls;
 
     int switches_status[NUM_SWITCHES];
+
+	int is_park;					// flag to indicate user entered a PARK cmd
+	int sensor_to_deaccelate_train;	// sensor (converted to num) to start stop the train
+	int park_delay_time;			// time to delay before stop the train, [tick] = [10ms]
 } Train_server;
 
 /* Train commands */

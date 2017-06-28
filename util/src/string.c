@@ -147,4 +147,12 @@ void *memset(void *s, int c, unsigned int n)
   return s;
 }
 
+int is_digit(char c)
+{
+	return (c >= '0' && c <= '9');
+}
 
+int is_alpha(char c)
+{
+	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+}

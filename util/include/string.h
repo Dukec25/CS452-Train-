@@ -14,4 +14,6 @@ int strcmp(char *str1, char *str2, size_t num);
 int strlen(char *str);
 void Memcpy(void *destination, const void *source, size_t num);
 void *memset(void *s, int c, unsigned int n);
+int is_digit(char c);
+int is_alpha(char c);
 #endif // __STRING_H__

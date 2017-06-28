@@ -12,30 +12,6 @@
 #define THREE_WAY_SWITCH_OFFSET 0x99
 #define THREE_WAY_SWITCH_NUM 4
 
-static int is_digit(char c)
-{
-	return (c >= '0' && c <= '9');
-}
-
-static int is_state(char c)
-{
-	switch(c) {
-	case 'c':
-	case 'C':
-	case 's':
-	case 'S':
-		return 1;
-	default:
-		return 0;
-	}
-}
-
-static int is_alpha(char c)
-{
-	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
-}
-
-
 char switch_id_to_byte(uint8 id)
 {
 	if (id > NUM_SWITCHES) {
@@ -580,6 +556,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		break;
 	case 'p':
 		pcmd->type = PARK;
+		debug(SUBMISSION, "parse PARK cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
 		break;
 	case 'd':
 		pcmd->type = DC;
