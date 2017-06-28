@@ -8,9 +8,9 @@
 #include <train.h>
 
 int cal_distance(track_node *track, int src, int dest);
-int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request);
+int choose_destination(track_node *track, int src, int dest, Train_server *train_server);
 track_node* find_path(track_node *track, int src, int dest);
-int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request);
+int switches_need_changes(int src, track_node *node, Train_server *train_server);
 
 /*
  * Returns -1 if the road ends 

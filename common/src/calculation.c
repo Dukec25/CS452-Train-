@@ -1,14 +1,13 @@
 #include <calculation.h>
 #include <user_functions.h>
-#include <cli.h>
 #include <log.h>
 #include <debug.h>
 
-int choose_destination(track_node *track, int src, int dest, Train_server *train_server, Cli_request *update_request){
+int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
     dump(SUBMISSION, "src = %d, dest=%d \r\n", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);
-    return switches_need_changes(src, temp, train_server, update_request);
+    return switches_need_changes(src, temp, train_server);
 }
 
 int cal_distance(track_node *track, int src, int dest)
@@ -66,7 +65,7 @@ track_node* find_path(track_node *track, int src, int dest)
     return NULL;
 }
 
-int switches_need_changes(int src, track_node *node, Train_server *train_server, Cli_request *update_request){
+int switches_need_changes(int src, track_node *node, Train_server *train_server){
     dump(SUBMISSION, "%s", "get into switches need change");
     int idx = 0; // br_update size is 10
     while(node->num != src){
@@ -77,15 +76,13 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
             int node_id = node->previous->num;
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    // update switches UI
-                    update_request->br_update[idx].id = node_id;
-                    update_request->br_update[idx++].state = 's';
+                    train_server->br_update[idx].id = node_id;
+                    train_server->br_update[idx++].state = 's';
                 }
             } else{
                 if(train_server->switches_status[node_id-1] != CURVE){
-                    // update switches UI
-                    update_request->br_update[idx].id = node_id;
-                    update_request->br_update[idx++].state = 'c';
+                    train_server->br_update[idx].id = node_id;
+                    train_server->br_update[idx++].state = 'c';
                 }
             }
             node = node->previous;

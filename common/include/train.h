@@ -56,8 +56,8 @@ typedef struct Calibration_package {
 	int src;
 	int dest;
 	int distance;
-	int time; // [tick] = [10ms]
-	int velocity; // [mm] / [tick] = [mm] / [10ms]
+	int time; // actual time, [tick] = [10ms]
+	int velocity; // virtual velocity measured in [tick]
 } Calibration_package;
 
 /* Velocity */
@@ -71,7 +71,7 @@ typedef struct Velocity_node {
 	int velocity[MAX_NUM_VELOCITIES];
 } Velocity_node;
 typedef struct Velocity_data {
-	Velocity_node node[TRACK_MAX];	// [mm] / [tick] = [mm] / [10ms]  
+	Velocity_node node[TRACK_MAX];	// virtual velocity measured in [tick]
 	int stopping_distance;	// mm
 } Velocity_data;
 int track_node_name_to_num(char *name);
@@ -96,6 +96,7 @@ typedef enum {
 typedef struct Train_server {
 	int sensor_reader_tid;
 	int is_shutdown;
+
 	fifo_t cmd_fifo;
 	
 	Train train;
@@ -110,9 +111,11 @@ typedef struct Train_server {
 	int is_park;					// flag to indicate user entered a PARK cmd
 	int sensor_to_deaccelate_train;	// sensor (converted to num) to start stop the train
 	int park_delay_time;			// time to delay before stop the train, [tick] = [10ms]
+    Switch br_update[10];			// switches to flip such that train can at a sensor 
 } Train_server;
+void train_server_init(Train_server *train_server);
 
-/* Train commands */
+/* Command */
 #define COMMAND_SIZE 100
 typedef enum {
 	TR, 		/* Set any train in motion at the desired speed */
@@ -157,7 +160,6 @@ typedef struct Cli_request {
 
 	Clock clock_update;
 	Calibration_package calibration_update;
-    Switch br_update[10];
 } Cli_request;
 typedef struct Cli_server {
 	fifo_t cmd_fifo;

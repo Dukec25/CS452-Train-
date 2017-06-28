@@ -515,6 +515,23 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 	}
 }
 
+void train_server_init(Train_server *train_server)
+{
+	fifo_init(&train_server->cmd_fifo);
+	train_server->sensor_lifo_top = -1;
+	train_server->is_shutdown = 0;
+	train_server->last_stop = -1;
+	train_server->num_sensor_polls = 0;
+	train_server->is_park = 0;
+	train_server->sensor_to_deaccelate_train = -1;
+	train_server->park_delay_time = -1;
+	int sw;
+	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
+		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
+		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
+	}
+}
+
 void command_clear(Command_buffer *command_buffer)
 {
 	int i = 0;

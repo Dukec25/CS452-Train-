@@ -5,14 +5,10 @@
 
 void train_task_startup()
 {
-	bwputc(COM1, START); // switches won't work without start command
 	cli_startup();
+	bwputc(COM1, START); // switches won't work without start command
 
 	irq_io_tasks_cluster();
-	// velocity4 initialization
-//	Velocity_data velocity_data;
-//	velocity14_initialization(&velocity_data);
-//	velocity_lookup(78, 43, &velocity_data);
 
 	initialize_switch();
 	sensor_initialization();
@@ -32,19 +28,7 @@ void train_server()
 {
 	// train_server initialization 
 	Train_server train_server;
-	fifo_init(&train_server.cmd_fifo);
-	train_server.sensor_lifo_top = -1;
-	train_server.is_shutdown = 0;
-	train_server.last_stop = -1;
-	train_server.num_sensor_polls = 0;
-	train_server.is_park = 0;
-	train_server.sensor_to_deaccelate_train = -1;
-	train_server.park_delay_time = -1;
-	int sw;
-	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
-		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
-		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
-	}
+	train_server_init(&train_server);
 
 	// velocity4 initialization
 	Velocity_data velocity_data;
@@ -146,13 +130,14 @@ void train_server()
 			debug(SUBMISSION, "train_server handle PARK: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
 
 			// flip switches such that the train can arrive at the stop
-            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server, &cli_update_request);
-            cli_update_request.type = CLI_UPDATE_SWITCH;
+            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server);
+			debug(SUBMISSION, "train_server handle PARK: %d br start", num_switch);
             for(i=0; i<num_switch; i++) {
-                cli_update_request.switch_update.id = cli_update_request.br_update[i].id; 
-                cli_update_request.switch_update.state = cli_update_request.br_update[i].state;
-                Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request),
-					 &cli_server_handshake, sizeof(cli_server_handshake));
+				Command sw_cmd;
+				sw_cmd.type = SW;
+				sw_cmd.arg0 = train_server.br_update[i].id;
+				sw_cmd.arg1 = train_server.br_update[i].state;
+				fifo_put(&train_server.cmd_fifo, &sw_cmd);
             }
 			debug(SUBMISSION, "train_server handle PARK: %d br done", num_switch);
 
@@ -169,7 +154,7 @@ void train_server()
 			debug(SUBMISSION, "train_server handle PARK: sensor_to_deaccelate_train = %d", sensor_to_deaccelate_train);
 
 			// calculate the delta = the distance between sensor_to_deaccelate_train
-			// calculate average velocity
+			// calculate average velocity measured in [tick]
 			int delta = 0;
 			int weighted_avg_velocity = 0;
 			for (i = 0; i < num_park_stops; i++) {
@@ -186,20 +171,23 @@ void train_server()
 			debug(SUBMISSION, "train_server handle PARK: delta = %d, avg_velocity = %d", delta, weighted_avg_velocity);
 
 			// calculate delay time
-			int park_delay_time = (delta - stopping_distance) / weighted_avg_velocity; // in [mm] / ([mm] / [tick]) = [tick]
+			int park_delay_time = weighted_avg_velocity; // in [tick]
 			train_server.park_delay_time = park_delay_time;
 			debug(SUBMISSION, "train_server handle PARK: park_delay_time = %d", park_delay_time);
         } else if (cmd->type == SENSOR) {
-			uint16 sensor_data[SENSOR_GROUPS];
+			// sensor poll
 			dump(SUBMISSION, "%s", "sensor cmd");
 			Putc(COM1, SENSOR_QUERY);
+			uint16 sensor_data[SENSOR_GROUPS];
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				char lower = Getc(COM1);
 				char upper = Getc(COM1);
 				sensor_data[(int) sensor_group] = upper << 8 | lower;
 			}
 			train_server.num_sensor_polls++;
-			dump(SUBMISSION, "sensor queried, num_sensor_polls = %d", train_server.num_sensor_polls);
+			dump(SUBMISSION, "num_sensor_polls = %d", train_server.num_sensor_polls);
+
+			// parse sensor data
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				if (sensor_data[(int) sensor_group] == 0) {
 					continue;
@@ -240,7 +228,7 @@ void train_server()
 				
 	                /*test_sensor(next_location);*/
 
-					// velcoity
+					// retrieve last triggered sensor
 					int start_time = 0;
 					int start_poll = 0; 
 					while (train_server.sensor_lifo_top != -1) {
@@ -255,19 +243,24 @@ void train_server()
 							break;
 						}
 					}
+
+					// update velocity and send cli request 
 					if (distance != 0) {
 						int end_time = sensor.triggered_time;
 						int end_poll = sensor.triggered_poll;
 						int time = end_time - start_time;
 						int poll = end_poll - start_poll;
-						int new_velocity = distance / (20 * poll);
+						int sensor_poll_time = end_time / train_server.num_sensor_polls;
+						int new_velocity = sensor_poll_time * poll; // virtual velocity measured in [tick]
+
+						// update velocity_data
 						velocity_update(train_server.last_stop, current_location, new_velocity, &velocity_data);
 
-						int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data);
-						// update velocity_data
+						// virtual velocity measured in [tick]
+						int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data); 
 
-					//	debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
-					//					 train_server.last_stop, current_location, distance, time, poll, velocity);
+						//debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
+						//				 train_server.last_stop, current_location, distance, time, poll, velocity);
 
 						// Send calibration update
 						Cli_request calibration_update_request;
@@ -276,7 +269,7 @@ void train_server()
 						calibration_update_request.calibration_update.dest = current_location;
 						calibration_update_request.calibration_update.distance = distance;
 						calibration_update_request.calibration_update.time = time;
-						calibration_update_request.calibration_update.velocity = velocity; 
+						calibration_update_request.calibration_update.velocity = distance / velocity; 
 						Send(cli_server_tid, &calibration_update_request, sizeof(calibration_update_request),
 							 &cli_server_handshake, sizeof(cli_server_handshake));
 					}
