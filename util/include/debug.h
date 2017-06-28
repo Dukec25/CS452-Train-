@@ -40,7 +40,6 @@ typedef enum debug_level
 			}																			\
 		while (0)
 */
-
 #define assert(cond, fmt, ...)		 										 								\
 		do {																								\
 			if (cond != 1)																					\

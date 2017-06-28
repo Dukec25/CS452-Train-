@@ -121,6 +121,7 @@ int predict_next(track_node *track, int src, Train_server *train_server){
 int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
     track_node *node;
     node = find_path(track, src, dest);
+	debug(SUBMISSION, "find_path %s", node->name);
 
     fifo_t queue; 
     fifo_init(&queue);
@@ -131,19 +132,25 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
     while(1){
         fifo_get(&queue, &node);
         node = node->previous;
+		debug(SUBMISSION, "visit %s", node->name);
+
         if(node->type == NODE_BRANCH){
             if(node->edge[DIR_STRAIGHT].dest == node){
+				debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
                 stop_distance -= node->edge[DIR_STRAIGHT].dist; 
             } else{
+				debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);
                 stop_distance -= node->edge[DIR_CURVED].dist;
             }
         } else{
+			debug(SUBMISSION, "decrement curve %d", node->edge[DIR_AHEAD].dist);
             stop_distance -= node->edge[DIR_AHEAD].dist;
         }
 
         fifo_put(&queue, node);
 
         if(node->type == NODE_SENSOR){
+			debug(SUBMISSION, "add %s", node->name);
             Sensor_dist sensor_dist;
             sensor_dist.sensor_id = node->num;
             sensor_dist.distance = node->edge[DIR_AHEAD].dist;
