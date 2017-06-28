@@ -92,28 +92,6 @@ typedef enum {
 	START = 96,
 	HALT = 97
 } Train_state;
-#define SENSOR_LIFO_SIZE 1000
-typedef struct Train_server {
-	int sensor_reader_tid;
-	int is_shutdown;
-
-	fifo_t cmd_fifo;
-	
-	Train train;
-
-	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
-	int sensor_lifo_top;
-	int last_stop;	// last sensor converted to num
-	int num_sensor_polls;
-
-    int switches_status[NUM_SWITCHES];
-
-	int is_park;					// flag to indicate user entered a PARK cmd
-	int sensor_to_deaccelate_train;	// sensor (converted to num) to start stop the train
-	int park_delay_time;			// time to delay before stop the train, [tick] = [10ms]
-    Switch br_update[10];			// switches to flip such that train can at a sensor 
-} Train_server;
-void train_server_init(Train_server *train_server);
 
 /* Command */
 #define COMMAND_SIZE 100
@@ -168,12 +146,10 @@ typedef struct Cli_server {
 	int cli_clock_tid;
 	int is_shutdown;
 } Cli_server;
-
 /*
  * Clear the command_buffer by fill it with space
  */
 void command_clear(Command_buffer *command_buffer);
-
 /*
  * Parses the command in the command_buffer.
  * Updates ptrain_id and ptrain_speed if command_buffer stores a valid TR command.
@@ -182,11 +158,37 @@ void command_clear(Command_buffer *command_buffer);
  * Returns -1 otherwise.
  */
 int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd);
-
 /*
  * Based on pcmd, send bytes to train.
  * Excluding SENSOR and SHUTDOWN 
  */
-void command_handle(Command *pcmd, Train_server *train_server);
+void command_handle(Command *pcmd);
+
+/* Train server */
+#define SENSOR_LIFO_SIZE	100
+#define COMMAND_FIFO_SIZE	100
+typedef struct Train_server {
+	int sensor_reader_tid;
+	int is_shutdown;
+
+	Command cmd_fifo[COMMAND_FIFO_SIZE];
+	int cmd_fifo_head;
+	int cmd_fifo_tail;
+
+	Train train;
+
+	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
+	int sensor_lifo_top;
+	int last_stop;	// last sensor converted to num
+	int num_sensor_polls;
+
+    int switches_status[NUM_SWITCHES];
+
+	int is_park;					// flag to indicate user entered a PARK cmd
+	int sensor_to_deaccelate_train;	// sensor (converted to num) to start stop the train
+	int park_delay_time;			// time to delay before stop the train, [tick] = [10ms]
+    Switch br_update[10];			// switches to flip such that train can at a sensor 
+} Train_server;
+void train_server_init(Train_server *train_server);
 
 #endif // __TRAIN_H__

@@ -517,14 +517,19 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 
 void train_server_init(Train_server *train_server)
 {
-	fifo_init(&train_server->cmd_fifo);
-	train_server->sensor_lifo_top = -1;
 	train_server->is_shutdown = 0;
+
+	train_server->cmd_fifo_head = 0;
+	train_server->cmd_fifo_tail = 0;
+
+	train_server->sensor_lifo_top = -1;
 	train_server->last_stop = -1;
 	train_server->num_sensor_polls = 0;
+
 	train_server->is_park = 0;
 	train_server->sensor_to_deaccelate_train = -1;
 	train_server->park_delay_time = -1;
+
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
@@ -631,7 +636,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	return 0;
 }
 
-void command_handle(Command *pcmd, Train_server *train_server)
+void command_handle(Command *pcmd)
 {
 	debug(DEBUG_K4, "enter %s", "command_handle");
 
@@ -655,7 +660,6 @@ void command_handle(Command *pcmd, Train_server *train_server)
 	case SW:
 		irq_printf(COM1, "%c%c", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
         // track switches status
-        train_server->switches_status[pcmd->arg0-1] = switch_state_to_byte(pcmd->arg1);
 		Delay(20);
 		debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");
 		Putc(COM1, SOLENOID_OFF);
