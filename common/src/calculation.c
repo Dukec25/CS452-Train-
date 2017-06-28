@@ -136,7 +136,7 @@ int predict_next(track_node *track, int src, Train_server *train_server){
     return -1;
 }
 
-fifo_t find_stops_by_distance(track_node *track, int src, int dest, int stop_distance){
+int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
     track_node *node;
     node = find_path(track, src, dest);
 
@@ -144,8 +144,7 @@ fifo_t find_stops_by_distance(track_node *track, int src, int dest, int stop_dis
     fifo_init(&queue);
     fifo_put(&queue, node);
 
-    fifo_t ans; 
-    fifo_init(&ans);
+    int arr_len = 0;
 
     while(1){
         fifo_get(&queue, &node);
@@ -166,10 +165,10 @@ fifo_t find_stops_by_distance(track_node *track, int src, int dest, int stop_dis
             Sensor_dist sensor_dist;
             sensor_dist.sensor_id = node->num;
             sensor_dist.distance = node->edge[DIR_AHEAD].dist;
-            fifo_put(&ans, &sensor_dist);
+            ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
-                return ans;
+                return arr_len;
             }
         }
     }

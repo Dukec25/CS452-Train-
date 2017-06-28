@@ -25,12 +25,12 @@ typedef struct Sensor_dist {
 
 
 /*
- *  Return the fifo which contains all the stops on the way of
- *  stop_distance + dest (excluding dest sensors and include the 
+ *  Return the length of the Sensor_dist array, the first value in the 
+ *  array is the sensor that is the closest with stop 
+ *  
+ *  including the sensors on the way of stop_distance + dest (excluding dest sensors and include the 
  *  sensor that is closest to the stop_location but not on the way)  
- *
- *  the first value in the fifo is the closest with the stop
  */
-fifo_t find_stops_by_distance(track_node *track, int src, int dest, int stop_distance);
+int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans);
 
 #endif //__CALCULATION_H__
