@@ -22,6 +22,10 @@ void irq_enable()
     timer3_irq_enable();
     timer3_enable();
 
+	vint *uart_ctrl;
+    uart_ctrl = (vint *) UART1_CTRL;
+    *uart_ctrl |= MSIEN_MASK;
+
     uart_irq_enable(COM1);
     uart_irq_enable(COM2);
     uart_device_enable(COM1, RCV);

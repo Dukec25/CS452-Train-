@@ -118,20 +118,16 @@ void idle_task()
 
 void io_test_task(){
 	int i = 0;
-    /*debug(100, "!!!!!!!!!!!!!!!!!!before printint irq sentence%s", "% ");*/
     
-    for( i = 0; i < 10000; i++ ){
-        debug(SUBMISSION, "%s", "about to irq_printf");
-        irq_printf(COM2, "golden retriever is the best%d\r\n", i);
-        /*irq_printf(COM2, "%d\r\n", i);*/
+    for( i = 0; i < 100001; i++ ){
+        Putc(COM1, 'a');
+        Putc(COM1, 'b');
+        Putc(COM1, 'c');
+        Putc(COM1, 'd');
+        Putc(COM1, '\r');
+        Putc(COM1, '\n');
+
     }
-	/*for (i = 0; i < 255; i++) {*/
-   		// Putc(0, 'a');
-        /*char val = Getc(COM2);*/
-		/*debug(DEBUG_UART_IRQ, "return from Getc, receive %d", val);*/
-        /*Putc(COM1, i);*/
-//		uart1_irq_soft();
-	/*}*/
 	Exit();
 }
 
@@ -204,7 +200,7 @@ void uart1_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
         AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-        Delay(5);
+        /*Delay(5);*/
         /*vint *flags = (int *)( UART1_BASE + UART_FLAG_OFFSET  );*/
         /*while( !(*flags & TXFE_MASK) || !( *flags & CTS_MASK  )  ) ;*/
         /*if(*UART1Flag & CTS_MASK){}*/
@@ -279,15 +275,19 @@ void first_task()
     tid = Create(PRIOR_LOWEST, idle_task);
     debug(DEBUG_K4, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_HIGH, clock_server_task);
-    debug(DEBUG_K4, "created taskId = %d", tid);
+    irq_io_tasks_cluster();
 
-    tid = Create(PRIOR_MEDIUM, clock_server_notifier);
+    tid = Create(PRIOR_MEDIUM, io_test_task);
     debug(DEBUG_K4, "created taskId = %d", tid);
+    /*tid = Create(PRIOR_HIGH, clock_server_task);*/
+    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
 
-	tid = Create(PRIOR_HIGH, train_task_startup);
-    debug(DEBUG_K4, "created taskId = %d", tid);
+    /*tid = Create(PRIOR_MEDIUM, clock_server_notifier);*/
+    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
 
-    /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
-	Exit();
+    /*tid = Create(PRIOR_HIGH, train_task_startup);*/
+    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
+
+    debug(SUBMISSION, "%s", "FirstUserTask: exiting");
+    Exit();
 }
