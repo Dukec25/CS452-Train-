@@ -1,5 +1,4 @@
 #include <calculation.h>
-#include <user_functions.h>
 #include <log.h>
 #include <debug.h>
 

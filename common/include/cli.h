@@ -1,7 +1,6 @@
 #ifndef __CLI_H__
 #define __CLI_H__
 
-#include <fifo.h>
 #include <clock.h>
 #include <train.h>
 

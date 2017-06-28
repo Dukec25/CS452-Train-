@@ -1,12 +1,10 @@
-#include <bwio.h>
-#include <string.h>
 #include <cursor.h>
 #include <cli.h>
 #include <train.h>
-#include <user_functions.h>
-#include <irq_io.h>
-#include <track_data.h>
 #include <clock.h>
+#include <string.h>
+#include <bwio.h>
+#include <irq_io.h>
 
 Cli_request get_train_command_request(Command cmd)
 {

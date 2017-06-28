@@ -1,8 +1,6 @@
 #ifndef __TRAIN_H__
 #define __TRAIN_H__
 #include <define.h>
-#include <fifo.h>
-#include <clock.h>
 #include <track_data.h>
 
 /* Switches */

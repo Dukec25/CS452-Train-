@@ -1,5 +1,4 @@
 #include <clock.h>
-#include <debug.h>
 
 void clock_init(Clock *pclock)
 {

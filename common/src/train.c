@@ -2,8 +2,6 @@
 #include <cli.h>
 #include <train.h>
 #include <string.h>
-#include <user_functions.h>
-#include <kernel.h>
 #include <cursor.h>
 #include <irq_io.h>
 
