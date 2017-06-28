@@ -167,11 +167,12 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	int i;
 	for (i = 0; i < TRACK_MAX; i++) {
 		velocity_data->node[i].src = i;
+		velocity_data->node[i].updates = 1;
 		velocity_data->node[i].num_velocity = 0;
 	}
  
 	velocity_data->stopping_distance = 940;
-
+/*
 	int index;
 	index = track_node_name_to_num("A3");
 	velocity_data->node[index].src = index;
@@ -460,6 +461,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
 	velocity_data->node[index].velocity[1] = 5;
 	velocity_data->node[index].num_velocity = 2;
+*/
 }
  
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
@@ -478,7 +480,7 @@ int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 	return -1;
 }
 
-void velocity_update(int src, int dest, int new_velocity, int hit, Velocity_data *velocity_data)
+void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocity_data)
 {
 	int is_found = 0;
 	int dest_idx = -1;
@@ -498,6 +500,9 @@ void velocity_update(int src, int dest, int new_velocity, int hit, Velocity_data
 		velocity_data->node[src].num_velocity++;
 	}
 	else {
+		int hit = velocity_data->node[src].updates;
+		velocity_data->node[src].updates++;
+
 		int old_velocity = velocity_data->node[src].velocity[dest_idx];
 		if (new_velocity != old_velocity) {
 			if (((new_velocity + hit * old_velocity) % (hit + 1)) >= ((hit + 1) / 2)) {

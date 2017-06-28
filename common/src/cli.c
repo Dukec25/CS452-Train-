@@ -183,10 +183,15 @@ void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_up
 
 void cli_update_track(Calibration_package calibration_pkg, int updates)
 {
+	if (calibration_pkg.src == -1) {
+		return;
+	}
+
 	irq_save();
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
-	irq_pos(updates % BOTTOM_BORDER + 1, TRACK_DATA_COL);	
+	irq_pos(updates % HEIGHT + 1, TRACK_DATA_COL);	
+
 	if (calibration_pkg.velocity == -1) {
 		irq_printf(COM2, "%c%d->%c%d,%d,%d [10ms], N/A [mm/10ms]",
 					src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,

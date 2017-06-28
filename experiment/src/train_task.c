@@ -255,17 +255,21 @@ void train_server()
 							break;
 						}
 					}
-					// Send calibration update
 					if (distance != 0) {
 						int end_time = sensor.triggered_time;
 						int end_poll = sensor.triggered_poll;
 						int time = end_time - start_time;
 						int poll = end_poll - start_poll;
-						// int velocity = distance / (20 * poll);
+						int new_velocity = distance / (20 * poll);
+						velocity_update(train_server.last_stop, current_location, new_velocity, &velocity_data);
+
 						int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data);
+						// update velocity_data
 
 					//	debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
 					//					 train_server.last_stop, current_location, distance, time, poll, velocity);
+
+						// Send calibration update
 						Cli_request calibration_update_request;
 						calibration_update_request.type = CLI_UPDATE_CALIBRATION;
 						calibration_update_request.calibration_update.src = train_server.last_stop;
