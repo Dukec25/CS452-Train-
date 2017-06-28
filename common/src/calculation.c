@@ -136,6 +136,51 @@ int predict_next(track_node *track, int src, Train_server *train_server){
     return -1;
 }
 
+/*fifo_t find_stops_by_distance(track_node *track, int src, int dest, int stop_distance){*/
+    /*track_node *node;*/
+    /*node = find_path(track, src, dest);*/
+
+    /*fifo_t queue; */
+    /*fifo_init(&queue);*/
+
+    /*fifo_put(&queue, node);*/
+
+    /*while(1){*/
+        /*fifo_get(&queue, &node);*/
+        /*node = node->previous;*/
+        /*if(node->type == NODE_BRANCH){*/
+            /*if(node->edge[DIR_STRAIGHT].dest == node){*/
+                /*stop_distance -= node->edge[DIR_STRAIGHT].dist; */
+            /*} else{*/
+                /*stop_distance -= node->edge[DIR_CURVED].dist;*/
+            /*}*/
+        /*} else if(*/
+
+
+        /*if(node->type == NODE_SENSOR && stop_distance){*/
+            /*if(stop_distance <=0 ){*/
+                /*return node->num;*/
+            /*}*/
+        /*}*/
+    /*}*/
+
+    /*node->prevjjjj*/
+    /*if(node->previous->edge[DIR_STRAIGHT].dest == node){*/
+        /*if(train_server->switches_status[node_id-1] != STRAIGHT){*/
+            /*// flip the switches */
+            /*irq_printf(COM1, "%c%c", STRAIGHT, switch_id_to_byte(node_id));*/
+            /*train_server->switches_status[node_id-1] = STRAIGHT;*/
+            /*Delay(20);*/
+            /*Putc(COM1, SOLENOID_OFF);*/
+            /*cli_update_switch(update_request->switch_update);*/
+            
+            /*// update switches UI*/
+            /*update_request->br_update[idx].id = node_id;*/
+            /*update_request->br_update[idx++].state = 's';*/
+        /*}*/
+
+/*}*/
+
 // initialization 
 /*track_node tracka[TRACK_MAX];*/
 /*init_tracka(tracka);*/
