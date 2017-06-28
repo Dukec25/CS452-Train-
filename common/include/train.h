@@ -41,7 +41,7 @@ typedef struct Sensor {
 	char group;
 	char id;
 	int triggered_time;
-	int triggered_poll;
+	int triggered_query;
 } Sensor;
 void sensor_initialization();
 int sensor_to_num(Sensor sensor);
@@ -174,7 +174,7 @@ typedef struct Train_server {
 	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
 	int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
-	int num_sensor_polls;
+	int num_sensor_query;
 
     int switches_status[NUM_SWITCHES];
 

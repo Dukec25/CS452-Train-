@@ -206,7 +206,7 @@ void train_server()
 			train_server.park_delay_time = park_delay_time;
 			debug(SUBMISSION, "train_server handle PARK: park_delay_time = %d", park_delay_time);
         } else if (cmd.type == SENSOR) {
-			// sensor poll
+			// sensor query
 			dump(SUBMISSION, "%s", "sensor cmd");
 			Putc(COM1, SENSOR_QUERY);
 			uint16 sensor_data[SENSOR_GROUPS];
@@ -215,8 +215,8 @@ void train_server()
 				char upper = Getc(COM1);
 				sensor_data[(int) sensor_group] = upper << 8 | lower;
 			}
-			train_server.num_sensor_polls++;
-			dump(SUBMISSION, "num_sensor_polls = %d", train_server.num_sensor_polls);
+			train_server.num_sensor_query++;
+			dump(SUBMISSION, "num_sensor_query = %d", train_server.num_sensor_query);
 
 			// parse sensor data
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
@@ -233,7 +233,7 @@ void train_server()
 					Sensor sensor;
 					sensor.group = sensor_group;
 					sensor.triggered_time = Time();
-					sensor.triggered_poll = train_server.num_sensor_polls;
+					sensor.triggered_query = train_server.num_sensor_query;
 					if (bit + 1 <= 8) {
 						sensor.id = 8 - bit;
 					}
@@ -261,7 +261,7 @@ void train_server()
 
 					// retrieve last triggered sensor
 					int start_time = 0;
-					int start_poll = 0; 
+					int start_query = 0; 
 					while (train_server.sensor_lifo_top != -1) {
 						Sensor last_sensor;
 						last_sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
@@ -270,7 +270,7 @@ void train_server()
 										 sensor.group, sensor.id, sensor.triggered_time);
 						if (sensor_to_num(last_sensor) == train_server.last_stop) {
 							start_time = last_sensor.triggered_time;
-							start_poll = last_sensor.triggered_poll;
+							start_query = last_sensor.triggered_query;
 							break;
 						}
 					}
@@ -278,11 +278,11 @@ void train_server()
 					// update velocity and send cli request 
 					if (distance != 0) {
 						int end_time = sensor.triggered_time;
-						int end_poll = sensor.triggered_poll;
+						int end_query = sensor.triggered_query;
 						int time = end_time - start_time;
-						int poll = end_poll - start_poll;
-						int sensor_poll_time = end_time / train_server.num_sensor_polls;
-						int new_velocity = sensor_poll_time * poll; // virtual velocity measured in [tick]
+						int query = end_query - start_query;
+						int sensor_query_time = end_time / train_server.num_sensor_query;
+						int new_velocity = sensor_query_time * query; // virtual velocity measured in [tick]
 
 						// update velocity_data
 						velocity_update(train_server.last_stop, current_location, new_velocity, &velocity_data);
@@ -290,8 +290,8 @@ void train_server()
 						// virtual velocity measured in [tick]
 						int velocity = velocity_lookup(train_server.last_stop, current_location, &velocity_data); 
 
-						//debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, poll = %d velocity = %d",
-						//				 train_server.last_stop, current_location, distance, time, poll, velocity);
+						//debug(SUBMISSION, "last_stop = %d, current_location = %d, distance = %d, time = %d, query = %d velocity = %d",
+						//				 train_server.last_stop, current_location, distance, time, query, velocity);
 
 						// Send calibration update
 						Cli_request calibration_update_request;

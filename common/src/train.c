@@ -522,7 +522,7 @@ void train_server_init(Train_server *train_server)
 
 	train_server->sensor_lifo_top = -1;
 	train_server->last_stop = -1;
-	train_server->num_sensor_polls = 0;
+	train_server->num_sensor_query = 0;
 
 	train_server->is_park = 0;
 	train_server->sensor_to_deaccelate_train = -1;
