@@ -59,10 +59,10 @@ typedef struct Calibration_package {
 #define MAX_NUM_VELOCITIES		3
 typedef struct Velocity_node {
 	int src;
-	int updates;
 	int num_velocity;
 	int dest[MAX_NUM_VELOCITIES];
 	int velocity[MAX_NUM_VELOCITIES];
+	int updates[MAX_NUM_VELOCITIES];
 } Velocity_node;
 typedef struct Velocity_data {
 	Velocity_node node[TRACK_MAX];	// virtual velocity measured in [tick]
