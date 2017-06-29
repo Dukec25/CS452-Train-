@@ -3,7 +3,8 @@
 #include <train.h>
 #include <fifo.h>
 
-void train_task_startup();
+void train_task_admin();
+void idle_task();
 
 typedef enum Handshake {
 	HANDSHAKE_AKG,
@@ -14,7 +15,7 @@ typedef enum Handshake {
 #define SENSOR_LIFO_SIZE	100
 #define COMMAND_FIFO_SIZE	100
 typedef struct Train_server {
-	int sensor_reader_tid;
+	int is_shutdown;
 
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
 	int cmd_fifo_head;
@@ -40,10 +41,10 @@ void park_task();
 
 /* Cli server*/
 typedef struct Cli_server {
+	int is_shutdown;
+
 	fifo_t cmd_fifo;
 	fifo_t status_update_fifo;
-	int cli_io_tid;
-	int cli_clock_tid;
 } Cli_server;
 void cli_server();
 void cli_clock_task();

@@ -1,3 +1,5 @@
+#define TIMER_MAX	0xFFFFFFFF
+
 void time_receive(){
     int round;
     debug(DEBUG_TIME, "!!!!!!!!!enter %s", "time receive");
@@ -40,6 +42,30 @@ void time_send(){
     uint32 timer_output = TIMER_MAX - *ptimer;
     debug(DEBUG_TIME, "send time = %d", timer_output);
     Exit();
+}
+
+void rps_server_task()
+{
+	debug(DEBUG_TASK, "enter %s", "rps_server_task");
+	uint32 tid = MyTid();
+
+	debug(DEBUG_TASK, "starting rps_server_start %d", tid); 
+	rps_server_start();
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+	Exit();
+}
+
+void rps_client_task()
+{
+	debug(DEBUG_TASK, "enter %s", "rps_client_task");
+	uint32 tid = MyTid();
+
+	debug(DEBUG_TASK, "starting rps_client_start %d", tid); 
+	rps_client_start();
+
+	debug(DEBUG_TASK, "tid =%d exiting", tid);
+	Exit();
 }
 
 void kernel3_client_task(){
@@ -229,3 +255,32 @@ void receive_task()
     Exit();
 }
 
+void io_test_task(){
+	int i = 0;
+	/*debug(100, "!!!!!!!!!!!!!!!!!!before printint irq sentence%s", "% ");*/
+	
+	for( i = 0; i < 10000; i++ ){
+		debug(SUBMISSION, "%s", "about to irq_printf");
+		irq_printf(COM2, "golden retriever is the best%d\r\n", i);
+		/*irq_printf(COM2, "%d\r\n", i);*/
+	}
+	/*for (i = 0; i < 255; i++) {*/
+   		// Putc(0, 'a');
+		/*char val = Getc(COM2);*/
+		/*debug(DEBUG_UART_IRQ, "return from Getc, receive %d", val);*/
+		/*Putc(COM1, i);*/
+//		uart1_irq_soft();
+	/*}*/
+	Exit();
+}
+
+void general_task()
+{ 
+	debug(DEBUG_TASK, "In user task %s", "general_task");
+	uint32 tid = MyTid();
+	uint32 ptid = MyParentTid();
+	debug(SUBMISSION, "Get back to user task general_task, 1st print, tid = %d, ptid = %d", tid, ptid);
+	Pass();
+	debug(SUBMISSION, "Get back to user task general_task, 2nd print, tid = %d, ptid = %d", tid, ptid);
+	Exit();
+}
