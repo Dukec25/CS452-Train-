@@ -3,6 +3,12 @@
 #include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
+    bwprintf(COM2, "src=%d, %d\r\n", src, dest);
+    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX) {
+        // value out of range, don't do anything
+        return -1;
+    }
+
     dump(SUBMISSION, "src = %d, dest=%d \r\n", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);

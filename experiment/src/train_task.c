@@ -391,6 +391,11 @@ void park_task()
 		int stop = sensor_to_num(stop_sensor);
 		//debug(SUBMISSION, "park_task, stop sensor is %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
 
+        if (train_server->last_stop < 0 || stop < 0 || train_server->last_stop > TRACK_MAX || stop > TRACK_MAX) {
+            // value out of range, don't do anything
+            continue;
+        }
+
 		// flip switches such that the train can arrive at the stop
 		int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
 		//debug(SUBMISSION, "park_task: send flip %d switches start", num_switch);
