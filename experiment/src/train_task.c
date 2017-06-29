@@ -240,7 +240,7 @@ void train_server()
 				int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
 				sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
 
-				delta += sensor_distance; 
+				delta += sensor_velocity ? sensor_distance : 0; 
 				weighted_avg_velocity += sensor_distance * sensor_velocity;
 			}
 			weighted_avg_velocity /= delta;

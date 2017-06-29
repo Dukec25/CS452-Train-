@@ -168,7 +168,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	}
  
 	velocity_data->stopping_distance = 940;
-/*
+
 	int index;
 	index = track_node_name_to_num("A3");
 	velocity_data->node[index].src = index;
@@ -457,7 +457,6 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
 	velocity_data->node[index].velocity[1] = 5;
 	velocity_data->node[index].num_velocity = 2;
-*/
 }
  
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
