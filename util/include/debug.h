@@ -22,7 +22,7 @@ typedef enum debug_level
 } debug_level;
 
 /* debug */
-
+/*
 #define debug(level, fmt, ...) 												 			\
         do {																			\
             if (level >= DEBUG && level < 100)											\
@@ -31,15 +31,15 @@ typedef enum debug_level
                 bwprintf(COM2, fmt "\r\n", __VA_ARGS__);								\
             }																			\
         while (0)
-
-//#define debug(level, fmt, ...) 												 			\
-        //do {																			\
-            //if (level >= DEBUG && level < 100)											\
-                //irq_printf(COM2, "%s:%d " fmt "\r\n", __FILE__, __LINE__, __VA_ARGS__);	\
-            //else if (level >= SUBMISSION)												\
-                //irq_printf(COM2, fmt "\r\n", __VA_ARGS__);								\
-            //}																			\
-        //while (0)
+*/
+#define debug(level, fmt, ...) 												 			\
+        do {																			\
+            if (level >= DEBUG && level < 100)											\
+                irq_printf(COM2, "%s:%d " fmt "\r\n", __FILE__, __LINE__, __VA_ARGS__);	\
+            else if (level >= SUBMISSION)												\
+                irq_printf(COM2, fmt "\r\n", __VA_ARGS__);								\
+            }																			\
+        while (0)
 #define assert(cond, fmt, ...)		 										 								\
 		do {																								\
 			if (cond != 1)																					\

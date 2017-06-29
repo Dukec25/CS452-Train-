@@ -12,6 +12,7 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 int cal_distance(track_node *track, int src, int dest)
 {
 	/*debug(SUBMISSION, "%d %d", src, dest);*/
+	dump(SUBMISSION, "%d %d", src, dest);
     track_node *temp;
     temp = find_path(track, src, dest);
     if (temp) {
@@ -39,7 +40,7 @@ track_node* find_path(track_node *track, int src, int dest)
         track_node *temp;
         fifo_get(&queue, &temp);
 
-		/*debug(SUBMISSION, "visit %s", temp->name);*/
+		dump(SUBMISSION, "visit %s", temp->name);
 
         if (strlen(temp->name) == strlen(track[dest].name)){
             if (!strcmp(temp->name, track[dest].name, strlen(temp->name))) {
@@ -133,7 +134,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 		/*bwprintf(COM2, "%s ", temp->name);*/
     	temp = temp->previous;
 	}
-	/*debug(SUBMISSION, "%s", temp->name);*/
+	dump(SUBMISSION, "%s", temp->name);
 
     fifo_t queue; 
     fifo_init(&queue);
@@ -146,7 +147,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
         track_node *cur_node;
         fifo_get(&queue, &cur_node);
         node = cur_node->previous;
-		/*debug(SUBMISSION, "visit %s", node->name);*/
+		dump(SUBMISSION, "visit %s", node->name);
 
         if(node->type == NODE_BRANCH){
 
@@ -159,17 +160,17 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 
             if (strlen(node->edge[DIR_STRAIGHT].dest->name) == strlen(cur_node->name)){
                 if (!strcmp(node->edge[DIR_STRAIGHT].dest->name, cur_node->name, strlen(node->name))) {
-                    /*debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);*/
+                    dump(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
                     stop_distance -= node->edge[DIR_STRAIGHT].dist; 
                     accumulated_distance += node->edge[DIR_STRAIGHT].dist;
                 }
             } else{
-				/*debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);*/
+				dump(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);
                 stop_distance -= node->edge[DIR_CURVED].dist;
                 accumulated_distance += node->edge[DIR_CURVED].dist;
             }
         } else{
-			/*debug(SUBMISSION, "decrement curve %d", node->edge[DIR_AHEAD].dist);*/
+			dump(SUBMISSION, "decrement curve %d", node->edge[DIR_AHEAD].dist);
             stop_distance -= node->edge[DIR_AHEAD].dist;
             accumulated_distance += node->edge[DIR_AHEAD].dist;
         }
@@ -177,7 +178,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
         fifo_put(&queue, node);
 
         if(node->type == NODE_SENSOR){
-			/*debug(SUBMISSION, "add %s", node->name);*/
+			dump(SUBMISSION, "add %s", node->name);
             Sensor_dist sensor_dist;
             sensor_dist.sensor_id = node->num;
             sensor_dist.distance = accumulated_distance;

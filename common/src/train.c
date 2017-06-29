@@ -612,7 +612,6 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		return -1;
 	}
 
-	debug(SUBMISSION, "parse cmd, arg0 = %d, arg1 = %d", args[0], args[1]);
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
