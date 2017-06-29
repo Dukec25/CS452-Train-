@@ -315,6 +315,7 @@ void stopping_distance_collector_task()
 		//debug(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg0);
 		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
 	}
+	Exit();
 }
 
 void br_task()
@@ -332,12 +333,11 @@ void br_task()
 	//debug(SUBMISSION, "br_task train_server_address = 0x%x", train_server_address);	 
 
 	while (1) {
-		int requester_tid;
 		Command br_cmd;
-		Receive(&requester_tid, &br_cmd, sizeof(br_cmd));
+		Receive(&train_server_tid, &br_cmd, sizeof(br_cmd));
 		handshake = HANDSHAKE_AKG;
-		Reply(requester_tid, &handshake, sizeof(handshake));
-		//deubg(SUBMISSION, "receive br cmd %c%d from task %d", br_cmd.arg0, br_cmd.arg1, requester_tid);
+		Reply(train_server_tid, &handshake, sizeof(handshake));
+		//deubg(SUBMISSION, "receive br cmd %c%d", br_cmd.arg0, br_cmd.arg1);
 
 		// parse destination
 		Sensor stop_sensor;
@@ -356,6 +356,7 @@ void br_task()
 		}
 		//debug(SUBMISSION, "br_task: flip %d br done", num_switch);
 	}
+	Exit();
 }
 
 void park_task()
@@ -441,6 +442,7 @@ void park_task()
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
 	}
+	Exit();
 }
 
 void cli_server()
