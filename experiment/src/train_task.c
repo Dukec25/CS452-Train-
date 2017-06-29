@@ -429,9 +429,11 @@ void park_task()
 			int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
 			sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
 
-			delta += sensor_velocity ? sensor_distance : 0; 
-			park_delay_time += sensor_distance * sensor_velocity;
+			delta += sensor_velocity ? sensor_distance : 0;  // total_distance
+			park_delay_time += sensor_distance * sensor_velocity; 
 		}
+        // park_delay_time/delta is weighted velocity
+        int final_delay_time = delta/(park_delay_time/delta);
 		park_delay_time /= delta;
 		//debug(SUBMISSION, "park_task: delta = %d, park_delay_time = %d", delta, park_delay_time);
 
@@ -442,7 +444,7 @@ void park_task()
 		}
 
 		//debug(SUBMISSION, "park_task current stop = %d, start delay", last_stop);
-		Delay(park_delay_time);
+		Delay(final_delay_time);
 		//debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
