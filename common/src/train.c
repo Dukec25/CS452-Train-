@@ -532,7 +532,6 @@ Command get_tr_stop_command(char id)
 	tr_stop_cmd.type = TR;
 	tr_stop_cmd.arg0 = id;
 	tr_stop_cmd.arg1 = MIN_SPEED;
-	tr_stop_cmd.is_park = 1;
 	return tr_stop_cmd;
 }
 
@@ -620,7 +619,6 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		pcmd->type = TR;
 		ptrain->speed = args[1];
 		ptrain->id = args[0];
-		pcmd->is_park = 0;
 		break;
 	case 'r':
 		pcmd->type = RV;

@@ -29,15 +29,14 @@ typedef struct Train_server {
 
     int switches_status[NUM_SWITCHES];
 
-	int is_park;					// flag to indicate user entered a PARK cmd
-	int sensor_to_deaccelate_train;	// sensor (converted to num) to start stop the train
-	int park_delay_time;			// time to delay before stop the train, [tick] = [10ms]
     Switch br_update[10];			// switches to flip such that train can at a sensor 
 } Train_server;
 void train_server_init(Train_server *train_server);
 void train_server();
 void sensor_reader_task();
 void stopping_distance_collector_task();
+void br_task();
+void park_task();
 
 /* Cli server*/
 typedef struct Cli_server {

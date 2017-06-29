@@ -38,10 +38,6 @@ void train_server_init(Train_server *train_server)
 	train_server->last_stop = -1;
 	train_server->num_sensor_query = 0;
 
-	train_server->is_park = 0;
-	train_server->sensor_to_deaccelate_train = -1;
-	train_server->park_delay_time = -1;
-
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
@@ -76,11 +72,20 @@ void train_server()
 	train_server.sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
 	dump(SUBMISSION, "sensor_reader_tid %d", train_server.sensor_reader_tid);
 
+	vint train_server_address = (vint) &train_server;
+	dump(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 
+
 	int stopping_distance_tid = Create(PRIOR_MEDIUM, stopping_distance_collector_task);
 	dump(SUBMISSION, "stopping_distance_tid %d", stopping_distance_tid);
-	vint train_server_address = (vint) &train_server;
-	dump(SUBMISSION, "train_server sending train_server_address = 0x%x", train_server_address);	 
 	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
+
+	int br_tid = Create(PRIOR_MEDIUM, br_task);
+	dump(SUBMISSION, "br_tid %d", br_tid);
+	Send(br_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
+
+	int park_tid = Create(PRIOR_MEDIUM, park_task);
+	dump(SUBMISSION, "park_tid %d", park_tid);
+	Send(park_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	while(1) {
 		// receive command request
@@ -121,11 +126,6 @@ void train_server()
 		switch (cmd.type) {
 		case TR:
 			dump(SUBMISSION, "%s", "handle tr cmd");
-
-			if (cmd.is_park) {
-				//debug(SUBMISSION, "handle park stop: delay %d", train_server.park_delay_time);
-				Delay(train_server.park_delay_time);
-			}
 			command_handle(&cmd);
 
 			train_server.train.id = cmd.arg0;
@@ -142,7 +142,7 @@ void train_server()
 			dump(SUBMISSION, "%s", "handle sw cmd");
 			command_handle(&cmd);
 
-        	train_server.switches_status[cmd.arg0 - 1] = switch_state_to_byte(cmd.arg1);
+			train_server.switches_status[cmd.arg0 - 1] = switch_state_to_byte(cmd.arg1);
 
 			cli_update_request = get_update_switch_request(cmd.arg0, cmd.arg1);
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
@@ -159,98 +159,18 @@ void train_server()
 
 		// handle DC, PARK, and SENSOR
 		if (cmd.type == BR) {
-			// parse destination
-			Sensor stop_sensor;
-			stop_sensor.group = toupper(cmd.arg0) - SENSOR_LABEL_BASE;
-			stop_sensor.id = cmd.arg1;
-			int stop = sensor_to_num(stop_sensor);
-			//debug(SUBMISSION, "train_server handle BR: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
-	
-			// flip switches such that the train can arrive at the stop
-			//debug(SUBMISSION, "%s", "train_server handle BR: br start");
-            int num_switch = choose_destination(track, train_server.last_stop, stop, &train_server);
-			//debug(SUBMISSION, "train_server handle BR: flip %d switches start", num_switch);
-            int i;
-            for(i = 0; i < num_switch; i++) {
-				Command sw_cmd = get_sw_command(train_server.br_update[i].id, train_server.br_update[i].state);
-
-				// push sw_cmd request onto the fifo
-				int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
-				if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
-					if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
-						cmd_fifo_put_next = 0;
-					}
-				}
-				train_server.cmd_fifo[train_server.cmd_fifo_head] = sw_cmd;
-				train_server.cmd_fifo_head = cmd_fifo_put_next;
-            }
-			//debug(SUBMISSION, "train_server handle BR: %d br done", num_switch);
+			//debug(SUBMISSION, "train_server handle br cmd %c%d", cmd.arg0, cmd.arg1);
+			Send(br_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
 		}
 		else if (cmd.type == DC) {
-			//debug(SUBMISSION, "train_server handle dc cmd, %d, %d", cmd.arg0, cmd.arg1);
+			//debug(SUBMISSION, "train_server handle dc cmd, %c%d", cmd.arg0, cmd.arg1);
 			Send(stopping_distance_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
 		}
-        else if(cmd.type == PARK) {
-            int i;
-
-			// flag is_park
-			train_server.is_park = 1;
-
-			// parse destination
-			Sensor stop_sensor;
-			stop_sensor.group = toupper(cmd.arg0) - SENSOR_LABEL_BASE;
-			stop_sensor.id = cmd.arg1;
-			int stop = sensor_to_num(stop_sensor);
-			//debug(SUBMISSION, "train_server handle PARK: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
-
-			// push br_cmd request onto the fifo
-			Command br_cmd = get_br_command(cmd.arg0, cmd.arg1);
-			int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
-			if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
-				if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
-					cmd_fifo_put_next = 0;
-				}
-			}
-			train_server.cmd_fifo[train_server.cmd_fifo_head] = br_cmd;
-			train_server.cmd_fifo_head = cmd_fifo_put_next;
-			//debug(SUBMISSION, "%s", "train_server handle PARK: push br done");
-
-			// retrieve stopping distance
-			int stopping_distance = velocity_data.stopping_distance;
-			//debug(SUBMISSION, "train_server handle PARK: stopping_distance = %d", stopping_distance);
-
-			Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
-			int num_park_stops = find_stops_by_distance(track, train_server.last_stop, stop, stopping_distance, park_stops);
-
-			// retrieve the sensor_to_deaccelate_train
-			int sensor_to_deaccelate_train = park_stops[num_park_stops - 1].sensor_id; // need to fill in
-			train_server.sensor_to_deaccelate_train = sensor_to_deaccelate_train;
-			//debug(SUBMISSION, "train_server handle PARK: sensor_to_deaccelate_train = %c%d",
-							  //num_to_sensor(sensor_to_deaccelate_train).group + SENSOR_LABEL_BASE,
-							  //num_to_sensor(sensor_to_deaccelate_train).id);
-
-			// calculate the delta = the distance between sensor_to_deaccelate_train
-			// calculate average velocity measured in [tick]
-			int delta = 0;
-			int weighted_avg_velocity = 0;
-			for (i = 0; i < num_park_stops; i++) {
-				int sensor_distance = park_stops[i].distance;
-				int sensor_src = park_stops[i].sensor_id;
-				int sensor_dest = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
-				int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
-				sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
-
-				delta += sensor_velocity ? sensor_distance : 0; 
-				weighted_avg_velocity += sensor_distance * sensor_velocity;
-			}
-			weighted_avg_velocity /= delta;
-			//debug(SUBMISSION, "train_server handle PARK: delta = %d, avg_velocity = %d", delta, weighted_avg_velocity);
-
-			// calculate delay time
-			int park_delay_time = weighted_avg_velocity; // in [tick]
-			train_server.park_delay_time = park_delay_time;
-			//debug(SUBMISSION, "train_server handle PARK: park_delay_time = %d", park_delay_time);
-        } else if (cmd.type == SENSOR) {
+		else if(cmd.type == PARK) {
+			//debug(SUBMISSION, "train_server handle park cmd, %c%d", cmd.arg0, cmd.arg1);
+			Send(park_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
+		}
+		else if (cmd.type == SENSOR) {
 			// sensor query
 			dump(SUBMISSION, "%s", "sensor cmd");
 			Putc(COM1, SENSOR_QUERY);
@@ -319,7 +239,7 @@ void train_server()
 
 					// calculate distance, next stop, time, and new_velocity
 					int distance = cal_distance(track, last_stop, current_stop);
-                    int next_stop = predict_next(track, current_stop, &train_server);
+					int next_stop = predict_next(track, current_stop, &train_server);
 					int time = sensor.triggered_time - last_sensor.triggered_time;
 					int query = sensor.triggered_query - last_sensor.triggered_query;
 					// int new_velocity = 19 * query;
@@ -340,34 +260,6 @@ void train_server()
 						get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
 					Send(cli_server_tid, &update_calibration_request, sizeof(update_calibration_request), &handshake, sizeof(handshake));
 				}
-			}
-		}
-
-		// deaccelerate
-		if (train_server.is_park) {
-			if (train_server.last_stop == train_server.sensor_to_deaccelate_train) {
-				//debug(SUBMISSION, "deaccelerate: train just passed %d",
-								  //num_to_sensor(train_server.sensor_to_deaccelate_train).group + SENSOR_LABEL_BASE,
-								  //num_to_sensor(train_server.sensor_to_deaccelate_train).id);
-
-				Command stop_cmd = get_tr_stop_command(train_server.train.id);
-
-				// push stop_cmd request onto the fifo
-				int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
-				if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
-					if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
-						cmd_fifo_put_next = 0;
-					}
-				}
-				train_server.cmd_fifo[train_server.cmd_fifo_head] = stop_cmd;
-				train_server.cmd_fifo_head = cmd_fifo_put_next;
-				//debug(SUBMISSION, "deaccelerate: pushed stop_cmd, is_park = %d, delay %d",
-								  //stop_cmd.is_park, train_server.park_delay_time);
-
-				// reset
-				train_server.is_park = 0;
-				train_server.sensor_to_deaccelate_train = -1;
-				train_server.park_delay_time = -1;
 			}
 		}
 	}
@@ -398,29 +290,155 @@ void stopping_distance_collector_task()
 	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
 	Reply(train_server_tid, &handshake, sizeof(handshake));
 	Train_server *train_server = (Train_server *) train_server_address;
-	dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
+	debug(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
 
 	while (1) {
 		Command dc_cmd;
 		Receive(&train_server_tid, &dc_cmd, sizeof(dc_cmd));
 		handshake = HANDSHAKE_AKG;
 		Reply(train_server_tid, &handshake, sizeof(handshake));
-//		debug(SUBMISSION, "receive dc cmd %d %d", dc_cmd.arg0, dc_cmd.arg1);
+		//debug(SUBMISSION, "receive dc cmd %c%d", dc_cmd.arg0, dc_cmd.arg1);
 
 		Sensor stop_sensor;
 		stop_sensor.group = toupper(dc_cmd.arg0) - SENSOR_LABEL_BASE;
 		stop_sensor.id = dc_cmd.arg1;
 		int stop = sensor_to_num(stop_sensor);
-		//debug(SUBMISSION, "receive dc cmd, start stop at %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
+		//debug(SUBMISSION, "receive dc cmd, stop_sensor at %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
 
 		int last_stop = train_server->last_stop;
 		while (last_stop != stop) {
 			last_stop = train_server->last_stop;
 			Pass();
 		}
-		//debug(SUBMISSION, "stopping_distance current stop = %d\r\n", last_stop);
+		//debug(SUBMISSION, "stopping_distance current stop = %d", last_stop);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		//debug(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg0);
+		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
+	}
+}
+
+void br_task()
+{
+	// track A initialization
+	track_node track[TRACK_MAX];
+	init_tracka(track);
+
+	Handshake handshake = HANDSHAKE_AKG;
+	int train_server_tid = INVALID_TID;
+	vint train_server_address;
+	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
+	Reply(train_server_tid, &handshake, sizeof(handshake));
+	Train_server *train_server = (Train_server *) train_server_address;
+	//debug(SUBMISSION, "br_task train_server_address = 0x%x", train_server_address);	 
+
+	while (1) {
+		int requester_tid;
+		Command br_cmd;
+		Receive(&requester_tid, &br_cmd, sizeof(br_cmd));
+		handshake = HANDSHAKE_AKG;
+		Reply(requester_tid, &handshake, sizeof(handshake));
+		//deubg(SUBMISSION, "receive br cmd %c%d from task %d", br_cmd.arg0, br_cmd.arg1, requester_tid);
+
+		// parse destination
+		Sensor stop_sensor;
+		stop_sensor.group = toupper(br_cmd.arg0) - SENSOR_LABEL_BASE;
+		stop_sensor.id = br_cmd.arg1;
+		int stop = sensor_to_num(stop_sensor);
+		//debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
+	
+		// flip switches such that the train can arrive at the stop
+		int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
+		//debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
+		int i;
+		for(i = 0; i < num_switch; i++) {
+			Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
+			Send(train_server_tid, &sw_cmd, sizeof(sw_cmd), &handshake, sizeof(handshake));
+		}
+		//debug(SUBMISSION, "br_task: flip %d br done", num_switch);
+	}
+}
+
+void park_task()
+{
+	// track A initialization
+	track_node track[TRACK_MAX];
+	init_tracka(track);
+
+	// velocity4 initialization
+	Velocity_data velocity_data;
+	velocity14_initialization(&velocity_data);
+
+	Handshake handshake = HANDSHAKE_AKG;
+	int train_server_tid = INVALID_TID;
+	vint train_server_address;
+	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
+	Reply(train_server_tid, &handshake, sizeof(handshake));
+	Train_server *train_server = (Train_server *) train_server_address;
+	dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
+
+	while (1) {
+		Command park_cmd;
+		Receive(&train_server_tid, &park_cmd, sizeof(park_cmd));
+		handshake = HANDSHAKE_AKG;
+		Reply(train_server_tid, &handshake, sizeof(handshake));
+		//debug(SUBMISSION, "receive park cmd %c%d", park_cmd.arg0, park_cmd.arg1);
+
+		// parse destination
+		Sensor stop_sensor;
+		stop_sensor.group = toupper(park_cmd.arg0) - SENSOR_LABEL_BASE;
+		stop_sensor.id = park_cmd.arg1;
+		int stop = sensor_to_num(stop_sensor);
+		//debug(SUBMISSION, "park_task, stop sensor is %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
+
+		// flip switches such that the train can arrive at the stop
+		int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
+		//debug(SUBMISSION, "park_task: send flip %d switches start", num_switch);
+		int i;
+		for(i = 0; i < num_switch; i++) {
+			Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
+			Send(train_server_tid, &sw_cmd, sizeof(sw_cmd), &handshake, sizeof(handshake));
+		}
+		//debug(SUBMISSION, "park_task: flip %d br done", num_switch);
+
+		// retrieve stopping distance
+		int stopping_distance = velocity_data.stopping_distance;
+		//debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);
+
+		Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
+		int num_park_stops = find_stops_by_distance(track, train_server->last_stop, stop, stopping_distance, park_stops);
+
+		// retrieve the sensor_to_deaccelate_train
+		int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
+		//debug(SUBMISSION, "park_task: deaccelarate_stop = %c%d",
+						  //num_to_sensor(deaccelarate_stop).group + SENSOR_LABEL_BASE, num_to_sensor(deaccelarate_stop).id);
+
+		// calculate the delta = the distance between sensor_to_deaccelate_train
+		// calculate average velocity measured in [tick]
+		int delta = 0;
+		int park_delay_time = 0;
+		for (i = 0; i < num_park_stops; i++) {
+			int sensor_distance = park_stops[i].distance;
+			int sensor_src = park_stops[i].sensor_id;
+			int sensor_dest = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
+			int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
+			sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
+
+			delta += sensor_velocity ? sensor_distance : 0; 
+			park_delay_time += sensor_distance * sensor_velocity;
+		}
+		park_delay_time /= delta;
+		//debug(SUBMISSION, "park_task: delta = %d, park_delay_time = %d", delta, park_delay_time);
+
+		int last_stop = train_server->last_stop;
+		while (last_stop != deaccelarate_stop) {
+			last_stop = train_server->last_stop;
+			Pass();
+		}
+
+		//debug(SUBMISSION, "park_task current stop = %d, start delay", last_stop);
+		Delay(park_delay_time);
+		//debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
+		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
 	}
 }

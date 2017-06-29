@@ -104,7 +104,6 @@ typedef struct {
 	Train_cmd_type type;
 	char arg0;
 	char arg1;
-	int is_park;
 } Command;
 typedef struct Command_buffer
 {
