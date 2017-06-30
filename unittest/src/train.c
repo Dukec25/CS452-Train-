@@ -89,12 +89,16 @@ int track_node_name_to_num(char *name)
 void velocity14_initialization(Velocity_data *velocity_data)
 {
 	int i;
-	for (i = 0; i < TRACK_MAX; i++) {
-		velocity_data->node[i].src = i;
-		velocity_data->node[i].updates = 1;
-		velocity_data->node[i].num_velocity = 0;
-	}
- 
+
+    for (i = 0; i < TRACK_MAX; i++) {
+        velocity_data->node[i].src = i;
+        velocity_data->node[i].num_velocity = 0;
+        int j;
+        for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
+            velocity_data->node[i].updates[j] = 1;
+        }
+                                    
+    }
 	velocity_data->stopping_distance = 940;
 
 	int index;
@@ -423,8 +427,8 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 		velocity_data->node[src].num_velocity++;
 	}
 	else {
-		int hit = velocity_data->node[src].updates;
-		velocity_data->node[src].updates++;
+		int hit = velocity_data->node[src].updates[dest_idx];
+		velocity_data->node[src].updates[dest_idx]++;
 
 		int old_velocity = velocity_data->node[src].velocity[dest_idx];
 		if (new_velocity != old_velocity) {

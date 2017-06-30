@@ -448,6 +448,9 @@ void park_task()
 
 		Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 		int num_park_stops = find_stops_by_distance(track, train_server->last_stop, stop, stopping_distance, park_stops);
+        if(num_park_stops == -1){
+            continue; // there is error, ignore this iteration
+        }
 
 		// retrieve the sensor_to_deaccelate_train
 		int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
@@ -465,6 +468,7 @@ void park_task()
 			int sensor_src = park_stops[i].sensor_id;
 			int sensor_dest = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
 			int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
+            
 			sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
 
 			delta += sensor_velocity ? sensor_distance : 0; 
@@ -476,6 +480,7 @@ void park_task()
 		}
 		park_delay_time /= delta;
 
+        debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
         vint delay_distance = delta - stopping_distance;
         vint delay_velocity = first_stop_distance/first_stop_velocity;
         park_delay_time = delay_distance/ delay_velocity;

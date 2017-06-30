@@ -133,7 +133,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 		bwprintf(COM2, "%s ", temp->name);
     	temp = temp->previous;
 	}
-	/*debug(SUBMISSION, "%s", temp->name);*/
+    bwprintf(COM2, "%s ", temp->name);
 
     fifo_t queue; 
     fifo_init(&queue);
@@ -146,30 +146,20 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
         track_node *cur_node;
         fifo_get(&queue, &cur_node);
         node = cur_node->previous;
-		debug(SUBMISSION, "visit %s", node->name);
+		debug(SUBMISSION, "visiting %s", node->name);
 
         if(node->type == NODE_BRANCH){
-
-            // change this to string comparison in the future 
-            if (strlen(temp->num) == strlen(track[dest].num)){
-                if (!strcmp(temp->num, track[dest].num, strlen(temp->num))) {
-                    return temp;
-                }
-            }
-
-            if (strlen(node->edge[DIR_STRAIGHT].dest->name) == strlen(cur_node->name)){
-                if (!strcmp(node->edge[DIR_STRAIGHT].dest->name, cur_node->name, strlen(node->name))) {
-                    debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
-                    stop_distance -= node->edge[DIR_STRAIGHT].dist; 
-                    accumulated_distance += node->edge[DIR_STRAIGHT].dist;
-                }
-            } else{
+            if (strlen(node->edge[DIR_STRAIGHT].dest->name) != strlen(cur_node->name)){
 				debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);
                 stop_distance -= node->edge[DIR_CURVED].dist;
                 accumulated_distance += node->edge[DIR_CURVED].dist;
+            } else{
+                debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
+                stop_distance -= node->edge[DIR_STRAIGHT].dist; 
+                accumulated_distance += node->edge[DIR_STRAIGHT].dist;
             }
         } else{
-			debug(SUBMISSION, "decrement curve %d", node->edge[DIR_AHEAD].dist);
+			debug(SUBMISSION, "decrement ahead %d", node->edge[DIR_AHEAD].dist);
             stop_distance -= node->edge[DIR_AHEAD].dist;
             accumulated_distance += node->edge[DIR_AHEAD].dist;
         }
@@ -185,7 +175,15 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
             ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
+                bwprintf(COM2, "angel\r\n");
                 return arr_len;
+            }
+        }
+
+        if (strlen(node->name) == strlen(track[src].name)){
+            if (!strcmp(node->name, track[src].name, strlen(node->name))) {
+                bwprintf(COM2, "evil\r\n");
+                return -1;
             }
         }
     }

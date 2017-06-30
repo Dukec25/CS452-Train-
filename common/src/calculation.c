@@ -156,14 +156,6 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 		dump(SUBMISSION, "visit %s", node->name);
 
         if(node->type == NODE_BRANCH){
-
-            // change this to string comparison in the future 
-            if (strlen(temp->num) == strlen(track[dest].num)){
-                if (!strcmp(temp->num, track[dest].num, strlen(temp->num))) {
-                    return temp;
-                }
-            }
-
             if (strlen(node->edge[DIR_STRAIGHT].dest->name) == strlen(cur_node->name)){
                 if (!strcmp(node->edge[DIR_STRAIGHT].dest->name, cur_node->name, strlen(node->name))) {
                     dump(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);
@@ -193,6 +185,12 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 
             if(stop_distance <=0){
                 return arr_len;
+            }
+        }
+
+        if (strlen(node->name) == strlen(track[src].name)){
+            if (!strcmp(node->name, track[src].name, strlen(node->name))) {
+                return -1;
             }
         }
     }
