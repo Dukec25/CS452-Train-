@@ -4,12 +4,29 @@
 #include <train_task.h>
 #include <string.h>
 
-int cal_distance(track_node *track, int src, int dest);
-int choose_destination(track_node *track, int src, int dest, Train_server *train_server);
+/*
+ * the base function of most the functions listed below, used to return a
+ * path from src and dest  
+ */
 track_node* find_path(track_node *track, int src, int dest);
+
+/*
+ * calculate the physical distance between src and dest 
+ */
+int cal_distance(track_node *track, int src, int dest);
+
+/*
+ * function used to flip switches in order to get the train to dest
+ */
+int choose_destination(track_node *track, int src, int dest, Train_server *train_server);
+
+/*
+ * helper method of choose_destination
+ */
 int switches_need_changes(int src, track_node *node, Train_server *train_server);
 
 /*
+ * Used to predict next sensor stop based on src
  * Returns -1 if the road ends 
  * Returns other value in normal case.
  */

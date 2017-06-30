@@ -40,7 +40,7 @@ void train_server()
 	// train_server initialization 
 	Train_server train_server;
 	train_server_init(&train_server);
-	// velocity4 initialization
+	// velocity14 initialization
 	Velocity_data velocity_data;
 	velocity14_initialization(&velocity_data);
 	// track A initialization
@@ -386,8 +386,10 @@ void br_task()
 		// flip switches such that the train can arrive at the stop
 		int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
 		//debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
+        bwprintf(COM2, "num_switch = %d\r\n", num_switch);
 		int i;
 		for(i = 0; i < num_switch; i++) {
+            bwprintf(COM2, "SW ID = %d, STATE = %d\r\n", train_server->br_update[i].id, train_server->br_update[i].state);
 			Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
 			Send(train_server_tid, &sw_cmd, sizeof(sw_cmd), &handshake, sizeof(handshake));
 		}

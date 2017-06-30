@@ -174,9 +174,10 @@ void cli_track_startup()
 
 void cli_user_input(Command_buffer *command_buffer)
 {
-	irq_pos(HEIGHT, 0);
+    /*irq_pos(HEIGHT, 0);*/
 	command_buffer->data[command_buffer->pos] = '\0';
-	irq_printf(COM2, "> %s", command_buffer->data);
+    /*irq_printf(COM2, "> %s", command_buffer->data);*/
+    bwprintf(COM2, "\r\n");
 }
 
 void cli_update_clock(Clock clock)

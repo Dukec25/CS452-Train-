@@ -71,22 +71,56 @@ track_node* find_path(track_node *track, int src, int dest)
 
 int switches_need_changes(int src, track_node *node, Train_server *train_server){
     dump(SUBMISSION, "%s", "get into switches need change");
+    bwprintf(COM2, "switches_need_changes=%d\r\n", src);
     int idx = 0; // br_update size is 10
+
+	track_node *temp = node;
+	while(temp->num != src) {
+		bwprintf(COM2, "%s ", temp->name);
+    	temp = temp->previous;
+	}
+    bwprintf(COM2, "%s \r\n", temp->name);
+
     while(node->num != src){
+        bwprintf(COM2, "visiting %s\r\n", node->name);
         if(node->previous->type != NODE_BRANCH){
             node = node->previous;
             continue;
         } else {
             int node_id = node->previous->num;
+            switch(node_id){
+                case 156:
+                    node_id = 22;
+                    break;
+                case 155:
+                    node_id = 21;
+                    break;
+                case 154:
+                    node_id = 20;
+                    break;
+                case 153:
+                    node_id = 19;
+                    break;
+                default:
+                    break;
+            }
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
+                bwprintf(COM2, "straight \r\n");
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
+                    bwprintf(COM2, "status curve \r\n");
                     train_server->br_update[idx].id = node_id;
                     train_server->br_update[idx++].state = 's';
+                } else{
+                    bwprintf(COM2, "status straight \r\n");
                 }
             } else{
+                bwprintf(COM2, "curve \r\n");
                 if(train_server->switches_status[node_id-1] != CURVE){
+                    bwprintf(COM2, "status straight \r\n");
                     train_server->br_update[idx].id = node_id;
                     train_server->br_update[idx++].state = 'c';
+                } else{
+                    bwprintf(COM2, "status curve \r\n");
                 }
             }
             node = node->previous;

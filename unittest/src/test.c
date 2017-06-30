@@ -235,11 +235,11 @@ void track_test()
 	// find_stops_by_distance
 	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 	Sensor sensor_src;
-	sensor_src.group = 'C' - 'A';
-	sensor_src.id = 10;
+	sensor_src.group = 'B' - 'A';
+	sensor_src.id = 4;
 	Sensor sensor_dest;
 	sensor_dest.group = 'E' - 'A';
-	sensor_dest.id = 2;
+	sensor_dest.id = 4;
 	test_assert(0, "%c%d->%c%d", sensor_src.group + 'A', sensor_src.id, sensor_dest.group + 'A', sensor_dest.id);
 	int num_park_stops = find_stops_by_distance(tracka, sensor_to_num(sensor_src), sensor_to_num(sensor_dest),
 													940, park_stops);
