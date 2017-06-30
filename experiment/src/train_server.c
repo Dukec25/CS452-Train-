@@ -416,7 +416,7 @@ void park_task()
 	// track A initialization
 	track_node track[TRACK_MAX];
 	init_tracka(track);
-	// velocity4 initialization
+	// velocity14 initialization
 	Velocity_data velocity_data;
 	velocity14_initialization(&velocity_data);
 

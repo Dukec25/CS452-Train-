@@ -160,6 +160,40 @@ int track_node_name_to_num(char *name)
 	return num; 
 }
  
+void velocity8_initialization(Velocity_data *velocity_data)
+{
+    int i;
+    for (i = 0; i < TRACK_MAX; i++) {
+        velocity_data->node[i].src = i;
+        velocity_data->node[i].num_velocity = 0;
+        int j;
+        for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
+            velocity_data->node[i].updates[j] = 1;
+        }
+    }
+ 
+    velocity_data->stopping_distance = 570;
+
+    int index;
+}
+
+void velocity10_initialization(Velocity_data *velocity_data)
+{
+	int i;
+	for (i = 0; i < TRACK_MAX; i++) {
+		velocity_data->node[i].src = i;
+		velocity_data->node[i].num_velocity = 0;
+		int j;
+		for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
+			velocity_data->node[i].updates[j] = 1;
+		}
+	}
+ 
+	velocity_data->stopping_distance = 673;
+
+	int index;
+}
+
 void velocity14_initialization(Velocity_data *velocity_data)
 {
 	int i;
@@ -724,7 +758,8 @@ void command_handle(Command *pcmd)
 	// pcmd->type get defined at train.h
 	switch(pcmd->type) {
 	case TR:
-		irq_printf(COM1, "%c%c", pcmd->arg1, pcmd->arg0);
+        // add 16 here to turn on the headlight of the train
+		irq_printf(COM1, "%c%c", pcmd->arg1+16, pcmd->arg0);
 		break;
 	case RV:
 		irq_printf(COM1, "%c%c", MIN_SPEED, pcmd->arg0);
