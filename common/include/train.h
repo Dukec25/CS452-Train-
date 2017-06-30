@@ -21,7 +21,7 @@ void initialize_switch();
 /*
  * Test switches initialization buying set switches the opposite state
 */
-void test_initialize_switch();
+void reverse_initialize_switch();
 /*
  * Convert a switch id to a byte to be sent to the train controller
  */

@@ -52,11 +52,11 @@ void initialize_switch()
 }
 
 // method seems deprecated, currently only use initalize_switch
-void test_initialize_switch()
+void reverse_initialize_switch()
 {
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
-		bwputc(COM1, switch_state_to_byte((sw == 19 || sw == 21) ? 'C' : 'S')); // state
+		bwputc(COM1, switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'C' : 'S')); // state
 		bwputc(COM1, switch_id_to_byte( sw )); // switch
 		Delay(20);
 	}
@@ -183,7 +183,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	index = track_node_name_to_num("A4");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("B16");
-	velocity_data->node[index].velocity[0] = 66;
+	velocity_data->node[index].velocity[0] = 80;
 	velocity_data->node[index].num_velocity = 1;
 	velocity_data->node[index].updates[0] = 32;
 
@@ -197,7 +197,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	index = track_node_name_to_num("B3");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("C2");
-	velocity_data->node[index].velocity[0] = 24;
+	velocity_data->node[index].velocity[0] = 60;
 	velocity_data->node[index].num_velocity = 1;
 	velocity_data->node[index].updates[0] = 14;
 
@@ -242,7 +242,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	index = track_node_name_to_num("B16");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("C10");
-	velocity_data->node[index].velocity[0] = 55;
+	velocity_data->node[index].velocity[0] = 58;
 	velocity_data->node[index].updates[0] = 29;
 	velocity_data->node[index].dest[1] = track_node_name_to_num("C5");
 	velocity_data->node[index].velocity[1] = 68;
@@ -262,7 +262,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	velocity_data->node[index].velocity[0] = 60;
 	velocity_data->node[index].updates[0] = 1;
 	velocity_data->node[index].dest[1] = track_node_name_to_num("E2");
-	velocity_data->node[index].velocity[1] = 70;
+	velocity_data->node[index].velocity[1] = 78;
 	velocity_data->node[index].updates[1] = 17;
 	velocity_data->node[index].num_velocity = 2;
 
@@ -289,7 +289,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	velocity_data->node[index].velocity[0] = 60;
 	velocity_data->node[index].updates[0] = 8;
 	velocity_data->node[index].dest[1] = track_node_name_to_num("B3");
-	velocity_data->node[index].velocity[1] = 55;
+	velocity_data->node[index].velocity[1] = 60;
 	velocity_data->node[index].updates[1] = 20;
 	velocity_data->node[index].num_velocity = 2;
 
@@ -303,7 +303,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	index = track_node_name_to_num("C12");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("A4");
-	velocity_data->node[index].velocity[0] = 52;
+	velocity_data->node[index].velocity[0] = 60;
 	velocity_data->node[index].updates[0] = 27;
 	velocity_data->node[index].num_velocity = 1;
 
@@ -411,7 +411,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	index = track_node_name_to_num("E2");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("E15");
-	velocity_data->node[index].velocity[0] = 25;
+	velocity_data->node[index].velocity[0] = 40;
 	velocity_data->node[index].updates[0] = 22;
 	velocity_data->node[index].num_velocity = 1;
 
@@ -497,7 +497,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 	index = track_node_name_to_num("E15");
 	velocity_data->node[index].src = index;
 	velocity_data->node[index].dest[0] = track_node_name_to_num("C12");
-	velocity_data->node[index].velocity[0] = 50;
+	velocity_data->node[index].velocity[0] = 58;
 	velocity_data->node[index].updates[0] = 21;
 	velocity_data->node[index].num_velocity = 1;
 

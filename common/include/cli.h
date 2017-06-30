@@ -83,7 +83,7 @@ Cli_request get_shutdown_request();
 #define TRACK_DATA_PER_ROW			5
 #define TRACK_DATA_PER_COL			26
 #define TRACK_LABEL_LENGTH			7
-#define TRACK_DATA_LENGTH			20
+#define TRACK_DATA_LENGTH			33
 
 /*
  * Draw the initial command line interface

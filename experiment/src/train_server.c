@@ -458,6 +458,8 @@ void park_task()
 		// calculate average velocity measured in [tick]
 		int delta = 0;
 		int park_delay_time = 0;
+        int first_stop_distance = 0;
+        int first_stop_velocity = 0;
 		for (i = 0; i < num_park_stops; i++) {
 			int sensor_distance = park_stops[i].distance;
 			int sensor_src = park_stops[i].sensor_id;
@@ -467,8 +469,17 @@ void park_task()
 
 			delta += sensor_velocity ? sensor_distance : 0; 
 			park_delay_time += sensor_distance * sensor_velocity;
+            if( i == num_park_stops - 1 ){
+                first_stop_distance = sensor_distance; 
+                first_stop_velocity = sensor_velocity;
+            }
 		}
 		park_delay_time /= delta;
+
+        vint delay_distance = delta - stopping_distance;
+        vint delay_velocity = first_stop_distance/first_stop_velocity;
+        park_delay_time = delay_distance/ delay_velocity;
+
 		//debug(SUBMISSION, "park_task: delta = %d, park_delay_time = %d", delta, park_delay_time);
 
 		int last_stop = train_server->last_stop;
