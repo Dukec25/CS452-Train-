@@ -175,14 +175,13 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
             ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
-                bwprintf(COM2, "angel\r\n");
                 return arr_len;
             }
         }
 
         if (strlen(node->name) == strlen(track[src].name)){
             if (!strcmp(node->name, track[src].name, strlen(node->name))) {
-                bwprintf(COM2, "evil\r\n");
+                // there is an error, probably too late to stop 
                 return -1;
             }
         }
