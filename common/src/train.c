@@ -583,6 +583,13 @@ int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 
 void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocity_data)
 {
+    if (new_velocity > 600){
+        // indicates the trains once stopped 
+        // currently only take into consideration speed as low as 6 
+        // probably need a smarter way to determine this in the future
+        return;
+    }
+
 	int is_found = 0;
 	int dest_idx = -1;
 
@@ -686,6 +693,13 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 				num_buffer[i] = '\0';
 		}	
 		int num_buffer_pos = 0;
+
+        if(command_buffer->data[pos] != ' '){
+            // if the next character after command not space
+            return -1;
+        }
+
+        // skip the next character after command
 		while (pos++ < command_buffer->pos) {
 			if (is_digit(command_buffer->data[pos])) {
 				// current char is a digit
@@ -699,7 +713,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 				// skip space
 				if (num_buffer_pos != 0) {
 					// at the end of a number
+                    int temp = argc;
 					args[argc++] = atoi(num_buffer);
+                    /*bwprintf(COM2, "converted value=%d\r\n", args[temp]);*/
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;
@@ -716,6 +732,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		return -1;
 	}
     /*bwprintf(COM2, "args%s\r\n", args);*/
+    /*bwprintf(COM2, "argc num = %d\r\n", argc);*/
     
     // currently no commands need more than two arguments
     // there will probably won't be in the future as well
@@ -726,6 +743,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
+        if (argc != 2){
+            return -1;
+        }
 		if (args[1] > MAX_SPEED) {
 			return -1;
 		}
@@ -734,27 +754,42 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		ptrain->id = args[0];
 		break;
 	case 'r':
+        if (argc != 1){
+            return -1;
+        }
 		pcmd->type = RV;
 		break;
 	case 's':
+        if (argc != 2){
+            return -1;
+        }
 		if (switch_state_to_byte(pcmd->arg1) == -1 ||  switch_id_to_byte(pcmd->arg0) == -1) {
 			return -1;
 		}
 		pcmd->type = SW;
 		break;
 	case 'b':
+        if (argc != 2){
+            return -1;
+        }
         if(args[1] > 16){
             return -1;
         }
 		pcmd->type = BR;
 		break;
 	case 'd':
+        if (argc != 2){
+            return -1;
+        }
         if(args[1] > 16){
             return -1;
         }
 		pcmd->type = DC;
 		break;
 	case 'p':
+        if (argc != 2){
+            return -1;
+        }
         if(args[1] > 16){
             return -1;
         }

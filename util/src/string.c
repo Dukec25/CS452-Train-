@@ -1,6 +1,7 @@
 #include <string.h>
 #include <debug.h>
 
+// can't convert number more than 255
 int atoi(char *str)
 {
 	int num  = 0;
