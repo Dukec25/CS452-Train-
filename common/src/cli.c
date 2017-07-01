@@ -113,6 +113,7 @@ void cli_startup()
 	bw_pos(SENSOR_LABEL_ROW, SENSOR_COL);
 	bwputstr(COM2, "Sensors");
 	int sensor_num;
+    bwprintf(COM2, "\033[32m"); // make sensor display green
 	for (sensor_num = 0; sensor_num < SENSOR_GROUPS * SENSORS_PER_GROUP; sensor_num++) {
 		Sensor sensor = num_to_sensor(sensor_num);
 		int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;
@@ -120,17 +121,20 @@ void cli_startup()
 		bw_pos(row, col);
 		bwprintf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);
 	}
+    bwprintf(COM2, "\033[0m"); // reset special format
 
 	// Place switches
 	bw_pos(SWITCH_LABEL_ROW, SWITCH_COL);
 	bwputstr(COM2, "Switches");
 	int sw;
+    bwprintf(COM2, "\033[36m"); // make switches display cyan
 	for (sw = 0; sw < NUM_SWITCHES; sw++) {
 		int sw_address = switch_id_to_byte(sw + 1);
 		// Place sw id
 		bw_pos(SWITCH_ROW + sw, SWITCH_COL);
 		bwputx(COM2, sw_address);
 	}
+    bwprintf(COM2, "\033[0m"); // reset special format
 
 	// Place input cursor at the end
 	bw_pos(HEIGHT, 0);
@@ -238,6 +242,7 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 		return;
 	}
 	irq_save();
+	irq_printf(COM2, "\033[33m");
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
     irq_pos(updates % 22 + 1, TRACK_DATA_COL + updates / 22 % 6 * TRACK_DATA_LENGTH);
@@ -245,5 +250,6 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 	irq_printf(COM2, "%c%d->%c%d,%d,%d[10ms],%d[10ms]",
 				src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,
 				calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
+    irq_printf(COM2, "\033[0m"); // reset special format
 	irq_restore();
 }
