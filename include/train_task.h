@@ -31,6 +31,12 @@ typedef struct Train_server {
     int switches_status[NUM_SWITCHES];
 
     Switch br_update[10];			// switches to flip such that train can at a sensor 
+	Velocity_data velocity14_data;
+	Velocity_data velocity10_data;
+	Velocity_data velocity8_data;
+	Velocity_data velocity6_data;
+
+    Velocity_data *current_velocity_data;
 } Train_server;
 void train_server_init(Train_server *train_server);
 void train_server();

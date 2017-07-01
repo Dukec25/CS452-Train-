@@ -205,7 +205,7 @@ void velocity10_initialization(Velocity_data *velocity_data)
 		}
 	}
  
-	velocity_data->stopping_distance = 673;
+	velocity_data->stopping_distance = 685;
 
 	int index;
 }
@@ -583,7 +583,16 @@ void velocity14_initialization(Velocity_data *velocity_data)
  
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
+	/*if (!is_found) {*/
+        /*bwprintf(COM2, "not found velocity%d\r\n", new_velocity);*/
+		/*int idx = velocity_data->node[src].num_velocity;*/
+		/*velocity_data->node[src].dest[idx] = dest;*/
+		/*velocity_data->node[src].velocity[idx] = new_velocity;*/
+		/*velocity_data->node[src].num_velocity++;*/
+	/*}*/
 	int i;
+    /*bwprintf(COM2, "src%d dest%d\r\n", src, dest);*/
+    /*bwprintf(COM2, "num_velocity%d\r\n",velocity_data->node[src].num_velocity);*/
 	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
 		if (velocity_data->node[src].dest[i] == dest) {
 			//debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
@@ -594,6 +603,7 @@ int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 			return velocity_data->node[src].velocity[i];
 		}
 	}
+    /*bwprintf(COM2, "!not found\r\n");*/
 	return -1;
 }
 
@@ -618,12 +628,14 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 	}
 
 	if (!is_found) {
+        /*bwprintf(COM2, "src=%d dest=%d\r\n", src, dest);*/
 		int idx = velocity_data->node[src].num_velocity;
 		velocity_data->node[src].dest[idx] = dest;
 		velocity_data->node[src].velocity[idx] = new_velocity;
 		velocity_data->node[src].num_velocity++;
 	}
 	else {
+        /*bwprintf(COM2, "is found velocity%d\r\n", new_velocity);*/
 		int hit = velocity_data->node[src].updates[dest_idx];
 		velocity_data->node[src].updates[dest_idx]++;
 
