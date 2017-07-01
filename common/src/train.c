@@ -160,6 +160,22 @@ int track_node_name_to_num(char *name)
 	return num; 
 }
  
+void velocity6_initialization(Velocity_data *velocity_data)
+{
+    int i;
+    for (i = 0; i < TRACK_MAX; i++) {
+        velocity_data->node[i].src = i;
+        velocity_data->node[i].num_velocity = 0;
+        int j;
+        for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
+            velocity_data->node[i].updates[j] = 1;
+        }
+    }
+ 
+    velocity_data->stopping_distance = 405;
+
+}
+
 void velocity8_initialization(Velocity_data *velocity_data)
 {
     int i;
@@ -172,7 +188,7 @@ void velocity8_initialization(Velocity_data *velocity_data)
         }
     }
  
-    velocity_data->stopping_distance = 570;
+    velocity_data->stopping_distance = 550;
 
     int index;
 }
@@ -707,7 +723,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 			}
 			else if (is_alpha(command_buffer->data[pos])) {
 				// current char is a switch state
+                int temp = argc;
 				args[argc++] = command_buffer->data[pos];
+                /*debug(SUBMISSION, "alpha data=%c\r\n", args[temp]);*/
 			}
 			else if (command_buffer->data[pos] == ' ' || (pos == command_buffer->pos)) {
 				// skip space
@@ -715,7 +733,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 					// at the end of a number
                     int temp = argc;
 					args[argc++] = atoi(num_buffer);
-                    /*bwprintf(COM2, "converted value=%d\r\n", args[temp]);*/
+                    /*debug(SUBMISSION, "converted value=%d\r\n", args[temp]);*/
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;

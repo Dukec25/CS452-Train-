@@ -40,9 +40,25 @@ void train_server()
 	// train_server initialization 
 	Train_server train_server;
 	train_server_init(&train_server);
+
 	// velocity14 initialization
-	Velocity_data velocity_data;
-	velocity14_initialization(&velocity_data);
+	Velocity_data velocity14_data;
+	velocity14_initialization(&velocity14_data);
+
+	// velocity10 initialization
+	Velocity_data velocity10_data;
+	velocity10_initialization(&velocity10_data);
+
+	// velocity8 initialization
+	Velocity_data velocity8_data;
+	velocity8_initialization(&velocity8_data);
+
+	// velocity6 initialization
+	Velocity_data velocity6_data;
+	velocity6_initialization(&velocity6_data);
+
+    Velocity_data *current_velocity_data;
+
 	// track A initialization
 	track_node track[TRACK_MAX];
 	init_tracka(track);
@@ -117,9 +133,25 @@ void train_server()
 
 			train_server.train.id = cmd.arg0;
 			train_server.train.speed = cmd.arg1;
-	
+
 			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
+            switch(train_server.train.speed){
+                case 14:
+                    current_velocity_data = &velocity14_data;
+                    break;
+                case 10:
+                    current_velocity_data = &velocity10_data;
+                    break;
+                case 8:
+                    current_velocity_data = &velocity8_data;
+                    break;
+                case 6:
+                    current_velocity_data = &velocity6_data;
+                    break;
+                default:
+                    break;
+            }
 			break;
 		case RV:
 			dump(SUBMISSION, "%s", "handle rv cmd");
@@ -235,14 +267,14 @@ void train_server()
 
 					// update velocity_data
 					// velocity_update(last_stop, current_stop, new_velocity, &velocity_data);
-					velocity_update(last_stop, current_stop, time, &velocity_data);
+					velocity_update(last_stop, current_stop, time, current_velocity_data);
 
 					// Send sensor update
 					Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
 					Send(cli_server_tid, &update_sensor_request, sizeof(update_sensor_request), &handshake, sizeof(handshake));
 	
 					// Send calibration update
-					int velocity = velocity_lookup(last_stop, current_stop, &velocity_data); 
+					int velocity = velocity_lookup(last_stop, current_stop, current_velocity_data); 
 					Cli_request update_calibration_request =
 						get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
 					Send(cli_server_tid, &update_calibration_request, sizeof(update_calibration_request), &handshake, sizeof(handshake));
@@ -416,10 +448,24 @@ void park_task()
 	// track A initialization
 	track_node track[TRACK_MAX];
 	init_tracka(track);
-	// velocity14 initialization
-	Velocity_data velocity_data;
-	velocity14_initialization(&velocity_data);
 
+	// velocity14 initialization
+	Velocity_data velocity14_data;
+	velocity14_initialization(&velocity14_data);
+
+	// velocity10 initialization
+	Velocity_data velocity10_data;
+	velocity10_initialization(&velocity10_data);
+
+	// velocity8 initialization
+	Velocity_data velocity8_data;
+	velocity8_initialization(&velocity8_data);
+
+	// velocity6 initialization
+	Velocity_data velocity6_data;
+	velocity6_initialization(&velocity6_data);
+
+    Velocity_data *current_velocity_data;
 	while (train_server->is_shutdown == 0) {
 		Command park_cmd;
 		Receive(&train_server_tid, &park_cmd, sizeof(park_cmd));
@@ -444,9 +490,26 @@ void park_task()
 		}
 		//debug(SUBMISSION, "park_task: flip %d br done", num_switch);
 
+        switch(train_server->train.speed){
+            case 14:
+                current_velocity_data = &velocity14_data;
+                break;
+            case 10:
+                current_velocity_data = &velocity10_data;
+                break;
+            case 8:
+                current_velocity_data = &velocity8_data;
+                break;
+            case 6:
+                current_velocity_data = &velocity6_data;
+                break;
+            default:
+                break;
+        }
+
 		// retrieve stopping distance
-		int stopping_distance = velocity_data.stopping_distance;
-		//debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);
+		int stopping_distance = current_velocity_data->stopping_distance; 
+        /*debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);*/
 
 		Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 		int num_park_stops = find_stops_by_distance(track, train_server->last_stop, stop, stopping_distance, park_stops);
@@ -469,7 +532,7 @@ void park_task()
 			int sensor_distance = park_stops[i].distance;
 			int sensor_src = park_stops[i].sensor_id;
 			int sensor_dest = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
-			int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, &velocity_data);
+			int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, current_velocity_data);
             
 			sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
 
@@ -482,8 +545,9 @@ void park_task()
 		}
 		park_delay_time /= delta;
 
-        debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
-        vint delay_distance = delta - stopping_distance;
+        bwprintf(COM2, "delta=%d, first_dist=%d,first_velo=%d, stop_dist=%d",delta, first_stop_distance, first_stop_velocity, stopping_distance);
+        bwprintf(COM2, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
+        debug(SUBMISSION,         vint delay_distance = delta - stopping_distance;
         vint delay_velocity = first_stop_distance/first_stop_velocity;
         park_delay_time = delay_distance/ delay_velocity;
 

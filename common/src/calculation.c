@@ -172,7 +172,9 @@ int predict_next(track_node *track, int src, Train_server *train_server){
 }
 
 int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
-    /*bwprintf(COM2, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);*/
+
+    bwprintf(COM2, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);
+
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX) {
         // value out of range, don't do anything
         bwprintf(COM2, "src=%d, %d\r\n", src, dest);

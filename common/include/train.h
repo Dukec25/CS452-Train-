@@ -70,6 +70,8 @@ typedef struct Velocity_data {
 } Velocity_data;
 int track_node_name_to_num(char *name);
 void velocity14_initialization(Velocity_data *velocity_data); 
+void velocity10_initialization(Velocity_data *velocity_data);
+void velocity8_initialization(Velocity_data *velocity_data);
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
 void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocity_data);
 
