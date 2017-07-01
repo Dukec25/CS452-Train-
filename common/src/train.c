@@ -786,7 +786,7 @@ void command_handle(Command *pcmd)
 
 		Delay(20);
 		debug(DEBUG_K4, "%s", "reached time limit, begin set speed");
-		irq_printf(COM1, "%c%c", pcmd->arg1, pcmd->arg0);
+		irq_printf(COM1, "%c%c", pcmd->arg1+16, pcmd->arg0);
 
 		break;
 	case SW:
