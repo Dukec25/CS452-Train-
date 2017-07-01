@@ -715,6 +715,13 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else {
 		return -1;
 	}
+    /*bwprintf(COM2, "args%s\r\n", args);*/
+    
+    // currently no commands need more than two arguments
+    // there will probably won't be in the future as well
+    if(argc > 2){
+        return -1;
+    }
 
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
@@ -736,12 +743,21 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		pcmd->type = SW;
 		break;
 	case 'b':
+        if(args[1] > 16){
+            return -1;
+        }
 		pcmd->type = BR;
 		break;
 	case 'd':
+        if(args[1] > 16){
+            return -1;
+        }
 		pcmd->type = DC;
 		break;
 	case 'p':
+        if(args[1] > 16){
+            return -1;
+        }
 		pcmd->type = PARK;
 		break;
 	}
