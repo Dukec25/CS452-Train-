@@ -4,6 +4,7 @@
 #include <define.h> 
 #include <debug.h>
 #include <fifo.h>
+#include <int_fifo.h>
 
 /* task descriptor */
 #define TASK_SIZE 			102400 /* 100kb */
@@ -100,7 +101,7 @@ typedef struct Kernel_state {
 	uint8				blocked_on_event[NUM_EVENTS];
 	// stores the event blocked tasks, one task for each event type
 	Task_descriptor		*event_blocks[NUM_EVENTS];
-	fifo_t				uart1_putc_q;
+	int_fifo_t				uart1_putc_q;
 } Kernel_state;
 
 /* task descriptor */

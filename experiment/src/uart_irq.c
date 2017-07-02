@@ -1,5 +1,6 @@
 #include <irq.h>
 #include <uart_irq.h>
+#include <int_fifo.h>
 
 static uint32 uart_receive_irq_mask()
 {
@@ -144,7 +145,7 @@ void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
             } else{
                 cts = 0;
             }
-            bwprintf(COM2, "%d%d\r\n", cts_status,cts);
+            /*bwprintf(COM2, "%d%d\r\n", cts_status,cts);*/
             switch(cts_status){
                 case -1: 
                     /*bwprintf(COM2, "cts fire -1\r\n");*/
@@ -161,9 +162,6 @@ void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
                         /*bwprintf(COM2, "cts 1\r\n");*/
                         *cts_send = 1;
                     } 
-                    break;
-                case 1:
-                    /*bwprintf(COM2, "cts fire 1\r\n");*/
                     break;
                 default:
                     break;
@@ -212,12 +210,12 @@ void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
 			//if (channel == COM1) bwprintf(COM2, "CTS = %d\r\n", *uart1_flag & CTS_MASK);
 
 			if ((channel == COM1) && (!td->is_ch_transmitted)) {
-				fifo_put(&ks->uart1_putc_q, td->ch);
+				int_fifo_put(&ks->uart1_putc_q, td->ch);
 				td->is_ch_transmitted = 1;
 				//bwprintf(COM2, "td %d inserted %d, is_ch_transmitted = %d\r\n", td->tid, td->ch, td->is_ch_transmitted);
 			}
 
-			if (((channel == COM1) && (*cts_send == 1))) {
+            if ((channel == COM2) || ((channel == COM1) && (*cts_send == 1))){
                 /*bwprintf(com2, "get sent\r\n");*/
 				//if (channel == COM1) bwprintf(COM2, "new CTS = %d\r\n", *uart1_flag & CTS_MASK);
         		// turn off the XMIT interrupt
@@ -225,15 +223,15 @@ void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
                 /*bwprintf(COM2, "after disable\r\n");*/
  
 				if ((channel == COM1) && (!is_fifo_empty(&ks->uart1_putc_q))) {
-					uint8 *extract;
+					vint extract;
                     /*bwprintf(COM2, "before write \r\n");*/
-					fifo_get(&ks->uart1_putc_q, &extract);
-					*pdata = *extract;
+					int_fifo_get(&ks->uart1_putc_q, &extract);
+					*pdata = extract;
+                    *cts_send = -1;
                 } 
                 else if (channel == COM2){
                     *pdata = td->ch;
                 }
-
 
 	            // notify events await on transmit ready
     	   	    ks->event_blocks[transmit_event] = NULL;
@@ -241,9 +239,6 @@ void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
            		td->state = STATE_READY;
             	insert_task(td, &(ks->ready_queue));
 
-                if(channel == COM1){
-                    *cts_send = -1;
-                }
                 /*bwprintf(COM2, "actually SENT\r\n");*/
 			}
 		}

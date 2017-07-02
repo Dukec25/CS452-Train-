@@ -24,7 +24,7 @@ static void ks_initialize(Kernel_state *ks)
 	ks->send_block.mask = 0;
 	ks->reply_block.mask = 0;
 	ks->receive_block.mask = 0;
-	fifo_init(&ks->uart1_putc_q);
+	int_fifo_init(&ks->uart1_putc_q);
 	int e = 0;
 	for (e = 0; e < NUM_EVENTS; e++) {
 		ks->event_blocks[e] = NULL;
