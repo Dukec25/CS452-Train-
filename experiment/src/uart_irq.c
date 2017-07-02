@@ -108,7 +108,7 @@ void uart_device_disable(int channel, UART_IRQ_TYPE type)
 	}
 }
 
-void uart_irq_handle(int channel, Kernel_state *ks)
+void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
 {
     // check UART interrupt status
 	debug(DEBUG_UART_IRQ, "enter %s", "uart_irq_handle"); 
@@ -137,7 +137,23 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 
     if(channel == COM1){
         if (uart_intr_value & 0x1) {
-            /*bwprintf(COM2, "%d", (*uart1_flag & CTS_MASK));*/
+            vint cts = *uart1_flag & CTS_MASK;
+            switch(*cts_send){
+                case -1: 
+                    if(cts == 0){
+                       *cts_send = 0; 
+                    }
+                    break;
+                case 0:  
+                    if(cts){
+                        *cts_send = 1;
+                    } 
+                    break;
+                case 1:
+                    break;
+                default:
+                    break;
+            }
             *uart_intr = 0; 
         }
     }
@@ -185,37 +201,31 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 				//bwprintf(COM2, "td %d inserted %d, is_ch_transmitted = %d\r\n", td->tid, td->ch, td->is_ch_transmitted);
 			}
 
-			if ((channel == COM2) || ((channel == COM1) & (*uart1_flag & CTS_MASK))) {
+			if ((channel == COM2) || ((channel == COM1) & *cts_send)) {
+                bwprintf(COM2, "GET SENT");
 				//if (channel == COM1) bwprintf(COM2, "new CTS = %d\r\n", *uart1_flag & CTS_MASK);
         		// turn off the XMIT interrupt
 				uart_device_disable(channel, XMIT);
  
 				if ((channel == COM1) && (!is_fifo_empty(&ks->uart1_putc_q))) {
-					uint8 *extract;
+					vint *extract;
 					fifo_get(&ks->uart1_putc_q, extract);
                     /*bwprintf(COM2, "pop %d\r\n", *extract);*/
 					*pdata = *extract;
-                    int temp = *uart1_flag & TXFE_MASK;
-                    if(temp){
-                        bwputc(COM2, '1');
-                    } else{
-                        bwputc(COM2, '0');
-                    }
-				}
-				else {
-					*pdata = td->ch;
-                    /*if(*uart1_flag & TXFE_MASK){*/
-                        /*bwputc(COM2, '1');*/
-                    /*} else{*/
-                        /*bwputc(COM2, '0');*/
-                    /*}*/
-				}
+                } 
+                else if (channel == COM2){
+                    *pdata = td->ch;
+                }
 
 	            // notify events await on transmit ready
     	   	    ks->event_blocks[transmit_event] = NULL;
         	   	ks->blocked_on_event[transmit_event] = 0;
            		td->state = STATE_READY;
             	insert_task(td, &(ks->ready_queue));
+
+                if(channel == COM1){
+                    *cts_send = -1;
+                }
 			}
 		}
     } 

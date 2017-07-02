@@ -39,7 +39,7 @@ void irq_disable()
     uart_irq_disable(COM1);
 }
 
-void irq_handle(Kernel_state *ks)
+void irq_handle(Kernel_state *ks, vint *cts_send)
 {
 //	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
@@ -47,11 +47,11 @@ void irq_handle(Kernel_state *ks)
 	// else if doesn't work for some reason
 	if ((*vic2_irq_status & uart_irq_mask(COM1)) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART1");
-        uart_irq_handle(COM1, ks);
+        uart_irq_handle(COM1, ks, cts_send);
     }
 	if ((*vic2_irq_status & uart_irq_mask(COM2)) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART2");
-        uart_irq_handle(COM2, ks);
+        uart_irq_handle(COM2, ks, cts_send);
     }
 
 	if ((*vic2_irq_status & timer3_irq_mask()) != 0) {
