@@ -40,7 +40,7 @@ void uart_irq_enable(int channel);
 void uart_irq_disable(int channel);
 void uart_device_enable(int channel, UART_IRQ_TYPE type);
 void uart_device_disable(int channel, UART_IRQ_TYPE type);
-void uart_irq_handle(int channel, Kernel_state *ks);
+void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send);
 
 #endif // __UART_IRQ_H__
 

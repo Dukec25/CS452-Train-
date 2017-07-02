@@ -4,10 +4,10 @@
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
     /*bwprintf(COM2, "src=%d, %d\r\n", src, dest);*/
-    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX) {
+    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         bwprintf(COM2, "src=%d, %d\r\n", src, dest);
-        bwprintf(COM2, "invalid data choose_destination");
+        bwprintf(COM2, "invalid data choose_destination\r\n");
         return -1;
     }
 
@@ -19,7 +19,7 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 
 int cal_distance(track_node *track, int src, int dest)
 {
-    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX) {
+    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         bwprintf(COM2, "src=%d, %d\r\n", src, dest);
         bwprintf(COM2, "invalid data cal_distance");
         return 0;
@@ -39,7 +39,7 @@ int cal_distance(track_node *track, int src, int dest)
 // TODO: deal with the case the input value is invalid 
 track_node* find_path(track_node *track, int src, int dest)
 {
-    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX) {
+    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         return NULL;
     }
 
@@ -175,7 +175,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 
     bwprintf(COM2, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);
 
-    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX) {
+    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         bwprintf(COM2, "src=%d, %d\r\n", src, dest);
         bwprintf(COM2, "invalid data in find_stops_by_distance");
@@ -232,6 +232,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
             ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
+                bwprintf(COM2, "ENDED");
                 return arr_len;
             }
         }

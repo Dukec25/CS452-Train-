@@ -112,7 +112,7 @@ void uart1_xmit_notifier(){
 		debug(DEBUG_UART_IRQ, "received reply_msg.data = %d", reply_msg.data);
 		AwaitEvent(XMIT_UART1_RDY, reply_msg.data);
 		debug(DEBUG_UART_IRQ, "wake up from %s", "XMIT_RDY");
-		Delay(5);
+		/*Delay(5);*/
 		/*vint *flags = (int *)( UART1_BASE + UART_FLAG_OFFSET  );*/
 		/*while( !(*flags & TXFE_MASK) || !( *flags & CTS_MASK  )  ) ;*/
 		/*if(*UART1Flag & CTS_MASK){}*/

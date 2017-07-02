@@ -24,7 +24,7 @@ static void ks_initialize(Kernel_state *ks)
 	ks->send_block.mask = 0;
 	ks->reply_block.mask = 0;
 	ks->receive_block.mask = 0;
-	fifo_init(&ks->uart1_putc_q);
+	int_fifo_init(&ks->uart1_putc_q);
 	int e = 0;
 	for (e = 0; e < NUM_EVENTS; e++) {
 		ks->event_blocks[e] = NULL;
@@ -312,6 +312,7 @@ int main()
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
+    vint cts_send = -1;
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
 			td = schedule(&ks);
@@ -344,7 +345,7 @@ int main()
 			
 			if (is_entry_from_hwi) {
 			//	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
-				irq_handle(&ks);
+				irq_handle(&ks, &cts_send);
 				is_entry_from_hwi = 0;
 				continue;
 			}

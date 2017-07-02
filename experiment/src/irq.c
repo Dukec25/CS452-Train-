@@ -21,6 +21,10 @@ void irq_enable()
 
     timer3_irq_enable();
     timer3_enable();
+    
+    vint *uart_ctrl;
+    uart_ctrl = (vint *) UART1_CTRL;
+    *uart_ctrl |= MSIEN_MASK;
 
     uart_irq_enable(COM1);
     uart_irq_enable(COM2);
@@ -33,9 +37,13 @@ void irq_disable()
     timer3_irq_disable();
     uart_irq_disable(COM2);
     uart_irq_disable(COM1);
+
+    vint *uart_ctrl;
+    uart_ctrl = (vint *) UART1_CTRL;
+    *uart_ctrl &= ~MSIEN_MASK;
 }
 
-void irq_handle(Kernel_state *ks)
+void irq_handle(Kernel_state *ks, vint *cts_send)
 {
 //	debug(DEBUG_UART_IRQ, "enter %s", "irq_handle");
 	vint *vic2_irq_status = (vint *) VIC2_IRQ_STATUS;
@@ -43,11 +51,11 @@ void irq_handle(Kernel_state *ks)
 	// else if doesn't work for some reason
 	if ((*vic2_irq_status & uart_irq_mask(COM1)) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART1");
-        uart_irq_handle(COM1, ks);
+        uart_irq_handle(COM1, ks, cts_send);
     }
 	if ((*vic2_irq_status & uart_irq_mask(COM2)) != 0) {
         debug(DEBUG_UART_IRQ, "handle uart interupt %s", "UART2");
-        uart_irq_handle(COM2, ks);
+        uart_irq_handle(COM2, ks, cts_send);
     }
 
 	if ((*vic2_irq_status & timer3_irq_mask()) != 0) {
