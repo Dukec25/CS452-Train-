@@ -312,7 +312,7 @@ int main()
 
 	volatile Task_descriptor *td = NULL;
 	vint is_entry_from_hwi = 0;
-    vint cts_send = 1;
+    vint cts_send = -1;
 	while(ks.ready_queue.mask != 0) {
 			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
 			td = schedule(&ks);

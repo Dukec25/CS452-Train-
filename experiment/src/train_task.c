@@ -14,12 +14,12 @@ void train_task_startup()
 {
 	irq_io_tasks_cluster();
 
-/*cli_startup();*/
-//	cli_track_startup();
+    cli_startup();
+    cli_track_startup();
 	bwputc(COM1, START); // switches won't work without start command
 
-	initialize_switch();
-	sensor_initialization();
+    /*initialize_switch();*/
+    /*sensor_initialization();*/
 
 	int tid;
 

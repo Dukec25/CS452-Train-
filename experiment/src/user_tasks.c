@@ -10,6 +10,9 @@
 #include <uart_irq.h>
 
 #define TIMER_MAX	0xFFFFFFFF
+#define SENSOR_GROUPS 5
+#define SENSORS_PER_GROUP 16
+#define SENSOR_QUERY 128 + SENSOR_GROUPS
 
 void general_task()
 { 
@@ -119,13 +122,14 @@ void idle_task()
 void io_test_task(){
 	int i = 0;
     
-    for( i = 0; i < 100001; i++ ){
-        Putc(COM1, 'a');
-        Putc(COM1, 'b');
-        Putc(COM1, 'c');
-        Putc(COM1, 'd');
-        Putc(COM1, '\r');
-        Putc(COM1, '\n');
+    while(1){
+        Putc(COM1, SENSOR_QUERY);
+        int sensor_group;
+        for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
+            char lower = Getc(COM1);
+            char upper = Getc(COM1);
+            bwprintf(COM2, "%d %d", lower, upper);
+        }
     }
 	Exit();
 }
@@ -276,17 +280,17 @@ void first_task()
 
     /*irq_io_tasks_cluster();*/
 
-    /*tid = Create(PRIOR_MEDIUM, io_test_task);*/
-    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
     tid = Create(PRIOR_HIGH, clock_server_task);
     debug(DEBUG_K4, "created taskId = %d", tid);
 
     tid = Create(PRIOR_MEDIUM, clock_server_notifier);
     debug(DEBUG_K4, "created taskId = %d", tid);
 
-    tid = Create(PRIOR_HIGH, train_task_startup);
-    debug(DEBUG_K4, "created taskId = %d", tid);
+    /*tid = Create(PRIOR_HIGH, train_task_startup);*/
+    /*debug(DEBUG_K4, "created taskId = %d", tid);*/
 
+    tid = Create(PRIOR_MEDIUM, io_test_task);
+    debug(DEBUG_K4, "created taskId = %d", tid);
     /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
     Exit();
 }
