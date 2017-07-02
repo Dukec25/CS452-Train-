@@ -135,9 +135,11 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 	vint uart_intr_value = *uart_intr;
     vint * uart1_flag = (vint *) UART1_FLAG;
 
-    if (uart_intr_value & 0x1) {
-        bwprintf(COM2, "clear to send %d\r\n", (*uart1_flag & CTS_MASK));
-        *uart_intr = 0; 
+    if(channel == COM1){
+        if (uart_intr_value & 0x1) {
+            /*bwprintf(COM2, "%d", (*uart1_flag & CTS_MASK));*/
+            *uart_intr = 0; 
+        }
     }
 
 	if (uart_intr_value & uart_receive_irq_mask()) {
@@ -159,6 +161,14 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 	if (uart_intr_value & uart_transmit_irq_mask()) {
         /*bwprintf(COM2, "ready to send %d\r\n", (*uart1_flag & CTS_MASK));*/
         debug(DEBUG_UART_IRQ, "handle xmit interrupt %s", "");
+
+        if(channel == COM1){
+            if(*uart1_flag & TXFE_MASK){
+                /*bwprintf(COM2, "%d", 1);*/
+            } else{
+                /*bwprintf(COM2, "%d", 0);*/
+            }
+        }
 
 		// new transmit interrupt handling 
         if (ks->blocked_on_event[transmit_event]) {
@@ -183,11 +193,22 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 				if ((channel == COM1) && (!is_fifo_empty(&ks->uart1_putc_q))) {
 					uint8 *extract;
 					fifo_get(&ks->uart1_putc_q, extract);
-					//bwprintf(COM2, "pop %d\r\n", *extract);
+                    /*bwprintf(COM2, "pop %d\r\n", *extract);*/
 					*pdata = *extract;
+                    int temp = *uart1_flag & TXFE_MASK;
+                    if(temp){
+                        bwputc(COM2, '1');
+                    } else{
+                        bwputc(COM2, '0');
+                    }
 				}
 				else {
 					*pdata = td->ch;
+                    /*if(*uart1_flag & TXFE_MASK){*/
+                        /*bwputc(COM2, '1');*/
+                    /*} else{*/
+                        /*bwputc(COM2, '0');*/
+                    /*}*/
 				}
 
 	            // notify events await on transmit ready
@@ -198,5 +219,6 @@ void uart_irq_handle(int channel, Kernel_state *ks)
 			}
 		}
     } 
+    /*bwprintf(COM2, "%d", *uart1_flag & TXFE_MASK);*/
     /*debug(SUBMISSION, "Wake up xmit notifier %d, ", td->tid); */
 }

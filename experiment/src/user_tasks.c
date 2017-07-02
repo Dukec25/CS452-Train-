@@ -288,6 +288,6 @@ void first_task()
     /*tid = Create(PRIOR_HIGH, train_task_startup);*/
     /*debug(DEBUG_K4, "created taskId = %d", tid);*/
 
-    debug(SUBMISSION, "%s", "FirstUserTask: exiting");
+    /*debug(SUBMISSION, "%s", "FirstUserTask: exiting");*/
     Exit();
 }
