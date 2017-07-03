@@ -211,7 +211,7 @@ void uart_irq_handle(int channel, Kernel_state *ks, vint *cts_send)
         		// turn off the XMIT interrupt
 				uart_device_disable(channel, XMIT);
  
-				if ((channel == COM1) && (!is_fifo_empty(&ks->uart1_putc_q))) {
+				if ((channel == COM1) && (!is_int_fifo_empty(&ks->uart1_putc_q))) {
 					vint extract;
 					int_fifo_get(&ks->uart1_putc_q, &extract);
 					//bwprintf(COM2, "pop %d\r\n", *extract);

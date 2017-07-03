@@ -34,13 +34,13 @@ void irq_enable()
 
 void irq_disable()
 {
-    timer3_irq_disable();
-    uart_irq_disable(COM2);
-    uart_irq_disable(COM1);
-
     vint *uart_ctrl;
     uart_ctrl = (vint *) UART1_CTRL;
     *uart_ctrl &= ~MSIEN_MASK;
+
+    timer3_irq_disable();
+    uart_irq_disable(COM2);
+    uart_irq_disable(COM1);
 }
 
 void irq_handle(Kernel_state *ks, vint *cts_send)

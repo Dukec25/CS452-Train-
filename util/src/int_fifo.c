@@ -19,7 +19,7 @@ int is_int_fifo_full(int_fifo_t *pf)
 
 int int_fifo_put(int_fifo_t *pf, vint item)
 {
-    if (is_fifo_full(pf)) {
+    if (is_int_fifo_full(pf)) {
         return -1; // fifo full
     }
     int next = pf->head + 1;
@@ -34,7 +34,7 @@ int int_fifo_put(int_fifo_t *pf, vint item)
 
 int int_fifo_get(int_fifo_t *pf, vint *pitem)
 {
-    if (is_fifo_empty(pf)) {
+    if (is_int_fifo_empty(pf)) {
         return -1; // fifo Empty - nothing to get
     }
     int next = pf->tail + 1;
@@ -49,7 +49,7 @@ int int_fifo_get(int_fifo_t *pf, vint *pitem)
 
 int int_fifo_peek(int_fifo_t *pf, vint *pitem)
 {
-    if (is_fifo_empty(pf)) {
+    if (is_int_fifo_empty(pf)) {
         return -1; // fifo Empty - nothing to get
     }
     *pitem = pf->items[pf->tail];

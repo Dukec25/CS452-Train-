@@ -1,6 +1,6 @@
 #ifndef __INT_FIFO_H__
 #define __INT_FIFO_H__
-#define FIFO_SIZE 10000
+#define FIFO_SIZE 3000
 
 #include <define.h>
 
