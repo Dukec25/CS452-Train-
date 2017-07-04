@@ -1,6 +1,7 @@
 #ifndef __IO_SERVER_H__
 #define __IO_SERVER_H__
 #include <fifo.h>
+#include <int_fifo.h>
 
 typedef enum Io_message_type {
     RECEIVE_RDY,
@@ -11,9 +12,9 @@ typedef enum Io_message_type {
 } Io_message_type;
 
 typedef struct Io_server{
-    fifo_t get_q; // waiting tasks that want to getc
-    fifo_t transmit_q; // characters waited to be transmit
-    fifo_t receive_q; // input characters waited be return to tasks call getc
+    int_fifo_t get_q; // waiting tasks that want to getc
+    int_fifo_t transmit_q; // characters waited to be transmit
+    int_fifo_t receive_q; // input characters waited be return to tasks call getc
 } Io_server;
 
 

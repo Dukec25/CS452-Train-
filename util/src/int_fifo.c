@@ -22,10 +22,12 @@ int int_fifo_put(int_fifo_t *pf, vint item)
     if (is_int_fifo_full(pf)) {
         return -1; // fifo full
     }
+
     int next = pf->head + 1;
     if (next >= FIFO_SIZE) {
         next = 0;
     }
+
     pf->items[pf->head] = item;
     pf->head = next;
     pf->count++;
