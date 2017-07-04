@@ -59,26 +59,26 @@ void train_server()
 	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
 		cli_server_tid = WhoIs("CLI_SERVER");
 	}
-	dump(SUBMISSION, "cli_server %d", cli_server_tid);
+	/*dump(SUBMISSION, "cli_server %d", cli_server_tid);*/
 
 	Handshake handshake = HANDSHAKE_AKG;
 	vint train_server_address = (vint) &train_server;
-	dump(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 
+	/*dump(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
 
 	int sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
-	dump(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);
+	/*dump(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
 	Send(sensor_reader_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	int stopping_distance_tid = Create(PRIOR_MEDIUM, stopping_distance_collector_task);
-	dump(SUBMISSION, "stopping_distance_tid %d", stopping_distance_tid);
+	/*dump(SUBMISSION, "stopping_distance_tid %d", stopping_distance_tid);*/
 	Send(stopping_distance_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	int br_tid = Create(PRIOR_MEDIUM, br_task);
-	dump(SUBMISSION, "br_tid %d", br_tid);
+	/*dump(SUBMISSION, "br_tid %d", br_tid);*/
 	Send(br_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	int park_tid = Create(PRIOR_MEDIUM, park_task);
-	dump(SUBMISSION, "park_tid %d", park_tid);
+	/*dump(SUBMISSION, "park_tid %d", park_tid);*/
 	Send(park_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
@@ -98,7 +98,7 @@ void train_server()
 		}
 		train_server.cmd_fifo[train_server.cmd_fifo_head] = request;
 		train_server.cmd_fifo_head = cmd_fifo_put_next;
-		dump(SUBMISSION, "%s", "ts put cmd");
+		/*dump(SUBMISSION, "%s", "ts put cmd");*/
 
 		if (train_server.cmd_fifo_head == train_server.cmd_fifo_tail) {
 			// cmd_fifo is empty
@@ -113,13 +113,13 @@ void train_server()
 		}
 		cmd = train_server.cmd_fifo[train_server.cmd_fifo_tail];
 		train_server.cmd_fifo_tail = cmd_fifo_get_next;
-		dump(SUBMISSION, "ts get cmd type %d", cmd.type);
+		/*dump(SUBMISSION, "ts get cmd type %d", cmd.type);*/
 
 		// handle TR, RV, SW, GO, STOP
 		Cli_request cli_update_request;
 		switch (cmd.type) {
 		case TR:
-			dump(SUBMISSION, "%s", "handle tr cmd");
+			/*dump(SUBMISSION, "%s", "handle tr cmd");*/
 			command_handle(&cmd);
 
 			train_server.train.id = cmd.arg0;
@@ -145,11 +145,11 @@ void train_server()
             }
 			break;
 		case RV:
-			dump(SUBMISSION, "%s", "handle rv cmd");
+			/*dump(SUBMISSION, "%s", "handle rv cmd");*/
 			command_handle(&cmd);
 			break;
 		case SW:
-			dump(SUBMISSION, "%s", "handle sw cmd");
+			/*dump(SUBMISSION, "%s", "handle sw cmd");*/
 			command_handle(&cmd);
 
 			train_server.switches_status[cmd.arg0 - 1] = switch_state_to_byte(cmd.arg1);
@@ -182,7 +182,7 @@ void train_server()
 		}
 		else if (cmd.type == SENSOR) {
 			// sensor query
-			dump(SUBMISSION, "%s", "sensor cmd");
+			/*dump(SUBMISSION, "%s", "sensor cmd");*/
 			Putc(COM1, SENSOR_QUERY);
 			uint16 sensor_data[SENSOR_GROUPS];
 			int sensor_group = 0;
@@ -192,14 +192,14 @@ void train_server()
 				sensor_data[(int) sensor_group] = upper << 8 | lower;
 			}
 			train_server.num_sensor_query++;
-			dump(SUBMISSION, "num_sensor_query = %d", train_server.num_sensor_query);
+			/*dump(SUBMISSION, "num_sensor_query = %d", train_server.num_sensor_query);*/
 
 			// parse sensor data
 			for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 				if (sensor_data[(int) sensor_group] == 0) {
 					continue;
 				}
-				dump(SUBMISSION, "sensor_data[%d] = %d", sensor_group, sensor_data[(int) sensor_group]);
+				/*dump(SUBMISSION, "sensor_data[%d] = %d", sensor_group, sensor_data[(int) sensor_group]);*/
 				char bit = 0;
 				for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
 					//sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
@@ -225,8 +225,8 @@ void train_server()
 					while (train_server.sensor_lifo_top != -1) {
 						last_sensor = train_server.sensor_lifo[train_server.sensor_lifo_top];
 						train_server.sensor_lifo_top -= 1;
-						dump(SUBMISSION, "pop sensor group = %d, id = %d, time = %d",
-										 sensor.group, sensor.id, sensor.triggered_time);
+						/*dump(SUBMISSION, "pop sensor group = %d, id = %d, time = %d",*/
+										 /*sensor.group, sensor.id, sensor.triggered_time);*/
 						if (sensor_to_num(last_sensor) == last_stop) {
 							break;
 						}
@@ -236,8 +236,8 @@ void train_server()
 					if (train_server.sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {
 						train_server.sensor_lifo_top += 1;
 						train_server.sensor_lifo[train_server.sensor_lifo_top] = sensor;
-						dump(SUBMISSION, "insert sensor group = %d, id = %d, time = %d",
-										 sensor.group, sensor.id, sensor.triggered_time);
+						/*dump(SUBMISSION, "insert sensor group = %d, id = %d, time = %d",*/
+										 /*sensor.group, sensor.id, sensor.triggered_time);*/
 					}
 
 					// update last triggered sensor
@@ -434,7 +434,7 @@ void park_task()
 	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
 	Reply(train_server_tid, &handshake, sizeof(handshake));
 	Train_server *train_server = (Train_server *) train_server_address;
-	dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
+	/*dump(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 */
 
 	// track A initialization
 	track_node track[TRACK_MAX];

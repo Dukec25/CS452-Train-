@@ -11,7 +11,7 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
         return -1;
     }
 
-    dump(SUBMISSION, "src = %d, dest=%d \r\n", src, dest);
+    /*dump(SUBMISSION, "src = %d, dest=%d \r\n", src, dest);*/
     track_node *temp;
     temp = find_path(track, src, dest);
     return switches_need_changes(src, temp, train_server);
@@ -25,7 +25,7 @@ int cal_distance(track_node *track, int src, int dest)
         return 0;
     }
 	/*debug(SUBMISSION, "%d %d", src, dest);*/
-	dump(SUBMISSION, "%d %d", src, dest);
+	/*dump(SUBMISSION, "%d %d", src, dest);*/
     track_node *temp;
     temp = find_path(track, src, dest);
     if (temp) {
@@ -53,7 +53,7 @@ track_node* find_path(track_node *track, int src, int dest)
         track_node *temp;
         fifo_get(&queue, &temp);
 
-		dump(SUBMISSION, "visit %s", temp->name);
+		/*dump(SUBMISSION, "visit %s", temp->name);*/
 
         if (strlen(temp->name) == strlen(track[dest].name)){
             if (!strcmp(temp->name, track[dest].name, strlen(temp->name))) {
@@ -84,7 +84,7 @@ track_node* find_path(track_node *track, int src, int dest)
 }
 
 int switches_need_changes(int src, track_node *node, Train_server *train_server){
-    dump(SUBMISSION, "%s", "get into switches need change");
+    /*dump(SUBMISSION, "%s", "get into switches need change");*/
     /*bwprintf(COM2, "switches_need_changes=%d\r\n", src);*/
     int idx = 0; // br_update size is 10
 

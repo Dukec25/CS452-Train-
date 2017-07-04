@@ -222,7 +222,7 @@ void velocity14_initialization(Velocity_data *velocity_data)
 		}
 	}
  
-	velocity_data->stopping_distance = 940;
+	velocity_data->stopping_distance = 935;
 
 	int index;
 	index = track_node_name_to_num("A3");
