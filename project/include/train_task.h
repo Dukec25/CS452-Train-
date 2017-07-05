@@ -1,12 +1,30 @@
 #ifndef __TRAIN_TASK__
 #define __TRAIN_TASK__
-
-void train_task_admin();
-void idle_task();
+#include <train_server.h>
+#include <cli_server.h>
 
 typedef enum Handshake {
 	HANDSHAKE_AKG,
 	HANDSHAKE_SHUTDOWN
 } Handshake;
+
+void train_task_admin();
+void idle_task();
+
+typedef enum Courier_message_type {
+	COURIER_NIL,
+	COURIER_WANT_CMD,
+	COURIER_WANT_CLI_REQUEST,
+	COURIER_HAS_CMD,
+	COURIER_HAS_CLI_REQUEST
+} Courier_message_type;
+typedef struct Courier_message {
+	Courier_message_type type;
+	Command cmd;
+	Cli_request cli_req;
+} Courier_message;
+
+void train_command_courier();
+void cli_request_courier();
 
 #endif // __TRAIN_TASK__

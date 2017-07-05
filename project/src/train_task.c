@@ -33,12 +33,20 @@ void train_task_admin()
 	debug(SUBMISSION, "created train_server taskId = %d", train_tid);
 	Send(train_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
-	int expected_num_exit = 3;
+	int train_command_courier_tid = Create(PRIOR_MEDIUM, train_command_courier);
+	Send(train_command_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+
+	int cli_request_courier_tid = Create(PRIOR_MEDIUM, cli_request_courier);
+	Send(cli_request_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+	
+	int expected_num_exit = 5;
 	int num_exit = 0;
-	int exit_list[3];
+	int exit_list[5];
 	exit_list[0] = idle_tid;
 	exit_list[1] = cli_tid;
 	exit_list[2] = train_tid;
+	exit_list[3] = train_command_courier_tid;
+	exit_list[4] = cli_request_courier_tid;
 	while(num_exit < expected_num_exit) {
 		Handshake exit_handshake;
 		Handshake exit_reply = HANDSHAKE_AKG;
@@ -56,6 +64,14 @@ void train_task_admin()
 			}
 			else if (exit_tid == exit_list[2]) {
 				exit_list[2] = INVALID_TID;
+				num_exit++;
+			}
+			else if (exit_tid == exit_list[3]) {
+				exit_list[3] = INVALID_TID;
+				num_exit++;
+			}
+			else if (exit_tid == exit_list[4]) {
+				exit_list[4] = INVALID_TID;
 				num_exit++;
 			}
 		}
@@ -93,6 +109,74 @@ void idle_task()
 		if(*uart1_error & OE_MASK){
 			debug(SUBMISSION, "%s", "overrun error");
 		}
+	}
+
+	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
+	Handshake exit_reply;
+	Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
+	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
+	Exit();
+}
+
+void train_command_courier()
+{
+	Handshake kill_all_reply = HANDSHAKE_AKG;
+	int train_task_admin_tid = INVALID_TID;
+	vint kill_all_addr;
+	Receive(&train_task_admin_tid, &kill_all_addr, sizeof(kill_all_addr));
+	Reply(train_task_admin_tid, &kill_all_reply, sizeof(kill_all_reply));
+	Handshake *kill_all = kill_all_addr;
+
+	int cli_server_tid = INVALID_TID;
+	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
+		cli_server_tid = WhoIs("CLI_SERVER");
+	}
+	int train_server_tid = INVALID_TID;
+	while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
+		train_server_tid = WhoIs("TRAIN_SERVER");
+	}
+
+	Handshake handshake = HANDSHAKE_AKG;
+	while (*kill_all != HANDSHAKE_SHUTDOWN) {
+		Cli_request cli_server_msg;
+		cli_server_msg.type = CLI_WANT_COMMAND;
+		TS_request train_server_msg;
+		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &train_server_msg, sizeof(train_server_msg));
+		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
+	}
+
+	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
+	Handshake exit_reply;
+	Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
+	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
+	Exit();
+}
+
+void cli_request_courier()
+{
+	Handshake kill_all_reply = HANDSHAKE_AKG;
+	int train_task_admin_tid = INVALID_TID;
+	vint kill_all_addr;
+	Receive(&train_task_admin_tid, &kill_all_addr, sizeof(kill_all_addr));
+	Reply(train_task_admin_tid, &kill_all_reply, sizeof(kill_all_reply));
+	Handshake *kill_all = kill_all_addr;
+
+	int cli_server_tid = INVALID_TID;
+	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
+		cli_server_tid = WhoIs("CLI_SERVER");
+	}
+	int train_server_tid = INVALID_TID;
+	while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
+		train_server_tid = WhoIs("TRAIN_SERVER");
+	}
+
+	Handshake handshake = HANDSHAKE_AKG;
+	while (*kill_all != HANDSHAKE_SHUTDOWN) {
+		TS_request train_server_msg;
+		train_server_msg.type = TS_WANT_CLI_REQ;
+		Cli_request cli_server_msg;
+		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &cli_server_msg, sizeof(cli_server_msg));
+		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &handshake, sizeof(handshake)); 
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;

@@ -11,6 +11,8 @@ void train_server_init(Train_server *train_server)
 {
 	train_server->is_shutdown = 0;
 
+	train_server->is_special_cmd = 0;
+
 	fifo_init(&train_server->cmd_fifo);
 
 	train_server->sensor_lifo_top = -1;
@@ -44,7 +46,6 @@ void train_server()
 	// train_server initialization 
 	Train_server train_server;
 	train_server_init(&train_server);
-
 
 	// track A initialization
 	track_node track[TRACK_MAX];
@@ -91,7 +92,7 @@ void train_server()
 
 		// pop command off the fifo		
 		Command *cmd;
-		fifo_get(&train_server.cmd_fifo, &cmd);
+		fifo_pop(&train_server.cmd_fifo, &cmd);
 		/*dump(SUBMISSION, "ts get cmd type %d", cmd.type);*/
 
 		// handle TR, RV, SW, GO, STOP
@@ -103,9 +104,6 @@ void train_server()
 
 			train_server.train.id = cmd->arg0;
 			train_server.train.speed = cmd->arg1;
-
-			cli_update_request = get_update_train_request(cmd->arg0, cmd->arg1);
-			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
             switch(train_server.train.speed){
                 case 14:
                     train_server.current_velocity_data = &train_server.velocity14_data;
@@ -122,10 +120,9 @@ void train_server()
                 default:
                     break;
             }
-			break;
-		case RV:
-			/*dump(SUBMISSION, "%s", "handle rv cmd");*/
-			command_handle(cmd);
+
+			cli_update_request = get_update_train_request(cmd->arg0, cmd->arg1);
+			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
 			break;
 		case SW:
 			/*dump(SUBMISSION, "%s", "handle sw cmd");*/
@@ -136,30 +133,30 @@ void train_server()
 			cli_update_request = get_update_switch_request(cmd->arg0, cmd->arg1);
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
 			break;
+		case RV:
 		case GO:
-			command_handle(cmd);
-			break;
 		case STOP:
 			command_handle(cmd);
 			break;
+
+		case DC:
+			train_server.is_dc = 1;
+			break;
+
+		case BR:
+			train_server.is_br = 1;
+			break;
+
+		case PARK:
+			train_server.is_park = 1;
+			break;
+
 		default:
 			break;
 		}
 
-		// handle DC, PARK, and SENSOR
-		if (cmd->type == BR) {
-			//debug(SUBMISSION, "train_server handle br cmd %c%d", cmd->arg0, cmd->arg1);
-			Send(br_tid, cmd, sizeof(*cmd), &handshake, sizeof(handshake));
-		}
-		else if (cmd->type == DC) {
-			//debug(SUBMISSION, "train_server handle dc cmd, %c%d", cmd->arg0, cmd->arg1);
-			Send(stopping_distance_tid, cmd, sizeof(*cmd), &handshake, sizeof(handshake));
-		}
-		else if(cmd->type == PARK) {
-			//debug(SUBMISSION, "train_server handle park cmd, %c%d", cmd->arg0, cmd->arg1);
-			Send(park_tid, cmd, sizeof(*cmd), &handshake, sizeof(handshake));
-		}
-		else if (cmd->type == SENSOR) {
+		// handle SENSOR
+		if (cmd->type == SENSOR) {
 			// sensor query
 			/*dump(SUBMISSION, "%s", "sensor cmd");*/
 			Putc(COM1, SENSOR_QUERY);
@@ -327,7 +324,10 @@ void stopping_distance_collector_task()
 	debug(SUBMISSION, "stopping_distance train_server_address = 0x%x", train_server_address);	 
 
 	while (train_server->is_shutdown == 0) {
-		Command dc_cmd;
+		if (train_server->is_dc == 0) {
+			continue;
+		}
+
 		Receive(&train_server_tid, &dc_cmd, sizeof(dc_cmd));
 		handshake = HANDSHAKE_AKG;
 		Reply(train_server_tid, &handshake, sizeof(handshake));
@@ -348,6 +348,8 @@ void stopping_distance_collector_task()
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		//debug(SUBMISSION, "stopping_distance send tr %d", tr_cmd.arg0);
 		Send(train_server_tid, &tr_cmd, sizeof(tr_cmd), &handshake, sizeof(handshake));
+
+		train_server->is_dc = 0;
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;

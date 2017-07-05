@@ -108,36 +108,56 @@ void cli_server()
 		int requester_tid = INVALID_TID;
 		Cli_request request;
 		Receive(&requester_tid, &request, sizeof(request));
-		handshake = HANDSHAKE_AKG;
-		Reply(requester_tid, &handshake, sizeof(handshake));
 
 		switch (request.type) {
 		case CLI_TRAIN_COMMAND:
+			// from cli_io_task
 			fifo_put(&cli_server.cmd_fifo, &request);
+			handshake = HANDSHAKE_AKG;
+			Reply(requester_tid, &handshake, sizeof(handshake));
 			/*dump(SUBMISSION, "%s", "cli_server put train cmd cli req");*/
 			break;
 
+		case CLI_UPDATE_CLOCK:
+			// from cli_clock_task
+			fifo_put(&cli_server.status_update_fifo, &request);
+			handshake = HANDSHAKE_AKG;
+			Reply(requester_tid, &handshake, sizeof(handshake));
+   			break;
+ 
 		case CLI_UPDATE_TRAIN:
 		case CLI_UPDATE_SENSOR:
 		case CLI_UPDATE_SWITCH:
-		case CLI_UPDATE_CLOCK:
 		case CLI_UPDATE_CALIBRATION:
+			// from cli_request_courier
 			fifo_put(&cli_server.status_update_fifo, &request);
-            /*if (request.type != CLI_UPDATE_CLOCK) dump(SUBMISSION, "update cli req %d", request.type);*/
+			handshake = HANDSHAKE_AKG;
+			Reply(requester_tid, &handshake, sizeof(handshake));
+            /*dump(SUBMISSION, "update cli req %d", request.type);*/
 			break;
 
 		case CLI_SHUTDOWN:
+			// from cli_io_task
 			*kill_all = HANDSHAKE_SHUTDOWN;
-			bwprintf(COM2, "%s", "shutdown...");
+			break;
+		
+		default:
 			break;
 		}
-		
-		if (!is_fifo_empty(&cli_server.cmd_fifo)) {
+
+		if (request.type != CLI_WANT_COMMAND) {
+			handshake = HANDSHAKE_AKG;
+			Reply(requester_tid, &handshake, sizeof(handshake));
+			bwprintf(COM2, "%s", "shutdown...");
+		}		
+		else if (!is_fifo_empty(&cli_server.cmd_fifo)) {
 			Cli_request *cli_cmd_request;
 			fifo_get(&cli_server.cmd_fifo, &cli_cmd_request);
-			Command train_cmd = cli_cmd_request->cmd;
-			/*dump(SUBMISSION, "cli send train cmd %d", train_cmd.type);*/
-			Send(train_server_tid, &train_cmd, sizeof(train_cmd), &handshake, sizeof(handshake));
+			TS_request ts_request;
+			ts_request.type = TS_COMMAND;
+			ts_request.cmd = cli_cmd_request->cmd;
+			/*dump(SUBMISSION, "cli send train cmd %d", ts_request.cmd.type);*/
+			Reply(requester_tid, &ts_request, sizeof(ts_request));
 		}
 
 		if (!is_fifo_empty(&cli_server.status_update_fifo)) {
