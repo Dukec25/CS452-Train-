@@ -140,13 +140,14 @@ void train_command_courier()
 		cli_server_msg.type = CLI_WANT_COMMAND;
 		TS_request train_server_msg;
 		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &train_server_msg, sizeof(train_server_msg));
-		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
+		if (train_server_msg.type != TS_NULL) {
+			Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
+		}
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
 	Handshake exit_reply;
 	Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
-	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
 	Exit();
 }
 
@@ -174,12 +175,13 @@ void cli_request_courier()
 		train_server_msg.type = TS_WANT_CLI_REQ;
 		Cli_request cli_server_msg;
 		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &cli_server_msg, sizeof(cli_server_msg));
-		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &handshake, sizeof(handshake)); 
+		if (cli_server_msg.type != CLI_NULL) {
+			Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &handshake, sizeof(handshake)); 
+		}
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
 	Handshake exit_reply;
 	Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
-	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
 	Exit();
 }
