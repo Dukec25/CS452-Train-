@@ -91,15 +91,15 @@ void cli_server()
 
 	Handshake handshake = HANDSHAKE_AKG;
 	vint cli_server_address = (vint) &cli_server;
-	/*debug(SUBMISSION, "cli_server cli_server_address = 0x%x", cli_server_address);	 */
+	/*irq_debug(SUBMISSION, "cli_server cli_server_address = 0x%x", cli_server_address);	 */
 
 	int cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); 
 	Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
-	/*debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
+	/*irq_debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
 
-	int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
-	Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
-	/*debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
+//	int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
+//	Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
+	/*irq_debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
 
 	int num_track_updates = 0;
 
@@ -116,7 +116,7 @@ void cli_server()
 			fifo_put(&cli_server.cmd_fifo, &cmd);
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
-			debug(SUBMISSION, "cli_server put train cmd %d", cmd.type);
+			irq_debug(SUBMISSION, "cli_server put train cmd %d", cmd.type);
 			break;
 
 		case CLI_UPDATE_CLOCK:
@@ -134,13 +134,13 @@ void cli_server()
 			fifo_put(&cli_server.status_update_fifo, &request);
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
-			//debug(SUBMISSION, "cli_server put update cmd %d", request.type);
+			//irq_debug(SUBMISSION, "cli_server put update cmd %d", request.type);
 			break;
 
 		case CLI_SHUTDOWN:
 			// from cli_io_task
 			*kill_all = HANDSHAKE_SHUTDOWN;
-			bwprintf(COM2, "%s", "shutdown...");
+			debug(SUBMISSION, "%s", "shutdown...");
 			Reply(requester_tid, &handshake, sizeof(handshake));
 			break;
 		
@@ -159,7 +159,7 @@ void cli_server()
 				fifo_get(&cli_server.cmd_fifo, &cmd);
 				ts_request.type = TS_COMMAND;
 				ts_request.cmd = *cmd;
-				debug(SUBMISSION, "cli reply courier with train cmd %d", ts_request.cmd.type);
+				irq_debug(SUBMISSION, "cli reply courier with train cmd %d", ts_request.cmd.type);
 			}
 			else {
 				ts_request.type = TS_NULL;
@@ -175,21 +175,21 @@ void cli_server()
 				cli_update_clock(update_request->clock_update);
 				break;
 			case CLI_UPDATE_TRAIN:
-				/*debug(SUBMISSION, "%s", "cli pop train update req");*/
+				/*irq_debug(SUBMISSION, "%s", "cli pop train update req");*/
 				cli_update_train(update_request->train_update);
 				break;
 			case CLI_UPDATE_SWITCH:
-				/*debug(SUBMISSION, "%s", "cli pop switch update req");*/
+				/*irq_debug(SUBMISSION, "%s", "cli pop switch update req");*/
 				cli_update_switch(update_request->switch_update);
 				break;
 			case CLI_UPDATE_SENSOR:
-				//debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
+				//irq_debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
 				//			update_request->sensor_update.group, update_request->sensor_update.id,
 				//			update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update);
 				break;
 			case CLI_UPDATE_CALIBRATION:
-				//debug(SUBMISSION, "%s", "cli pop calibration update req");
+				//irq_debug(SUBMISSION, "%s", "cli pop calibration update req");
 				cli_update_track(update_request->calibration_update, num_track_updates++);
 				break;
 			default:
@@ -204,7 +204,7 @@ void cli_server()
 	int num_exit = 0;
 	int exit_list[2];
 	exit_list[0] = cli_clock_tid;
-	exit_list[1] = cli_io_tid;
+//	exit_list[1] = cli_io_tid;
 	while(num_exit < expected_num_exit) {
 		Handshake exit_handshake;
 		Handshake exit_reply = HANDSHAKE_AKG;
@@ -238,7 +238,7 @@ void cli_clock_task()
 	Receive(&cli_server_tid, &cli_server_address, sizeof(cli_server_address));
 	Reply(cli_server_tid, &handshake, sizeof(handshake));
 	Train_server *cli_server = (Cli_server *) cli_server_address;
-	/*debug(SUBMISSION, "cli_clock_task cli_server_address = 0x%x", cli_server_address);	 */
+	/*irq_debug(SUBMISSION, "cli_clock_task cli_server_address = 0x%x", cli_server_address);	 */
 
 	// digital clock
 	vint elapsed_tenth_sec = 0;
@@ -269,7 +269,7 @@ void cli_io_task()
 	Receive(&cli_server_tid, &cli_server_address, sizeof(cli_server_address));
 	Reply(cli_server_tid, &handshake, sizeof(handshake));
 	Train_server *cli_server = (Cli_server *) cli_server_address;
-	/*debug(SUBMISSION, "cli_io_task cli_server_address = 0x%x", cli_server_address);*/
+	/*irq_debug(SUBMISSION, "cli_io_task cli_server_address = 0x%x", cli_server_address);*/
 
 	// command
 	Command_buffer command_buffer;
@@ -291,7 +291,7 @@ void cli_io_task()
 			parse_result = command_parse(&command_buffer, &train, &cmd);
 			if (parse_result != -1) {
 				Cli_request train_cmd_request = get_train_command_request(cmd);
-				debug(SUBMISSION, "%s", "io entered train cmd, send cmd");
+				irq_debug(SUBMISSION, "%s", "io entered train cmd, send cmd");
 				Send(cli_server_tid, &train_cmd_request, sizeof(train_cmd_request), &handshake, sizeof(handshake));
 			}
 			// clears command_buffer

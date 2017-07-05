@@ -3,11 +3,10 @@
 #include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
-    debug(SUBMISSION, "src = %d, dest = %d", src, dest);
+    irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
-        bwprintf(COM2, "src=%d, %d\r\n", src, dest);
-        bwprintf(COM2, "invalid data choose_destination\r\n");
+        debug(SUBMISSION, "invalid data src = %d, dest %d, in choose_destination", src, dest);
         return -1;
     }
 
@@ -20,11 +19,10 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 int cal_distance(track_node *track, int src, int dest)
 {
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
-        bwprintf(COM2, "src=%d, %d\r\n", src, dest);
-        bwprintf(COM2, "invalid data cal_distance");
+        debug(SUBMISSION, "invalid data src = %d, dest %d, in cal_distance", src, dest);
         return 0;
     }
-	/*debug(SUBMISSION, "%d %d", src, dest);*/
+	/*irq_debug(SUBMISSION, "%d %d", src, dest);*/
 	/*dump(SUBMISSION, "%d %d", src, dest);*/
     track_node *temp;
     temp = find_path(track, src, dest);
@@ -85,18 +83,18 @@ track_node* find_path(track_node *track, int src, int dest)
 
 int switches_need_changes(int src, track_node *node, Train_server *train_server){
     /*dump(SUBMISSION, "%s", "get into switches need change");*/
-    /*bwprintf(COM2, "switches_need_changes=%d\r\n", src);*/
+    /*debug(SUBMISSION, "switches_need_changes=%d\r\n", src);*/
     int idx = 0; // br_update size is 10
 
 	/*track_node *temp = node;*/
 	/*while(temp->num != src) {*/
-		/*bwprintf(COM2, "%s ", temp->name);*/
+		/*debug(SUBMISSION, "%s ", temp->name);*/
         /*temp = temp->previous;*/
 	/*}*/
-    /*bwprintf(COM2, "%s \r\n", temp->name);*/
+    /*debug(SUBMISSION, "%s \r\n", temp->name);*/
 
     while(node->num != src){
-        /*bwprintf(COM2, "visiting %s\r\n", node->name);*/
+        /*debug(SUBMISSION, "visiting %s\r\n", node->name);*/
         if(node->previous->type != NODE_BRANCH){
             node = node->previous;
             continue;
@@ -119,22 +117,22 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                     break;
             }
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
-                /*bwprintf(COM2, "straight \r\n");*/
+                /*debug(SUBMISSION, "straight \r\n");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    /*bwprintf(COM2, "status curve \r\n");*/
+                    /*debug(SUBMISSION, "status curve \r\n");*/
                     train_server->br_update[idx].id = node_id;
                     train_server->br_update[idx++].state = 's';
                 } else{
-                    /*bwprintf(COM2, "status straight \r\n");*/
+                    /*debug(SUBMISSION, "status straight \r\n");*/
                 }
             } else{
-                /*bwprintf(COM2, "curve \r\n");*/
+                /*debug(SUBMISSION, "curve \r\n");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
-                    /*bwprintf(COM2, "status straight \r\n");*/
+                    /*debug(SUBMISSION, "status straight \r\n");*/
                     train_server->br_update[idx].id = node_id;
                     train_server->br_update[idx++].state = 'c';
                 } else{
-                    /*bwprintf(COM2, "status curve \r\n");*/
+                    /*debug(SUBMISSION, "status curve \r\n");*/
                 }
             }
             node = node->previous;
@@ -173,12 +171,11 @@ int predict_next(track_node *track, int src, Train_server *train_server){
 
 int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
 
-    bwprintf(COM2, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);
+    debug(SUBMISSION, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);
 
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
-        bwprintf(COM2, "src=%d, %d\r\n", src, dest);
-        bwprintf(COM2, "invalid data in find_stops_by_distance");
+        debug(SUBMISSION, "invalid data src = %d, dest %d, in find_stops_by_distance", src, dest);
         return -1;
     }
 
@@ -187,10 +184,10 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 	
 	track_node *temp = node;
 	while(temp->num != src) {
-		bwprintf(COM2, "%s ", temp->name);
+		debug(SUBMISSION, "%s ", temp->name);
     	temp = temp->previous;
 	}
-    bwprintf(COM2, "%s \r\n", temp->name);
+    debug(SUBMISSION, "%s \r\n", temp->name);
 
     fifo_t queue; 
     fifo_init(&queue);
@@ -203,20 +200,20 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
         track_node *cur_node;
         fifo_get(&queue, &cur_node);
         node = cur_node->previous;
-		/*debug(SUBMISSION, "visiting %s", node->name);*/
+		/*irq_debug(SUBMISSION, "visiting %s", node->name);*/
 
         if(node->type == NODE_BRANCH){
             if (strlen(node->edge[DIR_STRAIGHT].dest->name) != strlen(cur_node->name)){
-				/*debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);*/
+				/*irq_debug(SUBMISSION, "decrement curve %d", node->edge[DIR_CURVED].dist);*/
                 stop_distance -= node->edge[DIR_CURVED].dist;
                 accumulated_distance += node->edge[DIR_CURVED].dist;
             } else{
-                /*debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);*/
+                /*irq_debug(SUBMISSION, "decrement straight %s", node->edge[DIR_STRAIGHT].dest->name);*/
                 stop_distance -= node->edge[DIR_STRAIGHT].dist; 
                 accumulated_distance += node->edge[DIR_STRAIGHT].dist;
             }
         } else{
-			/*debug(SUBMISSION, "decrement ahead %d", node->edge[DIR_AHEAD].dist);*/
+			/*irq_debug(SUBMISSION, "decrement ahead %d", node->edge[DIR_AHEAD].dist);*/
             stop_distance -= node->edge[DIR_AHEAD].dist;
             accumulated_distance += node->edge[DIR_AHEAD].dist;
         }
@@ -224,7 +221,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
         fifo_put(&queue, node);
 
         if(node->type == NODE_SENSOR){
-			/*debug(SUBMISSION, "add %s", node->name);*/
+			/*irq_debug(SUBMISSION, "add %s", node->name);*/
             Sensor_dist sensor_dist;
             sensor_dist.sensor_id = node->num;
             sensor_dist.distance = accumulated_distance;
@@ -232,7 +229,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
             ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
-                bwprintf(COM2, "ENDED");
+                debug(SUBMISSION, "%s", "ENDED");
                 return arr_len;
             }
         }

@@ -12,7 +12,7 @@ void train_task_admin()
 	vint kill_all_addr = &kill_all;
 
 	int idle_tid = Create(PRIOR_LOWEST, idle_task);
-	debug(SUBMISSION, "created idle_task taskId = %d", idle_tid);
+	irq_debug(SUBMISSION, "created idle_task taskId = %d", idle_tid);
 	Send(idle_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
 	cli_startup();
@@ -24,11 +24,11 @@ void train_task_admin()
 	sensor_initialization();
 
 	int cli_tid = Create(PRIOR_MEDIUM, cli_server);
-	debug(SUBMISSION, "created cli_server taskId = %d", cli_tid);
+	irq_debug(SUBMISSION, "created cli_server taskId = %d", cli_tid);
 	Send(cli_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
 	int train_tid = Create(PRIOR_MEDIUM, train_server);
-	debug(SUBMISSION, "created train_server taskId = %d", train_tid);
+	irq_debug(SUBMISSION, "created train_server taskId = %d", train_tid);
 	Send(train_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
 	int train_command_courier_tid = Create(PRIOR_MEDIUM, train_command_courier);
@@ -36,7 +36,9 @@ void train_task_admin()
 
 	int cli_request_courier_tid = Create(PRIOR_MEDIUM, cli_request_courier);
 	Send(cli_request_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
-	
+
+	int tid = Create(PRIOR_MEDIUM, 	milestone1_test);
+
 	int expected_num_exit = 5;
 	int num_exit = 0;
 	int exit_list[5];
@@ -80,7 +82,7 @@ void train_task_admin()
 
 void idle_task()
 {
-	debug(DEBUG_UART_IRQ, "enter %s", "idle_task");
+	irq_debug(DEBUG_UART_IRQ, "enter %s", "idle_task");
 
 	Handshake kill_all_reply = HANDSHAKE_AKG;
 	int train_task_admin_tid = INVALID_TID;
@@ -96,23 +98,23 @@ void idle_task()
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
 
 		if(*uart1_error & FE_MASK){
-			debug(SUBMISSION, "%s", "frame error");
+			irq_debug(SUBMISSION, "%s", "frame error");
 		}
 		if(*uart1_error & PE_MASK){
-			debug(SUBMISSION, "%s", "parity error");
+			irq_debug(SUBMISSION, "%s", "parity error");
 		}
 		if(*uart1_error & BE_MASK){
-			debug(SUBMISSION, "%s", "break error");
+			irq_debug(SUBMISSION, "%s", "break error");
 		}
 		if(*uart1_error & OE_MASK){
-			debug(SUBMISSION, "%s", "overrun error");
+			irq_debug(SUBMISSION, "%s", "overrun error");
 		}
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
 	Handshake exit_reply;
 	Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
-	debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
+	irq_debug(DEBUG_TASK, "j = %d, tid =%d exiting", j, tid);
 	Exit();
 }
 
@@ -140,7 +142,7 @@ void train_command_courier()
 		cli_server_msg.type = CLI_WANT_COMMAND;
 		TS_request train_server_msg;
 		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &train_server_msg, sizeof(train_server_msg));
-		if (train_server_msg.type != CLI_NULL) debug(SUBMISSION, "train_command_courier send msg %d", train_server_msg.type); 
+		if (train_server_msg.type != CLI_NULL) irq_debug(SUBMISSION, "train_command_courier send msg %d", train_server_msg.type); 
 		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
 	}
 
@@ -174,7 +176,7 @@ void cli_request_courier()
 		train_server_msg.type = TS_WANT_CLI_REQ;
 		Cli_request cli_server_msg;
 		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &cli_server_msg, sizeof(cli_server_msg));
-		//if (cli_server_msg.type != TS_NULL) debug(SUBMISSION, "cli_request_courier send msg %d", cli_server_msg.type); 
+		//if (cli_server_msg.type != TS_NULL) irq_debug(SUBMISSION, "cli_request_courier send msg %d", cli_server_msg.type); 
 		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &handshake, sizeof(handshake)); 
 	}
 

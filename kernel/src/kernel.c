@@ -107,7 +107,7 @@ void k_receive(vint *receive_tid, void *receive_message, int receive_length, Tas
     debug(DEBUG_SYSCALL, "enter kernel_receive tid=%d", td->tid);
     Task_descriptor *send_td; 
     int result = find_sender(&(ks->send_block), td->tid, &send_td);
-    debug(DEBUG_SYSCALL, "return result=%d", result);
+    bwprintf(COM2, "return result=%d\r\n", result);
 
     // check if anyone send any messages to this task by looking at send_block(don't yet know how)
     // if yes, put that task onto reply_block and grab its data 
@@ -121,7 +121,7 @@ void k_receive(vint *receive_tid, void *receive_message, int receive_length, Tas
         // be aware the case receive_length and send_length are different 
         *receive_tid = send_td->tid; // ??? *receive_tid = send_tid will crash
         memcpy(receive_message, send_message, receive_length);
-        debug(DEBUG_SYSCALL, "get to the end, tid=%d", send_td->tid);
+        bwprintf(COM2, "get to the end, tid=%d", send_td->tid);
         reschedule(td, ks);
     } else {
         insert_task(td, &(ks->receive_block));

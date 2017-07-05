@@ -10,7 +10,7 @@ void rps_server_initialize(RPS_server *rps_server)
 {
 	rps_server->tid = MyTid();
 	rps_server->is_playing = 0;
-	debug(DEBUG_TASK, "is_playing = %d", rps_server->is_playing);
+	irq_debug(DEBUG_TASK, "is_playing = %d", rps_server->is_playing);
 	rps_server->is_quit = 0;
 	rps_server->is_server_running = 1;
 
@@ -29,18 +29,18 @@ void rps_server_initialize(RPS_server *rps_server)
 
 void rps_server_start()
 {
-	debug(DEBUG_TASK, "enter %s", "rps_server_start");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_server_start");
 	RPS_server rps_server;
 	rps_server_initialize(&rps_server);
 
 	int register_result = RegisterAs("RPS_SERVER_NAME");
-	debug(DEBUG_TASK, "RegisterAs result = %d", register_result);
+	irq_debug(DEBUG_TASK, "RegisterAs result = %d", register_result);
 
 	if (register_result) {
-		debug(SUBMISSION, "RPS server RegisterAs failed, error code = %d, Exiting %d", register_result, rps_server.tid);
+		irq_debug(SUBMISSION, "RPS server RegisterAs failed, error code = %d, Exiting %d", register_result, rps_server.tid);
 		Exit();
 	}
-	debug(SUBMISSION, "Successfully registered rps server as %s", "rps_server");
+	irq_debug(SUBMISSION, "Successfully registered rps server as %s", "rps_server");
 
 	int continue_pressed = 0;
 	while(rps_server.is_server_running) {
@@ -49,19 +49,19 @@ void rps_server_start()
 		Receive(&tid, &request, sizeof(request));
 		switch(request.type) {
 			case RPS_MSG_SIGN_IN:
-			debug(DEBUG_TASK, "%s %d", "RPS_MSG_SIGN_IN", tid);
+			irq_debug(DEBUG_TASK, "%s %d", "RPS_MSG_SIGN_IN", tid);
 			rps_handle_sign_in(&rps_server, &request);
 			break;
 			case RPS_MSG_PLAY:
-			debug(DEBUG_TASK, "%s %d", "RPS_MSG_PLAY", tid);
+			irq_debug(DEBUG_TASK, "%s %d", "RPS_MSG_PLAY", tid);
 			rps_handle_play(&rps_server, &request);
 			break;
 			case RPS_MSG_QUIT:
-			debug(DEBUG_TASK, "%s %d", "RPS_MSG_QUIT", tid);
+			irq_debug(DEBUG_TASK, "%s %d", "RPS_MSG_QUIT", tid);
 			rps_handle_quit(&rps_server, &request);
 			break;
 			default:
-			debug(DEBUG_TASK, "%s %d", "WARNING!!!!!!!Unkown", tid);
+			irq_debug(DEBUG_TASK, "%s %d", "WARNING!!!!!!!Unkown", tid);
 			break;
 		}
 
@@ -69,9 +69,9 @@ void rps_server_start()
 
 		if (is_fifo_empty(&(rps_server.player_queue)) && !(rps_server.is_playing) && (rps_server.num_players == 0)) {
 			// No player in queue
-			debug(DEBUG_TASK, "No player in queue, and player is playing, %s", "stop");
+			irq_debug(DEBUG_TASK, "No player in queue, and player is playing, %s", "stop");
 			if (!continue_pressed) {
-				debug(SUBMISSION, "%s", "End one game, press 'q' to quit, ANY other key to continue");
+				irq_debug(SUBMISSION, "%s", "End one game, press 'q' to quit, ANY other key to continue");
 				char c = bwgetc(COM2);
 				if (c == 'q') {
 					rps_server.is_server_running = 0;
@@ -83,12 +83,12 @@ void rps_server_start()
 			}
 		}
 	}
-	debug(DEBUG_TASK, "Exiting %d", rps_server.tid); 
+	irq_debug(DEBUG_TASK, "Exiting %d", rps_server.tid); 
 	Exit();
 }
 
 void rps_reply_server_down(RPS_server *rps_server, int tid) {
-	debug(DEBUG_TASK, "enter %s", "rps_reply_server_down");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_reply_server_down");
 	RPS_message reply;
 	reply.tid = tid;
 	reply.type = RPS_MSG_SERVER_DOWN;
@@ -98,7 +98,7 @@ void rps_reply_server_down(RPS_server *rps_server, int tid) {
 
 void rps_handle_sign_in(RPS_server *rps_server, RPS_message *req)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_handle_sign_in");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_handle_sign_in");
 
 	if (!rps_server->is_server_running) {
 		rps_reply_server_down(rps_server, req->tid);
@@ -117,7 +117,7 @@ void rps_handle_sign_in(RPS_server *rps_server, RPS_message *req)
 		// put player to the end of player queue, and update signed_in_list 
 		fifo_put(&(rps_server->player_queue), req);
 		rps_server->signed_in_list[req->tid] = 1;
-		debug(DEBUG_TASK, "put %d into the end of player_queue, signed_in_list[%d] = %d",
+		irq_debug(DEBUG_TASK, "put %d into the end of player_queue, signed_in_list[%d] = %d",
 							req->tid, req->tid, rps_server->signed_in_list[req->tid]);
 		rps_pair_players(rps_server);
 		// reply sign in successfull message
@@ -131,14 +131,14 @@ void rps_handle_sign_in(RPS_server *rps_server, RPS_message *req)
 
 void rps_pair_players(RPS_server *rps_server)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_pair_players");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_pair_players");
 	
 	if (rps_server->is_playing) {
-		debug(DEBUG_TASK, "is_playing = %d, return", rps_server->is_playing);
+		irq_debug(DEBUG_TASK, "is_playing = %d, return", rps_server->is_playing);
 		return;
 	}
 	if(fifo_get_count(&(rps_server->player_queue)) < 2) {
-		debug(DEBUG_TASK, "not enough players %d, return", fifo_get_count(&(rps_server->player_queue)));
+		irq_debug(DEBUG_TASK, "not enough players %d, return", fifo_get_count(&(rps_server->player_queue)));
 		return;
 	}
 
@@ -149,7 +149,7 @@ void rps_pair_players(RPS_server *rps_server)
 	while(!is_fifo_empty(&(rps_server->player_queue)) && (rps_server->num_players < 2)) {
 		RPS_message *req;
 		fifo_get(&(rps_server->player_queue), &req);
-		debug(DEBUG_TASK, "get req %d, signed_in_list[tid] = %d, count = %d", req->tid, rps_server->signed_in_list[req->tid], count);
+		irq_debug(DEBUG_TASK, "get req %d, signed_in_list[tid] = %d, count = %d", req->tid, rps_server->signed_in_list[req->tid], count);
 		if (rps_server->signed_in_list[req->tid]) {
 			players[count] = req->tid;
 		}
@@ -163,7 +163,7 @@ void rps_pair_players(RPS_server *rps_server)
 	if (players[0] == players[1]) {
 		// Cannot play with itself
 		rps_server->num_players = 1;
-		debug(DEBUG_TASK, "Cannot play with itself %d, num_players = %d", players[0], rps_server->num_players);
+		irq_debug(DEBUG_TASK, "Cannot play with itself %d, num_players = %d", players[0], rps_server->num_players);
 		return;
 	}
 	
@@ -172,28 +172,28 @@ void rps_pair_players(RPS_server *rps_server)
 	}
 	if (count == 2) {
 		// Match players
-		debug(DEBUG_TASK, "!!!Got a pair of new players %d, %d", players[0], players[1]);
+		irq_debug(DEBUG_TASK, "!!!Got a pair of new players %d, %d", players[0], players[1]);
 		rps_server->player1_tid = players[0];
 		rps_server->player2_tid = players[1];
-		debug(DEBUG_TASK, "player1_tid = %d, player2_tid = %d, is_playing = %d",
+		irq_debug(DEBUG_TASK, "player1_tid = %d, player2_tid = %d, is_playing = %d",
 							rps_server->player1_tid, rps_server->player2_tid, rps_server->is_playing);
 	}
 	else if (count == 1) {
 		// Match players
-		debug(DEBUG_TASK, "!!!Got one new player %d", players[0]);
+		irq_debug(DEBUG_TASK, "!!!Got one new player %d", players[0]);
 		if (rps_server->num_players == 2) {
 			rps_server->player2_tid = players[0];
 		} else {
 			rps_server->player1_tid = players[0];
 		}
-		debug(DEBUG_TASK, "player1_tid = %d, player2_tid = %d, is_playing = %d",
+		irq_debug(DEBUG_TASK, "player1_tid = %d, player2_tid = %d, is_playing = %d",
 							rps_server->player1_tid, rps_server->player2_tid, rps_server->is_playing);
 	}
 }
 
 void rps_handle_play(RPS_server *rps_server, RPS_message *req)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_handle_play");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_handle_play");
 	if (!rps_server->is_server_running) {
 		rps_reply_server_down(rps_server, req->tid);
 		return;
@@ -204,23 +204,23 @@ void rps_handle_play(RPS_server *rps_server, RPS_message *req)
 	RPS_choice player_choice = req->content[0];
 	if (player_tid == rps_server->player1_tid) {
 		rps_server->player1_choice = player_choice;
-		debug(DEBUG_TASK, "update player1_choice = %d", rps_server->player1_choice);
+		irq_debug(DEBUG_TASK, "update player1_choice = %d", rps_server->player1_choice);
 	}
 	else if (player_tid == rps_server->player2_tid) {
 		rps_server->player2_choice = player_choice;
-		debug(DEBUG_TASK, "update player2_choice = %d", rps_server->player2_choice);
+		irq_debug(DEBUG_TASK, "update player2_choice = %d", rps_server->player2_choice);
 	}
 
 	if (!rps_server->is_playing) {
 		// rps server is not ready to play game yet, in the matching pair phase
-		debug(DEBUG_TASK, "is_playing = %d, not ready to play yet", rps_server->is_playing);
+		irq_debug(DEBUG_TASK, "is_playing = %d, not ready to play yet", rps_server->is_playing);
 		return;
 	}
 
 	if (rps_server->num_players == 2 && 
 		rps_server->player1_choice != INVALID_CHOICE && 
 		rps_server->player2_choice != INVALID_CHOICE) {
-		debug(DEBUG_TASK, "both player %d and player %d have given their choices %d %d, start to reply result",
+		irq_debug(DEBUG_TASK, "both player %d and player %d have given their choices %d %d, start to reply result",
 							rps_server->player1_tid, rps_server->player2_tid, rps_server->player1_choice, rps_server->player2_choice);
 		rps_reply_result(rps_server);
 		// reset players choice
@@ -231,7 +231,7 @@ void rps_handle_play(RPS_server *rps_server, RPS_message *req)
 
 void rps_handle_quit(RPS_server *rps_server, RPS_message *req)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_handle_quit");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_handle_quit");
 	if (!rps_server->is_server_running) {
 		rps_reply_server_down(rps_server, req->tid);
 		return;
@@ -251,12 +251,12 @@ void rps_handle_quit(RPS_server *rps_server, RPS_message *req)
 	rps_server->player1_choice = INVALID_CHOICE;
 	rps_server->player2_tid = INVALID_TID;
 	rps_server->player2_choice = INVALID_CHOICE;
-	debug(DEBUG_TASK, "is_playing = %d", rps_server->is_playing);
+	irq_debug(DEBUG_TASK, "is_playing = %d", rps_server->is_playing);
 
 	// unset corresponding slot in signed_in_list
 	rps_server->signed_in_list[rps_server->player1_tid] = 0;
 	rps_server->signed_in_list[rps_server->player2_tid] = 0;
-	debug(DEBUG_TASK, "signed_in_list[%d] = %d, signed_in_list[%d] = %d",
+	irq_debug(DEBUG_TASK, "signed_in_list[%d] = %d, signed_in_list[%d] = %d",
 					rps_server->player1_tid, rps_server->signed_in_list[rps_server->player1_tid],
 					rps_server->player2_tid, rps_server->signed_in_list[rps_server->player2_tid]);
 
@@ -265,7 +265,7 @@ void rps_handle_quit(RPS_server *rps_server, RPS_message *req)
 
 void rps_reply_result(RPS_server *rps_server)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_reply_result");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_reply_result");
 	if (!rps_server->is_server_running) {
 		rps_reply_server_down(rps_server, rps_server->player1_tid);
 		rps_reply_server_down(rps_server, rps_server->player2_tid);
@@ -303,7 +303,7 @@ void rps_reply_result(RPS_server *rps_server)
 		outcome2 = LOSE;
 	}
 
-	debug(DEBUG_TASK, "player %d vs player %d: %d vs %d -> outcome1 = %d, outcome2 = %d",
+	irq_debug(DEBUG_TASK, "player %d vs player %d: %d vs %d -> outcome1 = %d, outcome2 = %d",
 						rps_server->player1_tid, rps_server->player2_tid,
 						rps_server->player1_choice, rps_server->player2_choice, outcome1, outcome2);
 	RPS_message reply1;
@@ -327,22 +327,22 @@ void rps_client_initialize(RPS_client *rps_client)
 
 void rps_client_start()
 {
-	debug(DEBUG_TASK, "enter %s", "rps_client_start");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_client_start");
 	RPS_client rps_client;
 	rps_client_initialize(&rps_client);
-	debug(DEBUG_TASK, "player %d", rps_client.tid);
+	irq_debug(DEBUG_TASK, "player %d", rps_client.tid);
 
 	int result = 0;
 
 	int server_tid = WhoIs("RPS_SERVER_NAME");
-	debug(DEBUG_TASK, "server_tid = %d", server_tid);	
+	irq_debug(DEBUG_TASK, "server_tid = %d", server_tid);	
 	if (server_tid >= MAX_NUM_TASKS) {
-		debug(SUBMISSION, "WhoIs failed, invalid server tid %d", server_tid);
+		irq_debug(SUBMISSION, "WhoIs failed, invalid server tid %d", server_tid);
 	}
 
 	result = rps_client_sign_in(server_tid, &rps_client);
 	if (result == -1) {
-		debug(SUBMISSION, "player %d failed to sign in, Exiting", rps_client.tid);
+		irq_debug(SUBMISSION, "player %d failed to sign in, Exiting", rps_client.tid);
 		Exit();
 	}
 
@@ -350,13 +350,13 @@ void rps_client_start()
 	for (i = 0; i < NUM_ROUNDS; i++) {
 		result = rps_client_play(server_tid, &rps_client, i);
 		if (result == -1) {
-			debug(SUBMISSION, "player %d failed to play", rps_client.tid);
+			irq_debug(SUBMISSION, "player %d failed to play", rps_client.tid);
 		}
 	}
 
 	result = rps_client_quit(server_tid, &rps_client);
 	if (result == -1) {
-		debug(SUBMISSION, "player %d failed to quit, Exiting", rps_client.tid);
+		irq_debug(SUBMISSION, "player %d failed to quit, Exiting", rps_client.tid);
 		Exit();
 	}
 	Exit();
@@ -364,7 +364,7 @@ void rps_client_start()
 
 int rps_client_sign_in(int server_tid, RPS_client *rps_client)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_client_sign_in");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_client_sign_in");
 	RPS_message sign_in_request;
 	RPS_message *request = &sign_in_request;
 	request->tid = rps_client->tid;
@@ -377,13 +377,13 @@ int rps_client_sign_in(int server_tid, RPS_client *rps_client)
 	if (reply.type != RPS_MSG_SUCCESS) {
 		return -1;
 	}
-	debug(SUBMISSION, "player %d successfully signed in", rps_client->tid);
+	irq_debug(SUBMISSION, "player %d successfully signed in", rps_client->tid);
 	return 0;
 }
 
 int rps_client_play(int server_tid, RPS_client *rps_client, int round)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_client_play");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_client_play");
 	RPS_message play_request;
 	RPS_message *request = &play_request;
 	request->tid = rps_client->tid;
@@ -392,36 +392,36 @@ int rps_client_play(int server_tid, RPS_client *rps_client, int round)
 	request->content[1] = '\0';
 	request->type = RPS_MSG_PLAY;
 	RPS_message reply;
-	debug(DEBUG_TASK, "player %d is choose to play %d", rps_client->tid, request->content[0]);
+	irq_debug(DEBUG_TASK, "player %d is choose to play %d", rps_client->tid, request->content[0]);
 
 	Send(server_tid, request, sizeof(request), &reply, sizeof(reply));
 	
 	if (reply.type == RPS_MSG_SERVER_DOWN) {
-		debug(SUBMISSION, "server is down, Exiting", rps_client->tid);
+		irq_debug(SUBMISSION, "server is down, Exiting", rps_client->tid);
 		Exit();
 	}
 	if (choice == ROCK) {
-		debug(SUBMISSION, "player %d choose ROCK for round #%d", rps_client->tid, round + 1);
+		irq_debug(SUBMISSION, "player %d choose ROCK for round #%d", rps_client->tid, round + 1);
 	}
 	else if (choice == PAPER) {
-		debug(SUBMISSION, "player %d choose PAPER for round #%d", rps_client->tid, round + 1);
+		irq_debug(SUBMISSION, "player %d choose PAPER for round #%d", rps_client->tid, round + 1);
 	}
 	else if (choice == SCISSOR) {
-		debug(SUBMISSION, "player %d choose SCISSOR for round #%d", rps_client->tid, round + 1);
+		irq_debug(SUBMISSION, "player %d choose SCISSOR for round #%d", rps_client->tid, round + 1);
 	}
 
 	if (reply.type == RPS_MSG_OUTCOME) {
-		debug(SUBMISSION, "press any KEY to display round #%d result for player %d", round + 1, rps_client->tid);
+		irq_debug(SUBMISSION, "press any KEY to display round #%d result for player %d", round + 1, rps_client->tid);
 		char c = bwgetc(COM2);
 		RPS_outcome outcome = reply.content[0];
 		if (outcome == WIN) {
-			debug(SUBMISSION, "result of this round #%d for player %d is WIN", round + 1, rps_client->tid);
+			irq_debug(SUBMISSION, "result of this round #%d for player %d is WIN", round + 1, rps_client->tid);
 		}
 		else if (outcome == TIE) {
-			debug(SUBMISSION, "result of this round #%d for player %d is TIE", round + 1, rps_client->tid);
+			irq_debug(SUBMISSION, "result of this round #%d for player %d is TIE", round + 1, rps_client->tid);
 		}
 		else if (outcome == LOSE) {
-			debug(SUBMISSION, "result of this round #%d for player %d is LOSE", round + 1, rps_client->tid);
+			irq_debug(SUBMISSION, "result of this round #%d for player %d is LOSE", round + 1, rps_client->tid);
 		}
 		return 0;
 	}
@@ -431,7 +431,7 @@ int rps_client_play(int server_tid, RPS_client *rps_client, int round)
 
 int rps_client_quit(int server_tid, RPS_client *rps_client)
 {
-	debug(DEBUG_TASK, "enter %s", "rps_client_quit");
+	irq_debug(DEBUG_TASK, "enter %s", "rps_client_quit");
 	RPS_message quit_request;
 	RPS_message *request = &quit_request;
 	request->tid = rps_client->tid;
@@ -442,11 +442,11 @@ int rps_client_quit(int server_tid, RPS_client *rps_client)
 	Send(server_tid, request, sizeof(request), &reply, sizeof(reply));
 	
 	if (reply.type == RPS_MSG_SERVER_DOWN) {
-		debug(SUBMISSION, "server is down, Exiting %d", rps_client->tid);
+		irq_debug(SUBMISSION, "server is down, Exiting %d", rps_client->tid);
 		Exit();
 	}
 	else if (reply.type == RPS_MSG_GOODBYE) {
-		debug(SUBMISSION, "Goodbye player %d", rps_client->tid);
+		irq_debug(SUBMISSION, "Goodbye player %d", rps_client->tid);
 		Exit();
 	}
 

@@ -16,9 +16,9 @@ extern int asm_get_fp();
 int activate(Task_descriptor *td)
 {
 	td->state = STATE_ACTIVE;
-	debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
+	irq_debug(DEBUG_TRACE, "In activate tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, retval=0x%x, is_entry_from_hwi = 0x%x",
 					td->tid, td->state, td->priority, td->sp, td->lr, td->retval, td->is_entry_from_hwi);
-    /*debug(SUBMISSION, "%x", td->lr);*/
+    /*irq_debug(SUBMISSION, "%x", td->lr);*/
 	int is_entry_from_hwi = 0;
 	if (td->is_entry_from_hwi == ENTER_FROM_HWI) {
 		is_entry_from_hwi = td->is_entry_from_hwi;
@@ -47,17 +47,17 @@ int main()
 
 	// set up swi jump table 
 	vint *swi_handle_entry = (vint*) 0x28;
-	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", swi_handle_entry);
-	debug(DEBUG_TRACE, "asm_kernel_swiEntry = 0x%x", asm_kernel_swiEntry);
+	irq_debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", swi_handle_entry);
+	irq_debug(DEBUG_TRACE, "asm_kernel_swiEntry = 0x%x", asm_kernel_swiEntry);
 	*swi_handle_entry = (vint) (asm_kernel_swiEntry + 0x218000);
-	debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", *swi_handle_entry);
+	irq_debug(DEBUG_TRACE, "swi_handle_entry = 0x%x", *swi_handle_entry);
 
 	// set up hwi jump table
 	vint *hwi_handle_entry = (vint*) 0x38;
-	debug(DEBUG_UART_IRQ, "hwi_handle_entry = 0x%x", hwi_handle_entry);
-	debug(DEBUG_UART_IRQ, "asm_kernel_hwiEntry = 0x%x", asm_kernel_hwiEntry);
+	irq_debug(DEBUG_UART_IRQ, "hwi_handle_entry = 0x%x", hwi_handle_entry);
+	irq_debug(DEBUG_UART_IRQ, "asm_kernel_hwiEntry = 0x%x", asm_kernel_hwiEntry);
 	*hwi_handle_entry = (vint) (asm_kernel_hwiEntry + 0x218000);
-	debug(DEBUG_UART_IRQ, "hwi_handle_entry = 0x%x", *hwi_handle_entry);
+	irq_debug(DEBUG_UART_IRQ, "hwi_handle_entry = 0x%x", *hwi_handle_entry);
 
 	Kernel_state ks;
 	ks_initialize(&ks);
@@ -73,20 +73,20 @@ int main()
 	vint is_entry_from_hwi = 0;
     vint cts_send = -1;
 	while(ks.ready_queue.mask != 0) {
-			debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
+			irq_debug(DEBUG_TRACE, "mask =%d", ks.ready_queue.mask);
 			td = schedule(&ks);
 		
 			// idle task time measurement before exit kernel
 			if (td->tid == IDLE_TASK) {
 				idle_task_time -= timer4_read();
 			}
-			debug(DEBUG_IRQ, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
+			irq_debug(DEBUG_IRQ, "tid = %d, state = %d, priority = %d, sp = 0x%x, lr = 0x%x, next_task = %d",
 					td->tid, td->state, td->priority, td->sp, td->lr,
 					td->next_task ? td->next_task->tid : INVALID_TID);
 
 			// retrieve lr and retrieve syscall request type
 			vint cur_lr = activate(td);
-			debug(DEBUG_IRQ, "td %d get back into kernel again, cur_lr = 0x%x", td->tid, cur_lr);
+			irq_debug(DEBUG_IRQ, "td %d get back into kernel again, cur_lr = 0x%x", td->tid, cur_lr);
 
 			// idle task time measurement after enter kernel
 			if (td->tid == IDLE_TASK) {
@@ -103,7 +103,7 @@ int main()
 			update_td(td, cur_lr);
 			
 			if (is_entry_from_hwi) {
-			//	debug(DEBUG_UART_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
+			//	irq_debug(DEBUG_UART_IRQ, ">>>>>>>>>>>is_entry_from_hwi = %d, start irq handling", is_entry_from_hwi);
 				irq_handle(&ks, &cts_send);
 				is_entry_from_hwi = 0;
 				continue;
@@ -112,14 +112,14 @@ int main()
 			uint32 immed_24 = *((vint *)((int) td->lr - 4)) & ~(0xff000000);
 			uint32 req = immed_24 & 0xfff;
 			uint32 argc = (immed_24 >> 12) & 0xfff;
-			debug(DEBUG_IRQ, "swi get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
+			irq_debug(DEBUG_IRQ, "swi get back into kernel again, immed_24 = 0x%x, req = %d, argc = %d", immed_24, req, argc);
 
 			vint arg0 = *((vint*) ((int) td->sp + 0));
 			uint32 arg1 = *((vint*) ((int) td->sp + 4));
             uint32 arg2 = *((vint*) ((int) td->sp + 8));
             uint32 arg3 = *((vint*) ((int) td->sp + 12 )); 
             uint32 arg4 = *((vint*) ((int) td->sp + 4));
-			debug(DEBUG_TRACE, "arg0 = %d, arg1 = %d", arg0, arg1);
+			irq_debug(DEBUG_TRACE, "arg0 = %d, arg1 = %d", arg0, arg1);
 
             // uart1_irq_soft_clear();
 			switch(req){
@@ -148,7 +148,7 @@ int main()
                     k_reply(arg0, arg1, arg2, td, &ks);
                     break;
 				case 9:
-                    /*debug(SUBMISSION, "1%d", td->tid);*/
+                    /*irq_debug(SUBMISSION, "1%d", td->tid);*/
 					k_await_event(arg0, arg1, td, &ks);
 					break;
                 case 10:
@@ -161,9 +161,9 @@ int main()
 	// idle task measurement
 	elapsed_time = timer4_read() - elapsed_time;
 	timer4_stop();
-//	debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
-//	debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
+//	irq_debug(SUBMISSION, "idle task running time = %dus", idle_task_time);
+//	irq_debug(SUBMISSION, "elapsed time = %dus", elapsed_time);
 //	long long fraction = (idle_task_time * 100) / elapsed_time;
-//	debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
+//	irq_debug(SUBMISSION, "idle task took %d percent of total running time", fraction);
 	return 0;
 }

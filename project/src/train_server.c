@@ -58,14 +58,14 @@ void train_server()
 	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
 		cli_server_tid = WhoIs("CLI_SERVER");
 	}
-	/*debug(SUBMISSION, "cli_server %d", cli_server_tid);*/
+	/*irq_debug(SUBMISSION, "cli_server %d", cli_server_tid);*/
 
 	Handshake handshake = HANDSHAKE_AKG;
 	vint train_server_address = (vint) &train_server;
-	/*debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
+	/*irq_debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
 
 	int sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
-	/*debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
+	/*irq_debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
 	Send(sensor_reader_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
@@ -87,7 +87,7 @@ void train_server()
 			}
 			else {
 				pop_cli_req_fifo(&train_server, &cli_req);
-				//debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
+				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
 			}
 			Reply(requester_tid, &cli_req, sizeof(cli_req));
 		}
@@ -107,7 +107,7 @@ void train_server()
 		int cli_req_fifo_put_next;
 		switch (cmd.type) {
 		case TR:
-			debug(SUBMISSION, "%s", "handle tr cmd");
+			irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);
 			command_handle(&cmd);
 
 			train_server.train.id = cmd.arg0;
@@ -135,7 +135,7 @@ void train_server()
 	
 			break;
 		case SW:
-			debug(SUBMISSION, "%s", "handle sw cmd");
+			irq_debug(SUBMISSION, "%s", "handle sw cmd");
 			command_handle(&cmd);
 
 			train_server.switches_status[cmd.arg0 - 1] = switch_state_to_byte(cmd.arg1);
@@ -164,7 +164,7 @@ void train_server()
 			break;
 
 		case PARK:
-			debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);
+			irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);
 			train_server.is_special_cmd = 1;
 			train_server.special_cmd = cmd;
 			br_handle(&train_server, cmd);
@@ -248,7 +248,7 @@ void sensor_handle(Train_server *train_server)
 	init_tracka(track);
 
 	// sensor query
-	/*debug(SUBMISSION, "%s", "sensor cmd");*/
+	/*irq_debug(SUBMISSION, "%s", "sensor cmd");*/
 	Putc(COM1, SENSOR_QUERY);
 	uint16 sensor_data[SENSOR_GROUPS];
 	int sensor_group = 0;
@@ -258,14 +258,14 @@ void sensor_handle(Train_server *train_server)
 		sensor_data[(int) sensor_group] = upper << 8 | lower;
 	}
 	train_server->num_sensor_query++;
-	/*debug(SUBMISSION, "num_sensor_query = %d", train_server->num_sensor_query);*/
+	/*irq_debug(SUBMISSION, "num_sensor_query = %d", train_server->num_sensor_query);*/
 
 	// parse sensor data
 	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 		if (sensor_data[(int) sensor_group] == 0) {
 			continue;
 		}
-		/*debug(SUBMISSION, "sensor_data[%d] = %d", sensor_group, sensor_data[(int) sensor_group]);*/
+		/*irq_debug(SUBMISSION, "sensor_data[%d] = %d", sensor_group, sensor_data[(int) sensor_group]);*/
 		char bit = 0;
 		for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
 			//sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
@@ -309,7 +309,7 @@ void sensor_handle(Train_server *train_server)
 			int time = sensor.triggered_time - last_sensor.triggered_time;
 			int query = sensor.triggered_query - last_sensor.triggered_query;
 			// int new_velocity = 19 * query;
-			// debug(SUBMISSION, "last_stop = %d, current_stop = %d, distance = %d, time = %d", last_stop, current_stop, distance);
+			// irq_debug(SUBMISSION, "last_stop = %d, current_stop = %d, distance = %d, time = %d", last_stop, current_stop, distance);
 
 			// update velocity_data
 			// velocity_update(last_stop, current_stop, new_velocity, &velocity_data);
@@ -336,7 +336,7 @@ void dc_handle(Train_server *train_server, Command dc_cmd)
 		last_stop = train_server->last_stop;
 	}
 	else {
-		//debug(SUBMISSION, "stopping_distance current stop = %d", last_stop);
+		//irq_debug(SUBMISSION, "stopping_distance current stop = %d", last_stop);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		push_cmd_fifo(train_server, tr_cmd);
 
@@ -353,19 +353,19 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(br_cmd);
 	int stop = sensor_to_num(stop_sensor);
-	debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
+	irq_debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
 	
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
-	//debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
-	debug(SUBMISSION, "num_switch = %d", num_switch);
+	//irq_debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
+	irq_debug(SUBMISSION, "num_switch = %d", num_switch);
 	int i;
 	for(i = 0; i < num_switch; i++) {
-		debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);
+		irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);
 		Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
 		push_cmd_fifo(train_server, sw_cmd);
 	}
-	//debug(SUBMISSION, "br_task: flip %d br done", num_switch);
+	//irq_debug(SUBMISSION, "br_task: flip %d br done", num_switch);
 }
 
 void park_handle(Train_server *train_server, Command park_cmd)
@@ -377,11 +377,11 @@ void park_handle(Train_server *train_server, Command park_cmd)
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(park_cmd);
 	int stop = sensor_to_num(stop_sensor);
-	//debug(SUBMISSION, "park_task, stop sensor is %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
+	//irq_debug(SUBMISSION, "park_task, stop sensor is %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
 
 	// retrieve stopping distance
 	int stopping_distance = train_server->current_velocity_data->stopping_distance; 
-	/*debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);*/
+	/*irq_debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);*/
 
 	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 	int num_park_stops = find_stops_by_distance(track, train_server->last_stop, stop, stopping_distance, park_stops);
@@ -391,7 +391,7 @@ void park_handle(Train_server *train_server, Command park_cmd)
 
 	// retrieve the sensor_to_deaccelate_train
 	int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
-	//debug(SUBMISSION, "park_task: deaccelarate_stop = %c%d",
+	//irq_debug(SUBMISSION, "park_task: deaccelarate_stop = %c%d",
 					  //num_to_sensor(deaccelarate_stop).group + SENSOR_LABEL_BASE, num_to_sensor(deaccelarate_stop).id);
 
 	// calculate the delta = the distance between sensor_to_deaccelate_train
@@ -405,7 +405,7 @@ void park_handle(Train_server *train_server, Command park_cmd)
 		int sensor_distance = park_stops[i].distance;
 		int sensor_src = park_stops[i].sensor_id;
 		int sensor_dest = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
-		/*bwprintf(COM2, "last_stop=%d, current_stop=%d\r\n", sensor_src, sensor_dest);*/
+		/*irq_debug(SUBMISSION, "last_stop=%d, current_stop=%d\r\n", sensor_src, sensor_dest);*/
 		int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, train_server->current_velocity_data);
 			
 		sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
@@ -419,23 +419,23 @@ void park_handle(Train_server *train_server, Command park_cmd)
 	}
 	park_delay_time /= delta;
 
-	/*bwprintf(COM2, "delta=%d, first_dist=%d,first_velo=%d, stop_dist=%d",delta, first_stop_distance, first_stop_velocity, stopping_distance);*/
-	bwprintf(COM2, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
-	/*debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);*/
+	/*irq_debug(SUBMISSION, "delta=%d, first_dist=%d,first_velo=%d, stop_dist=%d",delta, first_stop_distance, first_stop_velocity, stopping_distance);*/
+	irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
+	/*irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);*/
 	vint delay_distance = delta - stopping_distance;
 	vint delay_velocity = first_stop_distance/first_stop_velocity;
 	park_delay_time = delay_distance/ delay_velocity;
 
-	//debug(SUBMISSION, "park_task: delta = %d, park_delay_time = %d", delta, park_delay_time);
+	//irq_debug(SUBMISSION, "park_task: delta = %d, park_delay_time = %d", delta, park_delay_time);
 
 	int last_stop = train_server->last_stop;
 	if (last_stop != deaccelarate_stop) {
 		last_stop = train_server->last_stop;
 	}
 	else {
-		//debug(SUBMISSION, "park_task current stop = %d, start delay", last_stop);
+		//irq_debug(SUBMISSION, "park_task current stop = %d, start delay", last_stop);
 		Delay(park_delay_time);
-		//debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
+		//irq_debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		push_cmd_fifo(train_server, tr_cmd);
 

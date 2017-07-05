@@ -584,18 +584,18 @@ void velocity14_initialization(Velocity_data *velocity_data)
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
 	/*if (!is_found) {*/
-        /*bwprintf(COM2, "not found velocity%d\r\n", new_velocity);*/
+        /*debug(SUBMISSION, "not found velocity%d\r\n", new_velocity);*/
 		/*int idx = velocity_data->node[src].num_velocity;*/
 		/*velocity_data->node[src].dest[idx] = dest;*/
 		/*velocity_data->node[src].velocity[idx] = new_velocity;*/
 		/*velocity_data->node[src].num_velocity++;*/
 	/*}*/
 	int i;
-    /*bwprintf(COM2, "src%d dest%d\r\n", src, dest);*/
-    /*bwprintf(COM2, "num_velocity%d\r\n",velocity_data->node[src].num_velocity);*/
+    /*debug(SUBMISSION, "src%d dest%d\r\n", src, dest);*/
+    /*debug(SUBMISSION, "num_velocity%d\r\n",velocity_data->node[src].num_velocity);*/
 	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
 		if (velocity_data->node[src].dest[i] == dest) {
-			//debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
+			//irq_debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
 			//	num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id,
 			//	num_to_sensor(velocity_data->node[src].dest[i]).group + SENSOR_LABEL_BASE,
 			//	num_to_sensor(velocity_data->node[src].dest[i]).id,
@@ -603,7 +603,7 @@ int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 			return velocity_data->node[src].velocity[i];
 		}
 	}
-    /*bwprintf(COM2, "!not found\r\n");*/
+    /*debug(SUBMISSION, "!not found\r\n");*/
 	return -1;
 }
 
@@ -628,14 +628,14 @@ void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocit
 	}
 
 	if (!is_found) {
-        /*bwprintf(COM2, "src=%d dest=%d\r\n", src, dest);*/
+        /*debug(SUBMISSION, "src=%d dest=%d\r\n", src, dest);*/
 		int idx = velocity_data->node[src].num_velocity;
 		velocity_data->node[src].dest[idx] = dest;
 		velocity_data->node[src].velocity[idx] = new_velocity;
 		velocity_data->node[src].num_velocity++;
 	}
 	else {
-        /*bwprintf(COM2, "is found velocity%d\r\n", new_velocity);*/
+        /*debug(SUBMISSION, "is found velocity%d\r\n", new_velocity);*/
 		int hit = velocity_data->node[src].updates[dest_idx];
 		velocity_data->node[src].updates[dest_idx]++;
 
@@ -737,7 +737,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 				// current char is a switch state
                 int temp = argc;
 				args[argc++] = command_buffer->data[pos];
-                /*debug(SUBMISSION, "alpha data=%c\r\n", args[temp]);*/
+                /*irq_debug(SUBMISSION, "alpha data=%c\r\n", args[temp]);*/
 			}
 			else if (command_buffer->data[pos] == ' ' || (pos == command_buffer->pos)) {
 				// skip space
@@ -745,7 +745,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 					// at the end of a number
                     int temp = argc;
 					args[argc++] = atoi(num_buffer);
-                    /*debug(SUBMISSION, "converted value=%d\r\n", args[temp]);*/
+                    /*irq_debug(SUBMISSION, "converted value=%d\r\n", args[temp]);*/
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;
@@ -761,8 +761,8 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else {
 		return -1;
 	}
-    /*bwprintf(COM2, "args%s\r\n", args);*/
-    /*bwprintf(COM2, "argc num = %d\r\n", argc);*/
+    /*debug(SUBMISSION, "args%s\r\n", args);*/
+    /*debug(SUBMISSION, "argc num = %d\r\n", argc);*/
     
     // currently no commands need more than two arguments
     // there will probably won't be in the future as well
@@ -834,7 +834,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 
 void command_handle(Command *pcmd)
 {
-	debug(DEBUG_K4, "enter %s", "command_handle");
+	irq_debug(DEBUG_K4, "enter %s", "command_handle");
 
 	// pcmd->type get defined at train.h
 	switch(pcmd->type) {
@@ -846,11 +846,11 @@ void command_handle(Command *pcmd)
 		irq_printf(COM1, "%c%c", MIN_SPEED, pcmd->arg0);
 
 		Delay(20);
-		debug(DEBUG_K4, "%s", "reached time limit, begin reverse");
+		irq_debug(DEBUG_K4, "%s", "reached time limit, begin reverse");
 		irq_printf(COM1, "%c%c", REVERSE, pcmd->arg0);
 
 		Delay(20);
-		debug(DEBUG_K4, "%s", "reached time limit, begin set speed");
+		irq_debug(DEBUG_K4, "%s", "reached time limit, begin set speed");
 		irq_printf(COM1, "%c%c", pcmd->arg1+16, pcmd->arg0);
 
 		break;
@@ -858,7 +858,7 @@ void command_handle(Command *pcmd)
 		irq_printf(COM1, "%c%c", switch_state_to_byte(pcmd->arg1), switch_id_to_byte(pcmd->arg0));
         // track switches status
 		Delay(20);
-		debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");
+		irq_debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");
 		Putc(COM1, SOLENOID_OFF);
 		break;
 	case GO:
