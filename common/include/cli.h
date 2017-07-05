@@ -4,36 +4,6 @@
 #include <clock.h>
 #include <train.h>
 
-typedef enum {
-	CLI_TRAIN_COMMAND,
-	CLI_UPDATE_TRAIN,
-	CLI_UPDATE_SENSOR,
-	CLI_UPDATE_SWITCH,
-	CLI_UPDATE_CLOCK,
-	CLI_UPDATE_CALIBRATION,
-	CLI_SHUTDOWN
-} Cli_request_type;
-typedef struct Cli_request {
-	Cli_request_type type;
-	Command cmd;
-	Train train_update;
-	Switch switch_update;
-
-	Sensor sensor_update;
-	int	last_sensor_update;
-	int next_sensor_update;
-
-	Clock clock_update;
-	Calibration_package calibration_update;
-} Cli_request;
-Cli_request get_train_command_request(Command cmd);
-Cli_request get_update_train_request(char id, char speed);
-Cli_request get_update_switch_request(char id, char state);
-Cli_request get_update_sensor_request(Sensor sensor, int last_stop, int next_stop);
-Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int time, int velocity);
-Cli_request get_update_clock_request(Clock clock);
-Cli_request get_shutdown_request();
-
 #define WIDTH 46
 #define HEIGHT 30
 #define RIGHT_COL_WIDTH 9
