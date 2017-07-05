@@ -2,19 +2,11 @@
 #define __KERNEL_H__
 
 #include <define.h> 
-#include <debug.h>
-#include <fifo.h>
 #include <int_fifo.h>
 
 /* task descriptor */
 #define TASK_SIZE 			102400 /* 100kb */
 #define TASK_START_LOCATION 0x1000000
-#define MAX_NUM_TASKS 		64
-#define ARGUMENT_LOCATION   0x9000000 // value get with trial and errors, might cause bug in the future
-#define INVALID_TID			-1
-
-/* inter-tasks communication */
-#define MAX_MSG_LEN		64 + 1
 
 /* HWI */
 #define ENTER_FROM_HWI	0xAA
@@ -51,12 +43,6 @@ typedef enum Task_state {
     STATE_REPLY_BLK,
 	STATE_EVENT_BLK
 } Task_state;
-typedef enum Task_priority {
-	PRIOR_LOWEST,
-	PRIOR_LOW,
-	PRIOR_MEDIUM,
-	PRIOR_HIGH
-} Task_priority;
 typedef enum Processor_mode {
 	USR = 0x10,
 	SYS = 0xDF,
@@ -116,6 +102,8 @@ typedef struct Kernel_state {
  * without flag bits set.
  */
 void td_intialize(void (*task)(), Kernel_state *ks, uint32 tid, uint32 ptid, Task_priority priority);
+void ks_initialize(Kernel_state *ks);
+void update_td(Task_descriptor *td, vint cur_lr);
 
 /* scheduler */
 /*

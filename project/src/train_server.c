@@ -4,11 +4,7 @@
 #include <user_functions.h>
 #include <train.h>
 #include <cli.h>
-#include <kernel.h>
 #include <calculation.h>
-#include <name_server.h>
-#include <ts7200.h>
-#include <uart_irq.h>
 
 void train_server_init(Train_server *train_server)
 {

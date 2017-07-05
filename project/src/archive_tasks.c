@@ -1,3 +1,9 @@
+#include <user_functions.h>
+#include <debug.h>
+#include <string.h>
+#include <rps.h>
+#include <ts7200.h>
+
 #define TIMER_MAX	0xFFFFFFFF
 
 void time_receive(){
@@ -8,7 +14,7 @@ void time_receive(){
     /*vint msg;*/
     char reply_msg[64];
     char msg[64];
-    vint *ptimer = timer();
+    vint *ptimer = timer4_read();
     int receive_time = 0;
     int reply_time = 0;
     for(round=0; round < 1000000; round++){
@@ -38,7 +44,7 @@ void time_send(){
     }    
     /*debug(DEBUG_TIME, "enter %s", "time task2");*/
     /*debug(DEBUG_TIME, "replied=%d", reply_four_bytes);*/
-    vint *ptimer = timer();
+    vint *ptimer = timer4_read();
     uint32 timer_output = TIMER_MAX - *ptimer;
     debug(DEBUG_TIME, "send time = %d", timer_output);
     Exit();

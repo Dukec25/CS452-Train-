@@ -1,6 +1,7 @@
 #include <name_server.h>
 #include <user_functions.h>
 #include <string.h>
+#include <debug.h>
 
 static int NAME_SERVER_TID = INVALID_TID;
 

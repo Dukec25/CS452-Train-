@@ -1,8 +1,7 @@
 #include <rps.h>
-#include <kernel.h>
 #include <user_functions.h>
-#include <name_server.h>
 #include <bwio.h>
+#include <debug.h>
 
 static const char RPS_SERVER_NAME[] = "rps_server";
 static uint32 choice_seed = 0;

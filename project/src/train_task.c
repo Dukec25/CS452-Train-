@@ -2,8 +2,6 @@
 #include <debug.h>
 #include <log.h>
 #include <user_functions.h>
-#include <kernel.h>
-#include <name_server.h>
 #include <ts7200.h>
 #include <uart_irq.h>
 

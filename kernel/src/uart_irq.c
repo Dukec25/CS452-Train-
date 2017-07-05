@@ -1,6 +1,7 @@
 #include <irq.h>
 #include <uart_irq.h>
 #include <int_fifo.h>
+#include <debug.h>
 
 static uint32 uart_receive_irq_mask()
 {

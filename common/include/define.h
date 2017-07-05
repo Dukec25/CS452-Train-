@@ -33,4 +33,15 @@ typedef unsigned int size_t;
 #define DEBUG	13
 #define LOG		13
 
+#define MAX_NUM_TASKS 		64
+#define INVALID_TID			-1
+#define MAX_MSG_LEN		64 + 1
+
+typedef enum Task_priority {
+	PRIOR_LOWEST,
+	PRIOR_LOW,
+	PRIOR_MEDIUM,
+	PRIOR_HIGH
+} Task_priority;
+
 #endif //__DEFINE_H__

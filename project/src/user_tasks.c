@@ -2,7 +2,6 @@
 #include <debug.h>
 #include <string.h>
 #include <name_server.h>
-#include <rps.h>
 #include <clock_server.h>
 #include <io_server.h>
 #include <train_task.h>
