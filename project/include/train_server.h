@@ -21,19 +21,19 @@ typedef struct Train_server {
 	int is_special_cmd;
 	Command special_cmd;
 
-#define COMMAND_FIFO_SIZE	1000
+#define COMMAND_FIFO_SIZE	100
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
 	int cmd_fifo_head;
 	int cmd_fifo_tail;
 
-#define CLI_REQ_FIFO_SIZE	1000
+#define CLI_REQ_FIFO_SIZE	100
 	Cli_request cli_req_fifo[CLI_REQ_FIFO_SIZE];
 	int cli_req_fifo_head;
 	int cli_req_fifo_tail;
 
 	Train train;
 
-#define SENSOR_LIFO_SIZE	1000
+#define SENSOR_LIFO_SIZE	100
 	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
 	int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
