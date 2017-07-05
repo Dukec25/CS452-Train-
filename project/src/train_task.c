@@ -1,6 +1,4 @@
 #include <train_task.h>
-#include <cli_server.h>
-#include <train_server.h>
 #include <debug.h>
 #include <log.h>
 #include <user_functions.h>

@@ -1,74 +1,10 @@
-#include <cli_server.h>
-#include <train_server.h>
+#include <train_task.h>
 #include <debug.h>
 #include <log.h>
 #include <user_functions.h>
 #include <train.h>
 #include <cli.h>
 #include <calculation.h>
-
-Cli_request get_train_command_request(Command cmd)
-{
-	Cli_request train_cmd_request;
-	train_cmd_request.type = CLI_TRAIN_COMMAND;
-	train_cmd_request.cmd = cmd;
-	return train_cmd_request;	
-}
-
-Cli_request get_update_train_request(char id, char speed)
-{
-	Cli_request update_train_request;
-	update_train_request.type = CLI_UPDATE_TRAIN;
-	update_train_request.train_update.id = id; 
-	update_train_request.train_update.speed = speed;
-	return update_train_request;
-}
-
-Cli_request get_update_switch_request(char id, char state)
-{
-	Cli_request update_switch_request;
-	update_switch_request.type = CLI_UPDATE_SWITCH;
-	update_switch_request.switch_update.id = id; 
-	update_switch_request.switch_update.state = state;	
-	return update_switch_request;
-}
-
-Cli_request get_update_sensor_request(Sensor sensor, int last_stop, int next_stop)
-{
-	Cli_request update_sensor_request;
-	update_sensor_request.type = CLI_UPDATE_SENSOR;
-	update_sensor_request.sensor_update = sensor;
-	update_sensor_request.last_sensor_update = last_stop;
-	update_sensor_request.next_sensor_update = next_stop;
-	return update_sensor_request;	
-}
-
-Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int time, int velocity)
-{
-	Cli_request update_calibration_request;
-	update_calibration_request.type = CLI_UPDATE_CALIBRATION;
-	update_calibration_request.calibration_update.src = last_stop;
-	update_calibration_request.calibration_update.dest = current_stop;
-	update_calibration_request.calibration_update.distance = distance;
-	update_calibration_request.calibration_update.time = time;
-	update_calibration_request.calibration_update.velocity = velocity;
-	return update_calibration_request;
-}
-
-Cli_request get_update_clock_request(Clock clock)
-{
-	Cli_request update_clock_request;
-	update_clock_request.type = CLI_UPDATE_CLOCK;
-	update_clock_request.clock_update = clock;
-	return update_clock_request;	
-}
-
-Cli_request get_shutdown_request()
-{
-	Cli_request shutdown_request;
-	shutdown_request.type = CLI_SHUTDOWN;	
-	return shutdown_request;
-}
 
 void cli_server()
 {

@@ -1,5 +1,4 @@
-#include <train_server.h>
-#include <cli_server.h>
+#include <train_task.h>
 #include <debug.h>
 #include <log.h>
 #include <user_functions.h>
@@ -11,9 +10,8 @@ void train_server_init(Train_server *train_server)
 {
 	train_server->is_shutdown = 0;
 
-	train_server->is_special_cmd = 0;
-
-	fifo_init(&train_server->cmd_fifo);
+	train_server->cmd_fifo_head = 0;
+	train_server->cmd_fifo_tail = 0;
 
 	train_server->sensor_lifo_top = -1;
 	train_server->last_stop = -1;
@@ -87,23 +85,43 @@ void train_server()
 		Reply(requester_tid, &handshake, sizeof(handshake));
 
 		// push command request onto the fifo
-		fifo_put(&train_server.cmd_fifo, &request);
+		int cmd_fifo_put_next = train_server.cmd_fifo_head + 1;
+		if (cmd_fifo_put_next != train_server.cmd_fifo_tail) {
+			if (cmd_fifo_put_next >= COMMAND_FIFO_SIZE) {
+				cmd_fifo_put_next = 0;
+			}
+		}
+		train_server.cmd_fifo[train_server.cmd_fifo_head] = request;
+		train_server.cmd_fifo_head = cmd_fifo_put_next;
 		/*dump(SUBMISSION, "%s", "ts put cmd");*/
 
+		if (train_server.cmd_fifo_head == train_server.cmd_fifo_tail) {
+			// cmd_fifo is empty
+			continue;
+		}
+
 		// pop command off the fifo		
-		Command *cmd;
-		fifo_pop(&train_server.cmd_fifo, &cmd);
+		Command cmd;
+		int cmd_fifo_get_next = train_server.cmd_fifo_tail + 1;
+		if (cmd_fifo_get_next >= COMMAND_FIFO_SIZE) {
+			cmd_fifo_get_next = 0;
+		}
+		cmd = train_server.cmd_fifo[train_server.cmd_fifo_tail];
+		train_server.cmd_fifo_tail = cmd_fifo_get_next;
 		/*dump(SUBMISSION, "ts get cmd type %d", cmd.type);*/
 
 		// handle TR, RV, SW, GO, STOP
 		Cli_request cli_update_request;
-		switch (cmd->type) {
+		switch (cmd.type) {
 		case TR:
 			/*dump(SUBMISSION, "%s", "handle tr cmd");*/
-			command_handle(cmd);
+			command_handle(&cmd);
 
-			train_server.train.id = cmd->arg0;
-			train_server.train.speed = cmd->arg1;
+			train_server.train.id = cmd.arg0;
+			train_server.train.speed = cmd.arg1;
+
+			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
+			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
             switch(train_server.train.speed){
                 case 14:
                     train_server.current_velocity_data = &train_server.velocity14_data;
@@ -120,43 +138,40 @@ void train_server()
                 default:
                     break;
             }
-
-			cli_update_request = get_update_train_request(cmd->arg0, cmd->arg1);
-			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
 			break;
 		case SW:
 			/*dump(SUBMISSION, "%s", "handle sw cmd");*/
-			command_handle(cmd);
+			command_handle(&cmd);
 
-			train_server.switches_status[cmd->arg0 - 1] = switch_state_to_byte(cmd->arg1);
+			train_server.switches_status[cmd.arg0 - 1] = switch_state_to_byte(cmd.arg1);
 
-			cli_update_request = get_update_switch_request(cmd->arg0, cmd->arg1);
+			cli_update_request = get_update_switch_request(cmd.arg0, cmd.arg1);
 			Send(cli_server_tid, &cli_update_request, sizeof(cli_update_request), &handshake, sizeof(handshake));
 			break;
 		case RV:
 		case GO:
 		case STOP:
-			command_handle(cmd);
-			break;
-
-		case DC:
-			train_server.is_dc = 1;
-			break;
-
-		case BR:
-			train_server.is_br = 1;
-			break;
-
-		case PARK:
-			train_server.is_park = 1;
+			command_handle(&cmd);
 			break;
 
 		default:
 			break;
 		}
 
-		// handle SENSOR
-		if (cmd->type == SENSOR) {
+		// handle DC, PARK, and SENSOR
+		if (cmd.type == BR) {
+			//debug(SUBMISSION, "train_server handle br cmd %c%d", cmd.arg0, cmd.arg1);
+			Send(br_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
+		}
+		else if (cmd.type == DC) {
+			//debug(SUBMISSION, "train_server handle dc cmd, %c%d", cmd.arg0, cmd.arg1);
+			Send(stopping_distance_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
+		}
+		else if(cmd.type == PARK) {
+			//debug(SUBMISSION, "train_server handle park cmd, %c%d", cmd.arg0, cmd.arg1);
+			Send(park_tid, &cmd, sizeof(cmd), &handshake, sizeof(handshake));
+		}
+		else if (cmd.type == SENSOR) {
 			// sensor query
 			/*dump(SUBMISSION, "%s", "sensor cmd");*/
 			Putc(COM1, SENSOR_QUERY);

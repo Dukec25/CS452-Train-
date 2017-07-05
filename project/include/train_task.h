@@ -2,6 +2,8 @@
 #define __TRAIN_TASK__
 #include <train_server.h>
 #include <cli_server.h>
+#include <train.h>
+#include <fifo.h>
 
 typedef enum Handshake {
 	HANDSHAKE_AKG,
@@ -26,5 +28,4 @@ typedef struct Courier_message {
 
 void train_command_courier();
 void cli_request_courier();
-
 #endif // __TRAIN_TASK__
