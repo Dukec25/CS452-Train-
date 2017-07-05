@@ -91,15 +91,15 @@ void cli_server()
 
 	Handshake handshake = HANDSHAKE_AKG;
 	vint cli_server_address = (vint) &cli_server;
-	/*dump(SUBMISSION, "cli_server cli_server_address = 0x%x", cli_server_address);	 */
+	/*debug(SUBMISSION, "cli_server cli_server_address = 0x%x", cli_server_address);	 */
 
 	int cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); 
 	Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
-	/*dump(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
+	/*debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
 
 	int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
 	Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
-	/*dump(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
+	/*debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
 
 	int num_track_updates = 0;
 
@@ -108,13 +108,15 @@ void cli_server()
 		Cli_request request;
 		Receive(&requester_tid, &request, sizeof(request));
 
+		Command cmd;
 		switch (request.type) {
 		case CLI_TRAIN_COMMAND:
 			// from cli_io_task
-			fifo_put(&cli_server.cmd_fifo, &request);
+			cmd = request.cmd;
+			fifo_put(&cli_server.cmd_fifo, &cmd);
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
-			/*dump(SUBMISSION, "%s", "cli_server put train cmd cli req");*/
+			debug(SUBMISSION, "cli_server put train cmd %d", cmd.type);
 			break;
 
 		case CLI_UPDATE_CLOCK:
@@ -132,31 +134,32 @@ void cli_server()
 			fifo_put(&cli_server.status_update_fifo, &request);
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
-            /*dump(SUBMISSION, "update cli req %d", request.type);*/
+			//debug(SUBMISSION, "cli_server put update cmd %d", request.type);
 			break;
 
 		case CLI_SHUTDOWN:
 			// from cli_io_task
 			*kill_all = HANDSHAKE_SHUTDOWN;
+			bwprintf(COM2, "%s", "shutdown...");
+			Reply(requester_tid, &handshake, sizeof(handshake));
 			break;
 		
+		case CLI_NULL:	
+			Reply(requester_tid, &handshake, sizeof(handshake));
+			break;
+
 		default:
 			break;
 		}
 
-		if (request.type != CLI_WANT_COMMAND) {
-			handshake = HANDSHAKE_AKG;
-			Reply(requester_tid, &handshake, sizeof(handshake));
-			bwprintf(COM2, "%s", "shutdown...");
-		}		
-		else {
+		if (request.type == CLI_WANT_COMMAND) {
 			TS_request ts_request;
 			if (!is_fifo_empty(&cli_server.cmd_fifo)) {
-				Cli_request *cli_cmd_request;
-				fifo_get(&cli_server.cmd_fifo, &cli_cmd_request);
+				Command *cmd;
+				fifo_get(&cli_server.cmd_fifo, &cmd);
 				ts_request.type = TS_COMMAND;
-				ts_request.cmd = cli_cmd_request->cmd;
-				/*dump(SUBMISSION, "cli send train cmd %d", ts_request.cmd.type);*/
+				ts_request.cmd = *cmd;
+				debug(SUBMISSION, "cli reply courier with train cmd %d", ts_request.cmd.type);
 			}
 			else {
 				ts_request.type = TS_NULL;
@@ -172,21 +175,21 @@ void cli_server()
 				cli_update_clock(update_request->clock_update);
 				break;
 			case CLI_UPDATE_TRAIN:
-				/*dump(SUBMISSION, "%s", "cli pop train update req");*/
+				/*debug(SUBMISSION, "%s", "cli pop train update req");*/
 				cli_update_train(update_request->train_update);
 				break;
 			case CLI_UPDATE_SWITCH:
-				/*dump(SUBMISSION, "%s", "cli pop switch update req");*/
+				/*debug(SUBMISSION, "%s", "cli pop switch update req");*/
 				cli_update_switch(update_request->switch_update);
 				break;
 			case CLI_UPDATE_SENSOR:
-				/*dump(SUBMISSION, "%s", "cli pop sensor group = %d, id = %d, time = %d",*/
-							/*update_request->sensor_update.group, update_request->sensor_update.id,*/
-							/*update_request->sensor_update.triggered_time);		*/
+				//debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
+				//			update_request->sensor_update.group, update_request->sensor_update.id,
+				//			update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update);
 				break;
 			case CLI_UPDATE_CALIBRATION:
-				/*dump(SUBMISSION, "%s", "cli pop calibration update req");*/
+				//debug(SUBMISSION, "%s", "cli pop calibration update req");
 				cli_update_track(update_request->calibration_update, num_track_updates++);
 				break;
 			default:
@@ -217,10 +220,6 @@ void cli_server()
 				exit_list[1] = INVALID_TID;
 				num_exit++;
 			}
-			else if (exit_tid == exit_list[2]) {
-				exit_list[2] = INVALID_TID;
-				num_exit++;
-			}
 		}
 	}
 	
@@ -239,7 +238,7 @@ void cli_clock_task()
 	Receive(&cli_server_tid, &cli_server_address, sizeof(cli_server_address));
 	Reply(cli_server_tid, &handshake, sizeof(handshake));
 	Train_server *cli_server = (Cli_server *) cli_server_address;
-	/*dump(SUBMISSION, "cli_clock_task cli_server_address = 0x%x", cli_server_address);	 */
+	/*debug(SUBMISSION, "cli_clock_task cli_server_address = 0x%x", cli_server_address);	 */
 
 	// digital clock
 	vint elapsed_tenth_sec = 0;
@@ -270,7 +269,7 @@ void cli_io_task()
 	Receive(&cli_server_tid, &cli_server_address, sizeof(cli_server_address));
 	Reply(cli_server_tid, &handshake, sizeof(handshake));
 	Train_server *cli_server = (Cli_server *) cli_server_address;
-	/*dump(SUBMISSION, "cli_io_task cli_server_address = 0x%x", cli_server_address);*/
+	/*debug(SUBMISSION, "cli_io_task cli_server_address = 0x%x", cli_server_address);*/
 
 	// command
 	Command_buffer command_buffer;
@@ -292,7 +291,7 @@ void cli_io_task()
 			parse_result = command_parse(&command_buffer, &train, &cmd);
 			if (parse_result != -1) {
 				Cli_request train_cmd_request = get_train_command_request(cmd);
-				/*dump(SUBMISSION, "%s", "io entered train cmd, send cmd");*/
+				debug(SUBMISSION, "%s", "io entered train cmd, send cmd");
 				Send(cli_server_tid, &train_cmd_request, sizeof(train_cmd_request), &handshake, sizeof(handshake));
 			}
 			// clears command_buffer

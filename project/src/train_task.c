@@ -19,7 +19,7 @@ void train_task_admin()
 	bwputc(COM1, START); // switches won't work without start command
 	irq_io_tasks_cluster();
 
-    reverse_initialize_switch();
+//    reverse_initialize_switch();
 	initialize_switch();
 	sensor_initialization();
 
@@ -140,9 +140,8 @@ void train_command_courier()
 		cli_server_msg.type = CLI_WANT_COMMAND;
 		TS_request train_server_msg;
 		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &train_server_msg, sizeof(train_server_msg));
-		if (train_server_msg.type != TS_NULL) {
-			Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
-		}
+		if (train_server_msg.type != CLI_NULL) debug(SUBMISSION, "train_command_courier send msg %d", train_server_msg.type); 
+		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
@@ -175,9 +174,8 @@ void cli_request_courier()
 		train_server_msg.type = TS_WANT_CLI_REQ;
 		Cli_request cli_server_msg;
 		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &cli_server_msg, sizeof(cli_server_msg));
-		if (cli_server_msg.type != CLI_NULL) {
-			Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &handshake, sizeof(handshake)); 
-		}
+		//if (cli_server_msg.type != TS_NULL) debug(SUBMISSION, "cli_request_courier send msg %d", cli_server_msg.type); 
+		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &handshake, sizeof(handshake)); 
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;

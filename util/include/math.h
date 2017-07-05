@@ -5,5 +5,6 @@
 
 uint8 popcount(uint32 x);
 uint8 clz(uint32 x);
+uint32 rand(uint32 state[static 1]);
 
 #endif // __MATH_H__

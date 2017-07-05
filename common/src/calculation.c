@@ -3,7 +3,7 @@
 #include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
-    /*bwprintf(COM2, "src=%d, %d\r\n", src, dest);*/
+    debug(SUBMISSION, "src = %d, dest = %d", src, dest);
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         bwprintf(COM2, "src=%d, %d\r\n", src, dest);

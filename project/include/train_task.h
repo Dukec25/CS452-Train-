@@ -26,6 +26,11 @@ typedef struct Courier_message {
 	Cli_request cli_req;
 } Courier_message;
 
+/* Courier */
 void train_command_courier();
 void cli_request_courier();
+
+/* Test */
+void milestone1_test();
+
 #endif // __TRAIN_TASK__

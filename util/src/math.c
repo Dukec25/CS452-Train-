@@ -24,3 +24,13 @@ uint8 clz(uint32 x)
 	/*debug("in clz, lz = %d", lz);*/
 	return lz;
 }
+
+uint32 rand(uint32 state[static 1])
+{
+	uint32 x = state[0];
+	x ^= x << 13;
+	x ^= x >> 17;
+	x ^= x << 5;
+	state[0] = x;
+	return x >= x ? x : -x;
+}

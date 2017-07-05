@@ -320,16 +320,6 @@ void rps_reply_result(RPS_server *rps_server)
 	Reply(reply2.tid, &reply2, sizeof(reply1));
 }
 
-uint32 rand(uint32 state[static 1])
-{
-	uint32 x = state[0];
-	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
-	state[0] = x;
-	return x >= x ? x : -x;
-}
-
 void rps_client_initialize(RPS_client *rps_client)
 {
 	rps_client->tid = MyTid();

@@ -71,9 +71,6 @@ void rps_handle_quit(RPS_server *rps_server, RPS_message *req);
 void rps_pair_players(RPS_server *rps_server);
 void rps_reply_result(RPS_server *rps_server);
 
-// random number generator
-uint32 rand(uint32 state[static 1]);
-
 // client
 void rps_client_initialize();
 void rps_client_start();
