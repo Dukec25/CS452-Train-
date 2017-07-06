@@ -107,7 +107,7 @@ void train_server()
 		int cli_req_fifo_put_next;
 		switch (cmd.type) {
 		case TR:
-			irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);
+			/*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
 			command_handle(&cmd);
 
 			train_server.train.id = cmd.arg0;
@@ -164,7 +164,7 @@ void train_server()
 			break;
 
 		case PARK:
-			irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);
+			/*irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);*/
 			train_server.is_special_cmd = 1;
 			train_server.special_cmd = cmd;
 			br_handle(&train_server, cmd);
@@ -353,15 +353,15 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(br_cmd);
 	int stop = sensor_to_num(stop_sensor);
-	irq_debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);
+	/*irq_debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);*/
 	
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
 	//irq_debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
-	irq_debug(SUBMISSION, "num_switch = %d", num_switch);
+	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
 	int i;
 	for(i = 0; i < num_switch; i++) {
-		irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);
+		/*irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);*/
 		Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
 		push_cmd_fifo(train_server, sw_cmd);
 	}
@@ -420,7 +420,7 @@ void park_handle(Train_server *train_server, Command park_cmd)
 	park_delay_time /= delta;
 
 	/*irq_debug(SUBMISSION, "delta=%d, first_dist=%d,first_velo=%d, stop_dist=%d",delta, first_stop_distance, first_stop_velocity, stopping_distance);*/
-	irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
+	/*irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);*/
 	/*irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);*/
 	vint delay_distance = delta - stopping_distance;
 	vint delay_velocity = first_stop_distance/first_stop_velocity;

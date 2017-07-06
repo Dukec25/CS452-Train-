@@ -19,7 +19,7 @@ void train_task_admin()
 	bwputc(COM1, START); // switches won't work without start command
 	irq_io_tasks_cluster();
 
-//    reverse_initialize_switch();
+    reverse_initialize_switch();
 	initialize_switch();
 	sensor_initialization();
 
@@ -37,7 +37,7 @@ void train_task_admin()
 	int cli_request_courier_tid = Create(PRIOR_MEDIUM, cli_request_courier);
 	Send(cli_request_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
-	int tid = Create(PRIOR_MEDIUM, 	milestone1_test);
+	/*int tid = Create(PRIOR_MEDIUM, 	milestone1_test);*/
 
 	int expected_num_exit = 5;
 	int num_exit = 0;
@@ -142,7 +142,7 @@ void train_command_courier()
 		cli_server_msg.type = CLI_WANT_COMMAND;
 		TS_request train_server_msg;
 		Send(cli_server_tid, &cli_server_msg, sizeof(cli_server_msg), &train_server_msg, sizeof(train_server_msg));
-		if (train_server_msg.type != CLI_NULL) irq_debug(SUBMISSION, "train_command_courier send msg %d", train_server_msg.type); 
+		/*if (train_server_msg.type != CLI_NULL) irq_debug(SUBMISSION, "train_command_courier send msg %d", train_server_msg.type); */
 		Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &handshake, sizeof(handshake)); 
 	}
 

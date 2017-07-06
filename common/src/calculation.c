@@ -3,7 +3,7 @@
 #include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
-    irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);
+    /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         debug(SUBMISSION, "invalid data src = %d, dest %d, in choose_destination", src, dest);
@@ -171,7 +171,7 @@ int predict_next(track_node *track, int src, Train_server *train_server){
 
 int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
 
-    debug(SUBMISSION, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);
+    /*debug(SUBMISSION, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);*/
 
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
@@ -184,10 +184,10 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 	
 	track_node *temp = node;
 	while(temp->num != src) {
-		debug(SUBMISSION, "%s ", temp->name);
+		/*debug(SUBMISSION, "%s ", temp->name);*/
     	temp = temp->previous;
 	}
-    debug(SUBMISSION, "%s \r\n", temp->name);
+    /*debug(SUBMISSION, "%s \r\n", temp->name);*/
 
     fifo_t queue; 
     fifo_init(&queue);
@@ -229,7 +229,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
             ans[arr_len++]  = sensor_dist;
 
             if(stop_distance <=0){
-                debug(SUBMISSION, "%s", "ENDED");
+                /*debug(SUBMISSION, "%s", "ENDED");*/
                 return arr_len;
             }
         }

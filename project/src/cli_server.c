@@ -97,8 +97,8 @@ void cli_server()
 	Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
 
-//	int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
-//	Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
+    int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
+    Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
 
 	int num_track_updates = 0;
@@ -116,7 +116,7 @@ void cli_server()
 			fifo_put(&cli_server.cmd_fifo, &cmd);
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
-			irq_debug(SUBMISSION, "cli_server put train cmd %d", cmd.type);
+			/*irq_debug(SUBMISSION, "cli_server put train cmd %d", cmd.type);*/
 			break;
 
 		case CLI_UPDATE_CLOCK:
@@ -159,7 +159,7 @@ void cli_server()
 				fifo_get(&cli_server.cmd_fifo, &cmd);
 				ts_request.type = TS_COMMAND;
 				ts_request.cmd = *cmd;
-				irq_debug(SUBMISSION, "cli reply courier with train cmd %d", ts_request.cmd.type);
+				/*irq_debug(SUBMISSION, "cli reply courier with train cmd %d", ts_request.cmd.type);*/
 			}
 			else {
 				ts_request.type = TS_NULL;
@@ -291,7 +291,7 @@ void cli_io_task()
 			parse_result = command_parse(&command_buffer, &train, &cmd);
 			if (parse_result != -1) {
 				Cli_request train_cmd_request = get_train_command_request(cmd);
-				irq_debug(SUBMISSION, "%s", "io entered train cmd, send cmd");
+				/*irq_debug(SUBMISSION, "%s", "io entered train cmd, send cmd");*/
 				Send(cli_server_tid, &train_cmd_request, sizeof(train_cmd_request), &handshake, sizeof(handshake));
 			}
 			// clears command_buffer
