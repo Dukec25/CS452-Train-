@@ -3,6 +3,7 @@
 #include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
+#include <define.h>
 
 typedef enum {
 	TS_NULL,
@@ -15,11 +16,23 @@ typedef struct TS_request {
 	Command cmd;
 } TS_request;
 
+typedef struct DC_Command {
+	int is_received;
+	int stop;
+} DC_command;
+
+typedef struct PARK_Command {
+	int is_received;
+	int is_initialized;
+	int deaccelerate_stop;
+	int park_delay_time;
+} PARK_Command;
+
 typedef struct Train_server {
 	int is_shutdown;
 
-	int is_special_cmd;
-	Command special_cmd;
+	DC_command dc_cmd;
+	PARK_Command park_cmd;
 
 #define COMMAND_FIFO_SIZE	100
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
@@ -47,9 +60,10 @@ void train_server_init(Train_server *train_server);
 void train_server();
 void sensor_reader_task();
 void sensor_handle(Train_server *train_server);
-void dc_handle(Train_server *train_server, Command dc_cmd);
+void dc_handle(Train_server *train_server);
 void br_handle(Train_server *train_server, Command br_cmd);
-void park_handle(Train_server *train_server, Command park_cmd);
+void park_initialize(Train_server *train_server, Command cmd);
+void park_handle(Train_server *train_server);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);

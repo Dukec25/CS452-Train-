@@ -9,7 +9,10 @@
 void train_server_init(Train_server *train_server)
 {
 	train_server->is_shutdown = 0;
-	train_server->is_special_cmd = 0;
+
+	train_server->dc_cmd.is_received = 0;
+	train_server->park_cmd.is_received = 0;
+	train_server->park_cmd.is_initialized = 0;
 
 	train_server->cmd_fifo_head = 0;
 	train_server->cmd_fifo_tail = 0;
@@ -131,8 +134,8 @@ void train_server()
 			break;
 
 		case DC:
-			train_server.is_special_cmd = 1;
-			train_server.special_cmd = cmd;
+			train_server.dc_cmd.is_received = 1;
+			train_server.dc_cmd.stop = sensor_to_num(parse_stop_sensor(cmd));
 			break;
 
 		case BR:
@@ -141,28 +144,20 @@ void train_server()
 
 		case PARK:
 			irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);
-			train_server.is_special_cmd = 1;
-			train_server.special_cmd = cmd;
+			train_server.park_cmd.is_received = 1;
 			br_handle(&train_server, cmd);
+			park_initialize(&train_server, cmd);
 			break;
 
 		default:
 			break;
 		}
 
-		if (train_server.is_special_cmd) {
-			switch (train_server.special_cmd.type) {
-			case DC:
-				dc_handle(&train_server, train_server.special_cmd);
-				break;
-
-			case PARK:
-				park_handle(&train_server, train_server.special_cmd);	
-				break;
-
-			default:
-				break;
-			}
+		if (train_server.dc_cmd.is_received) {
+			dc_handle(&train_server);
+		}
+		if (train_server.park_cmd.is_received && train_server.park_cmd.is_initialized) {
+			park_handle(&train_server);	
 		}
 	}
 
@@ -290,13 +285,10 @@ void sensor_handle(Train_server *train_server)
 	}
 }
 
-void dc_handle(Train_server *train_server, Command dc_cmd)
+void dc_handle(Train_server *train_server)
 {
-	Sensor stop_sensor = parse_stop_sensor(dc_cmd);
-	int stop = sensor_to_num(stop_sensor);
-
 	int last_stop = train_server->last_stop;
-	if (last_stop != stop) {
+	if (last_stop != train_server->dc_cmd.stop) {
 		last_stop = train_server->last_stop;
 	}
 	else {
@@ -304,7 +296,7 @@ void dc_handle(Train_server *train_server, Command dc_cmd)
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		push_cmd_fifo(train_server, tr_cmd);
 
-		train_server->is_special_cmd = 0;
+		train_server->dc_cmd.is_received = 0;
 	}
 }
 
@@ -332,14 +324,14 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	//irq_debug(SUBMISSION, "br_task: flip %d br done", num_switch);
 }
 
-void park_handle(Train_server *train_server, Command park_cmd)
+void park_initialize(Train_server *train_server, Command cmd)
 {
 	// track A initialization
 	track_node track[TRACK_MAX];
 	init_trackb(track);
 
 	// parse destination
-	Sensor stop_sensor = parse_stop_sensor(park_cmd);
+	Sensor stop_sensor = parse_stop_sensor(cmd);
 	int stop = sensor_to_num(stop_sensor);
 	//irq_debug(SUBMISSION, "park_task, stop sensor is %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
 
@@ -352,8 +344,8 @@ void park_handle(Train_server *train_server, Command park_cmd)
 		return; // there is error, ignore this iteration
 	}
 
-	// retrieve the sensor_to_deaccelate_train
-	int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
+	// retrieve the sensor_to_deaccelerate_train
+	train_server->park_cmd.deaccelerate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
 
 	// calculate the delta = the distance between sensor_to_deaccelate_train
 	// calculate average velocity measured in [tick]
@@ -364,21 +356,27 @@ void park_handle(Train_server *train_server, Command park_cmd)
 		delta += park_stops[i].distance;
 	}
 
-	int park_delay_time = (delta - stopping_distance * 1000) / velocity;
-	irq_debug(SUBMISSION, "deaccelarate_stop=%d, delta=%d, stop_dist=%d, park_delay_time = %d",
-							deaccelarate_stop, delta, stopping_distance, park_delay_time);
+	train_server->park_cmd.park_delay_time = (delta - stopping_distance * 1000) / velocity;
+	irq_debug(SUBMISSION, "deaccelerate_stop=%d, delta=%d, stop_dist=%d, park_delay_time = %d",
+							train_server->park_cmd.deaccelerate_stop, delta, stopping_distance, train_server->park_cmd.park_delay_time);
 
+	train_server->park_cmd.is_initialized = 1;
+}
+
+void park_handle(Train_server *train_server)
+{
 	int last_stop = train_server->last_stop;
-	if (last_stop != deaccelarate_stop) {
+	if (last_stop != train_server->park_cmd.deaccelerate_stop) {
 		last_stop = train_server->last_stop;
 	}
 	else {
 		//irq_debug(SUBMISSION, "park_task current stop = %d, start delay", last_stop);
-		Delay(park_delay_time);
+		Delay(train_server->park_cmd.park_delay_time);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		//irq_debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
 		push_cmd_fifo(train_server, tr_cmd);
 
-		train_server->is_special_cmd = 0;
+		train_server->park_cmd.is_received = 0;
+		train_server->park_cmd.is_initialized = 0;
 	}
 }
