@@ -49,9 +49,9 @@ void train_server()
 	Train_server train_server;
 	train_server_init(&train_server);
 
-	// track A initialization
-	track_node track[TRACK_MAX];
-	init_tracka(track);
+    // by default using track A, can be changed by command map
+    track_node track[TRACK_MAX];
+    init_tracka(train_server.track);
 
 	RegisterAs("TRAIN_SERVER");
 	int cli_server_tid = INVALID_TID;
@@ -106,6 +106,13 @@ void train_server()
 		Cli_request cli_update_request;
 		int cli_req_fifo_put_next;
 		switch (cmd.type) {
+        case MAP: 
+            if(cmd.arg0 == 'A' || cmd.arg0 == 'a'){
+                init_tracka(train_server.track);
+            } else{
+                init_trackb(train_server.track);
+            }
+            break;
 		case TR:
 			/*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
 			command_handle(&cmd);
@@ -226,7 +233,7 @@ void sensor_reader_task()
 	Train_server *train_server = (Train_server *) train_server_address;
 	
 	while (train_server->is_shutdown == 0) {
-		Delay(20);	// update every 200ms
+        Delay(20); // update every 200ms
 		Command sensor_cmd = get_sensor_command();
 		TS_request ts_request;
 		ts_request.type = TS_COMMAND;
@@ -243,10 +250,6 @@ void sensor_reader_task()
 
 void sensor_handle(Train_server *train_server)
 {
-	// track A initialization
-	track_node track[TRACK_MAX];
-	init_tracka(track);
-
 	// sensor query
 	/*irq_debug(SUBMISSION, "%s", "sensor cmd");*/
 	Putc(COM1, SENSOR_QUERY);
@@ -304,8 +307,8 @@ void sensor_handle(Train_server *train_server)
 			}
 
 			// calculate distance, next stop, time, and new_velocity
-			int distance = cal_distance(track, last_stop, current_stop);
-			int next_stop = predict_next(track, current_stop, train_server);
+			int distance = cal_distance(train_server->track, last_stop, current_stop);
+			int next_stop = predict_next(train_server->track, current_stop, train_server);
 			int time = sensor.triggered_time - last_sensor.triggered_time;
 			int query = sensor.triggered_query - last_sensor.triggered_query;
 			// int new_velocity = 19 * query;
@@ -346,17 +349,13 @@ void dc_handle(Train_server *train_server, Command dc_cmd)
 
 void br_handle(Train_server *train_server, Command br_cmd)
 {
-	// track A initialization
-	track_node track[TRACK_MAX];
-	init_tracka(track);
-
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(br_cmd);
 	int stop = sensor_to_num(stop_sensor);
 	/*irq_debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);*/
 	
 	// flip switches such that the train can arrive at the stop
-	int num_switch = choose_destination(track, train_server->last_stop, stop, train_server);
+	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
 	//irq_debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
 	int i;
@@ -370,10 +369,6 @@ void br_handle(Train_server *train_server, Command br_cmd)
 
 void park_handle(Train_server *train_server, Command park_cmd)
 {
-	// track A initialization
-	track_node track[TRACK_MAX];
-	init_tracka(track);
-
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(park_cmd);
 	int stop = sensor_to_num(stop_sensor);
@@ -384,7 +379,7 @@ void park_handle(Train_server *train_server, Command park_cmd)
 	/*irq_debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);*/
 
 	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
-	int num_park_stops = find_stops_by_distance(track, train_server->last_stop, stop, stopping_distance, park_stops);
+	int num_park_stops = find_stops_by_distance(train_server->track, train_server->last_stop, stop, stopping_distance, park_stops);
 	if(num_park_stops == -1){
 		return; // there is error, ignore this iteration
 	}

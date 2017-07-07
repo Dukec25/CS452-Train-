@@ -709,12 +709,18 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 		return 0;
-	}
+    }
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
-			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4)) {
+			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
+             !strcmp(command_buffer->data, "map", 3)) {
 		// parse arguments
 		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
+
+        if ( !strcmp(command_buffer->data, "map", 3) ){
+            pos = 3; 
+        } 
+
 		char num_buffer[10];
 		int i = 0;
 		for (i = 0; i < 10; i++) {
@@ -825,6 +831,14 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         }
 		pcmd->type = PARK;
 		break;
+    case 'm':
+        if (argc != 1){
+            return -1;
+        }
+        if (args[0] != 'A' || args[0] != 'B' || args[0] != 'a' || args[0] != 'b'){
+            return -1;
+        }
+        pcmd->type = MAP;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
