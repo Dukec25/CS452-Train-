@@ -194,8 +194,8 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 }
 
 void cli_draw_track(){
-    char* map_a;
-    map_a =  ""
+    Map map_a;
+    map_a.ascii =  ""
         "-------X----O---------O-------X-----------X--------\n"
         "           /         /                             X\n"
         "-----X----O         O----X------O--X-X--O---X---X---O\n"
@@ -212,23 +212,107 @@ void cli_draw_track(){
         "             \\               \\             /\n"
         "-X--------X---O---------X-----O-----------O----X--------\n"
         ;
+    int col_idx=0;
 
-    int columns = 0;
+
     // draw the track 
 	bw_pos(SENSOR_ROW, SENSOR_COL);
-    int temp;
     int idx = 0;
 
-    while(1){
-        if(map_a[idx] == '\n'){
-            cli_next_line();
-        } else if (map_a[idx] == 0){
-            break;
-        } else{
-            bwputc(COM2, map_a[idx]);
-        }
-        idx++;
-    }
+    /*while(1){*/
+        /*if(map_a.ascii[idx] == '\n'){*/
+            /*cli_next_line();*/
+        /*} else if (map_a[idx] == 0){*/
+            /*break;*/
+        /*} else{*/
+            /*bwputc(COM2, map_a[idx]);*/
+        /*}*/
+        /*idx++;*/
+    /*}*/
+
+    // row 12
+    col_idx = 1;
+    // B11, B12
+    map_a.sensors[26].row = 12;
+    map_a.sensors[26].col = col_idx;
+    map_a.sensors[27].row = 12;
+    map_a.sensors[27].col = col_idx;
+    // A7, A8
+    map_a.sensors[6].row = 12;
+    map_a.sensors[6].col = col_idx+7;
+    map_a.sensors[7].row = 12;
+    map_a.sensors[7].col = col_idx+7;
+    col_idx+=7;
+    map_a.switches[2].row = 12;
+    map_a.switches[2].col = col_idx+4;
+    col_idx+=4;
+    // C5, C6
+    map_a.sensors[36].row = 12;
+    map_a.sensors[36].col = col_idx+12;
+    map_a.sensors[37].row = 12;
+    map_a.sensors[37].col = col_idx+12;
+    col_idx+=12;
+    map_a.switches[6].row = 12;
+    map_a.switches[6].col = col_idx+4;
+    col_idx+=4;
+    // C15, C16
+    map_a.sensors[46].row = 12;
+    map_a.sensors[46].col = col_idx+6;
+    map_a.sensors[47].row = 12;
+    map_a.sensors[47].col = col_idx+6;
+    col_idx+=6;
+    // D11, D12
+    map_a.sensors[58].row = 12;
+    map_a.sensors[58].col = col_idx+4;
+    map_a.sensors[59].row = 12;
+    map_a.sensors[59].col = col_idx+4;
+    col_idx+=4;
+    map_a.switches[7].row = 12;
+    map_a.switches[7].col = col_idx+6;
+    col_idx+=6;
+    // E11, E12
+    map_a.sensors[74].row = 12;
+    map_a.sensors[74].col = col_idx+3;
+    map_a.sensors[75].row = 12;
+    map_a.sensors[75].col = col_idx+3;
+    
+    // row 13 
+    // row 14
+    col_idx = 1;
+    //B9, 10
+    map_a.sensors[24].row = 14;
+    map_a.sensors[24].col = 1;
+    map_a.sensors[25].row = 14;
+    map_a.sensors[25].col = 1;
+    //A5, 6
+    map_a.sensors[4].row = 14;
+    map_a.sensors[4].col = col_idx+9;
+    map_a.sensors[5].row = 14;
+    map_a.sensors[5].col = col_idx+9;
+    col_idx += 9;
+    map_a.switches[3].row = 14;
+    map_a.switches[3].col = col_idx + 4;
+    col_idx +=4;
+    // C7, 8
+    map_a.sensors[38].row = 14;
+    map_a.sensors[38].col = col_idx+10;
+    map_a.sensors[39].row = 14;
+    map_a.sensors[39].col = col_idx+10;
+    col_idx += 10;
+    map_a.switches[18].row = 14;
+    map_a.switches[18].col = col_idx + 6;
+    col_idx += 6;
+    map_a.switches[5].row = 14;
+    map_a.switches[5].col = col_idx + 12;
+    col_idx + =12;
+    // C3, 4 
+    map_a.switches[34].row = 14;
+    map_a.switches[34].col = col_idx + 5;
+    map_a.switches[35].row = 14;
+    map_a.switches[35].col = col_idx + 5;
+
+    
+
 
     char* map_b;
     map_b = ""

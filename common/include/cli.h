@@ -101,3 +101,14 @@ void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_up
  */
 void cli_update_track(Calibration_package calibration_pkg, int updates);
 #endif // __CLI_H__
+
+typedef struct loc{
+    int row;
+    int col;
+} loc;
+
+typedef struct Map{
+    char *ascii;
+    loc sensors[NUM_SENSORS];
+    loc switches[NUM_SWITCHES+1]; // start with 1 
+} Map;

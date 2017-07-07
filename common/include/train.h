@@ -5,6 +5,7 @@
 
 /* Switches */
 #define NUM_SWITCHES 22
+#define NUM_SENSORS 80
 typedef struct Switch {
 	char id;
 	char state;
