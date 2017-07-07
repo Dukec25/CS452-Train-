@@ -37,8 +37,6 @@ void train_task_admin()
 	int cli_request_courier_tid = Create(PRIOR_MEDIUM, cli_request_courier);
 	Send(cli_request_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
-	int tid = Create(PRIOR_MEDIUM, 	milestone1_test);
-
 	int expected_num_exit = 5;
 	int num_exit = 0;
 	int exit_list[5];

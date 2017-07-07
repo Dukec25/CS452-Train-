@@ -81,38 +81,6 @@ void cli_startup()
 	bw_save();
 }
 
-void cli_track_startup()
-{
-	bw_save();
-
-	int row, col;
-
-	// draw borders
-	for (col = TRACK_DATA_LEFT_BORDER + 1; col <= TRACK_DATA_RIGHT_BORDER - 1; col++) {
-		// upper border
-		bw_pos(TRACK_DATA_UPPER_BORDER, col);
-		bwputc(COM2, '-');
-		// status border
-		bw_pos(TRACK_DATA_STATUS_BORDER, col);
-		bwputc(COM2, '-');
-		// bottom borders
-		bw_pos(TRACK_DATA_BOTTOM_BORDER, col);
-		bwputc(COM2, '-');
-	}
-	// left, middle, and right borders
-	for (row = TRACK_DATA_UPPER_BORDER; row <= TRACK_DATA_BOTTOM_BORDER; row++) {
-		bw_pos(row, TRACK_DATA_LEFT_BORDER);
-		bwputc(COM2, '|');
-		bw_pos(row, TRACK_DATA_RIGHT_BORDER);
-		bwputc(COM2, '|');
-	}
-
-	// Place trackA
-	bw_pos(TRACK_DATA_STATUS_BORDER - 1, TRACK_DATA_LABEL_COL);
-	bwputstr(COM2, "Track A (mm, cm/sec)");
-	bw_restore();
-}
-
 void cli_user_input(Command_buffer *command_buffer)
 {
     /*irq_pos(HEIGHT, 0);*/
@@ -182,11 +150,10 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 	irq_printf(COM2, "\033[33m");
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
-    irq_pos(updates % 22 + 1, TRACK_DATA_COL + updates / 22 % 6 * TRACK_DATA_LENGTH);
-	/*irq_pos(updates % HEIGHT + 1, TRACK_DATA_COL);	*/
-	irq_printf(COM2, "%c%d->%c%d,%d,%d[10ms],%d[10ms]",
+    irq_pos(TRACK_DATA_ROW + updates % 22, TRACK_DATA_COL + updates / 22 % 5 * TRACK_DATA_LENGTH);
+	irq_printf(COM2, "%c%d->%c%d,%d,%d[um/tick],%d[um/tick]",
 				src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,
-				calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
+				calibration_pkg.distance, calibration_pkg.real_velocity, calibration_pkg.velocity);
     irq_printf(COM2, "\033[0m"); // reset special format
 	irq_restore();
 }

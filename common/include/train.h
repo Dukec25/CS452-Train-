@@ -38,42 +38,10 @@ char switch_state_to_byte(char state);
 typedef struct Sensor {
 	char group;
 	char id;
-	int triggered_time;
-	int triggered_query;
 } Sensor;
 void sensor_initialization();
 int sensor_to_num(Sensor sensor);
 Sensor num_to_sensor(int num);
-
-/* Calibration */
-typedef struct Calibration_package {
-	int src;
-	int dest;
-	int distance;
-	int time; // actual time, [tick] = [10ms]
-	int velocity; // virtual velocity measured in [tick]
-} Calibration_package;
-
-/* Velocity */
-#define VELOCITY_DATA_LENGTH	80
-#define MAX_NUM_VELOCITIES		3
-typedef struct Velocity_node {
-	int src;
-	int num_velocity;
-	int dest[MAX_NUM_VELOCITIES];
-	int velocity[MAX_NUM_VELOCITIES];
-	int updates[MAX_NUM_VELOCITIES];
-} Velocity_node;
-typedef struct Velocity_data {
-	Velocity_node node[TRACK_MAX];	// virtual velocity measured in [tick]
-	int stopping_distance;	// mm
-} Velocity_data;
-int track_node_name_to_num(char *name);
-void velocity14_initialization(Velocity_data *velocity_data); 
-void velocity10_initialization(Velocity_data *velocity_data);
-void velocity8_initialization(Velocity_data *velocity_data);
-int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
-void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocity_data);
 
 /* Train */
 #define TRAINS 80
@@ -89,18 +57,46 @@ typedef enum {
 	HALT = 97
 } Train_state;
 
+/* Calibration */
+typedef struct Calibration_package {
+	int src;
+	int dest;
+	int distance;
+	int real_velocity; 	// in um / tick
+	int velocity;		// virtual velocity measured in um / tick
+} Calibration_package;
+
+/* Velocity */
+#define ALPHA			0.9
+#define MAX_VELOCITY	8000	// um / tick
+typedef struct Velocity_model {
+	int train_id;
+	int speed[MAX_SPEED + 1];				// 0 - 14
+	int stopping_distance[MAX_SPEED + 1];	// in mm
+	double velocity[MAX_SPEED + 1];			// in um / tick
+	double acceleration;					// in um / tick^2
+	double deacceleration; 					// in um / tick^2
+} Velocity_model;
+int track_node_name_to_num(char *name);
+void velocity69_initialization(Velocity_model *velocity_model); 
+void velocity71_initialization(Velocity_model *velocity_model); 
+void velocity58_initialization(Velocity_model *velocity_model); 
+void velocity_update(int speed, double real_velocity, Velocity_model *velocity_model);
+
 /* Command */
 #define COMMAND_SIZE 100
 typedef enum {
-	TR, 		/* Set any train in motion at the desired speed */
-	RV, 		/* The train should reverse direction. */
-	SW, 		/* Throw the given switch to straight (S) or curved (C). */
-	GO, 		/* Start the train controller */
-	STOP,		/* Stop the train controller */
-	SENSOR,		/* Dump sensor modules */
-    BR,			/* Flip the switches to get the train from one point to another */
-	DC,			/* Stop train to measure stopping distance */
-    PARK		/* Flip the switches to get the train from one point to another, and park train at a sensor */
+/* tr 76 10 */	TR, 		/* Set any train in motion at the desired speed */
+/* rv 76 */		RV, 		/* The train should reverse direction. */
+/* sw 10 c */	SW, 		/* Throw the given switch to straight (S) or curved (C). */
+/* go */		GO, 		/* Start the train controller */
+/* stop */		STOP,		/* Stop the train controller */
+				SENSOR,		/* Dump sensor modules */
+/* br e 13 */	BR,			/* Flip the switches to get the train from one point to another */
+/* dc e 13 */	DC,			/* Stop train after pass a certain sensor to collect stopping distances data */
+/* park e 13 */	PARK,		/* Flip the switches to get the train from one point to another, and park train at a sensor */
+/* mc 12 30 */	MC,			/* Set train at the desired speed then delay some time [0.1s], stop it to collect short moves data */
+/* walk 50 */   WALK		/* Flip the switches to get the train from one point to another, and walk train a distance */
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;
@@ -112,6 +108,7 @@ typedef struct Command_buffer
 	char data[COMMAND_SIZE];
 	int pos;
 } Command_buffer;
+Command get_tr_command(char id, char speed);
 Command get_sw_command(char id, char state);
 Command get_sensor_command();
 Command get_tr_stop_command(char id);

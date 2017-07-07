@@ -11,7 +11,7 @@
 track_node* find_path(track_node *track, int src, int dest);
 
 /*
- * calculate the physical distance between src and dest 
+ * calculate the physical distance between src and dest in um 
  */
 int cal_distance(track_node *track, int src, int dest);
 
@@ -34,7 +34,7 @@ int predict_next(track_node *track, int src, Train_server *train_server);
 
 typedef struct Sensor_dist {
     int sensor_id;
-    int distance;
+    int distance; // in um
 } Sensor_dist;
 
 /*

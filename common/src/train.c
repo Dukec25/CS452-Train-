@@ -159,496 +159,49 @@ int track_node_name_to_num(char *name)
 	}
 	return num; 
 }
- 
-void velocity6_initialization(Velocity_data *velocity_data)
+
+void velocity69_initialization(Velocity_model *velocity_model) 
 {
-    int i;
-    for (i = 0; i < TRACK_MAX; i++) {
-        velocity_data->node[i].src = i;
-        velocity_data->node[i].num_velocity = 0;
-        int j;
-        for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
-            velocity_data->node[i].updates[j] = 1;
-        }
-    }
- 
-    velocity_data->stopping_distance = 405;
-
-}
-
-void velocity8_initialization(Velocity_data *velocity_data)
-{
-    int i;
-    for (i = 0; i < TRACK_MAX; i++) {
-        velocity_data->node[i].src = i;
-        velocity_data->node[i].num_velocity = 0;
-        int j;
-        for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
-            velocity_data->node[i].updates[j] = 1;
-        }
-    }
- 
-    velocity_data->stopping_distance = 550;
-
-    int index;
-}
-
-void velocity10_initialization(Velocity_data *velocity_data)
-{
-	int i;
-	for (i = 0; i < TRACK_MAX; i++) {
-		velocity_data->node[i].src = i;
-		velocity_data->node[i].num_velocity = 0;
-		int j;
-		for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
-			velocity_data->node[i].updates[j] = 1;
-		}
-	}
- 
-	velocity_data->stopping_distance = 685;
-
-	int index;
-}
-
-void velocity14_initialization(Velocity_data *velocity_data)
-{
-	int i;
-	for (i = 0; i < TRACK_MAX; i++) {
-		velocity_data->node[i].src = i;
-		velocity_data->node[i].num_velocity = 0;
-		int j;
-		for (j = 0; j < MAX_NUM_VELOCITIES; j++) {
-			velocity_data->node[i].updates[j] = 1;
-		}
-	}
- 
-	velocity_data->stopping_distance = 935;
-
-	int index;
-	index = track_node_name_to_num("A3");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C11");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 5;
-
-	index = track_node_name_to_num("A4");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B16");
-	velocity_data->node[index].velocity[0] = 80;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 1;
-
-	index = track_node_name_to_num("B1");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D14");
-	velocity_data->node[index].velocity[0] = 70;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 8;
-
-	index = track_node_name_to_num("B3");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C2");
-	velocity_data->node[index].velocity[0] = 40;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 1;
-
-	index = track_node_name_to_num("B4");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C9");
-	velocity_data->node[index].velocity[0] = 64;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 5;
-
-	index = track_node_name_to_num("B6");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C12");
-	velocity_data->node[index].velocity[0] = 56;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 6;
-
-	index = track_node_name_to_num("B13");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D2");
-	velocity_data->node[index].velocity[0] = 64;
-	velocity_data->node[index].updates[0] = 4;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("E2");
-	velocity_data->node[index].velocity[1] = 80;
-	velocity_data->node[index].updates[1] = 2;
-	velocity_data->node[index].num_velocity = 2;
-
-	index = track_node_name_to_num("B14");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D16");
-	velocity_data->node[index].velocity[0] = 25;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 21;
-
-	index = track_node_name_to_num("B15");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("A3");
-	velocity_data->node[index].velocity[0] = 72;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 5;
-
-	index = track_node_name_to_num("B16");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C10");
-	velocity_data->node[index].velocity[0] = 55;
-	velocity_data->node[index].updates[0] = 29;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("C5");
-	velocity_data->node[index].velocity[1] = 68;
-	velocity_data->node[index].num_velocity = 2;
-	velocity_data->node[index].updates[1] = 1;
-
-	index = track_node_name_to_num("C1");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B4");
-	velocity_data->node[index].velocity[0] = 32;
-	velocity_data->node[index].num_velocity = 1;
-	velocity_data->node[index].updates[0] = 5;
-
-	index = track_node_name_to_num("C2");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D2");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].updates[0] = 1;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("E2");
-	velocity_data->node[index].velocity[1] = 70;
-	velocity_data->node[index].updates[1] = 17;
-	velocity_data->node[index].num_velocity = 2;
-
-	index = track_node_name_to_num("C5");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D12");
-	velocity_data->node[index].velocity[0] = 100;
-	velocity_data->node[index].updates[0] = 2;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("E11");
-	velocity_data->node[index].velocity[1] = 165;
-	velocity_data->node[index].updates[1] = 2;
-	velocity_data->node[index].dest[2] = track_node_name_to_num("C15");
-	velocity_data->node[index].velocity[2] = 45;
-	velocity_data->node[index].updates[2] = 4;
-	velocity_data->node[index].num_velocity = 3;
-
-	index = track_node_name_to_num("C9");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B15");
-	velocity_data->node[index].velocity[0] = 66;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("C10");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B1");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].updates[0] = 8;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("B3");
-	velocity_data->node[index].velocity[1] = 55;
-	velocity_data->node[index].updates[1] = 20;
-	velocity_data->node[index].num_velocity = 2;
-
-	index = track_node_name_to_num("C11");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E16");
-	velocity_data->node[index].velocity[0] = 56;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("C12");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("A4");
-	velocity_data->node[index].velocity[0] = 52;
-	velocity_data->node[index].updates[0] = 27;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("C14");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("A4");
-	velocity_data->node[index].velocity[0] = 91;
-	velocity_data->node[index].updates[0] = 7;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("C15");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D12");
-	velocity_data->node[index].velocity[0] = 75;
-	velocity_data->node[index].updates[0] = 4;
-	velocity_data->node[index].num_velocity = 1;
-    
-	index = track_node_name_to_num("D1");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B14");
-	velocity_data->node[index].velocity[0] = 71;
-	velocity_data->node[index].updates[0] = 19;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("C1");
-	velocity_data->node[index].velocity[1] = 80;
-	velocity_data->node[index].updates[1] = 1;
-	velocity_data->node[index].num_velocity = 2;
-
-	index = track_node_name_to_num("D2");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E4");
-	velocity_data->node[index].velocity[0] = 20;
-	velocity_data->node[index].updates[0] = 4;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D4");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B6");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D5");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E6");
-	velocity_data->node[index].velocity[0] = 58;
-	velocity_data->node[index].updates[0] = 28;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D6");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E10");
-	velocity_data->node[index].velocity[0] = 100;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D8");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E8");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].updates[0] = 7;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D10");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D5");
-	velocity_data->node[index].velocity[0] = 140;
-	velocity_data->node[index].updates[0] = 1;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
-	velocity_data->node[index].velocity[1] = 128;
-	velocity_data->node[index].updates[1] = 5;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
-	velocity_data->node[index].num_velocity = 2;
-
-	index = track_node_name_to_num("D12");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E11");
-	velocity_data->node[index].velocity[0] = 40;
-	velocity_data->node[index].updates[0] = 2;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D14");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E14");
-	velocity_data->node[index].velocity[0] = 40;
-	velocity_data->node[index].updates[0] = 6;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D15");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B13");
-	velocity_data->node[index].velocity[0] = 20;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("D16");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E14");
-	velocity_data->node[index].velocity[0] = 40;
-	velocity_data->node[index].updates[0] = 21;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E1");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("B14");
-	velocity_data->node[index].velocity[0] = 80;
-	velocity_data->node[index].updates[0] = 1;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("C1");
-	velocity_data->node[index].velocity[1] = 80;
-	velocity_data->node[index].updates[1] = 1;
-	velocity_data->node[index].num_velocity = 2;
-
-	index = track_node_name_to_num("E2");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E15");
-	velocity_data->node[index].velocity[0] = 25;
-	velocity_data->node[index].updates[0] = 22;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E3");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D1");
-	velocity_data->node[index].velocity[0] = 20;
-	velocity_data->node[index].updates[0] = 1;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E4");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E5");
-	velocity_data->node[index].velocity[0] = 44;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E5");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D6");
-	velocity_data->node[index].velocity[0] = 56;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E6");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D1");
-	velocity_data->node[index].velocity[0] = 71;
-	velocity_data->node[index].updates[0] = 24;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("D4");
-	velocity_data->node[index].velocity[1] = 43;
-	velocity_data->node[index].updates[1] = 6;
-	velocity_data->node[index].dest[2] = track_node_name_to_num("E3");
-	velocity_data->node[index].velocity[2] = 4;
-	velocity_data->node[index].updates[2] = 1;
-	velocity_data->node[index].num_velocity = 3;
-
-	index = track_node_name_to_num("E8");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C14");
-	velocity_data->node[index].velocity[0] = 141;
-	velocity_data->node[index].updates[0] = 8;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E9");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D5");
-	velocity_data->node[index].velocity[0] = 101;
-	velocity_data->node[index].updates[0] = 27;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
-	velocity_data->node[index].velocity[1] = 120;
-	velocity_data->node[index].updates[0] = 2;
-	velocity_data->node[index].num_velocity = 2;
-	
-	index = track_node_name_to_num("E10");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E13");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].updates[0] = 6;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E11");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D10");
-	velocity_data->node[index].velocity[0] = 60;
-	velocity_data->node[index].updates[0] = 6;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E13");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D15");
-	velocity_data->node[index].velocity[0] = 40;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E14");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E9");
-	velocity_data->node[index].velocity[0] = 58;
-	velocity_data->node[index].updates[0] = 34;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E15");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("C12");
-	velocity_data->node[index].velocity[0] = 50;
-	velocity_data->node[index].updates[0] = 21;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("E16");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("E1");
-	velocity_data->node[index].velocity[0] = 24;
-	velocity_data->node[index].updates[0] = 5;
-	velocity_data->node[index].num_velocity = 1;
-
-	index = track_node_name_to_num("MR9");
-	velocity_data->node[index].src = index;
-	velocity_data->node[index].dest[0] = track_node_name_to_num("D5");
-	velocity_data->node[index].velocity[0] = 100;
-	velocity_data->node[index].updates[0] = 1;
-	velocity_data->node[index].dest[1] = track_node_name_to_num("D8");
-	velocity_data->node[index].velocity[1] = 120;
-	velocity_data->node[index].updates[1] = 1;
-	velocity_data->node[index].num_velocity = 2;
-}
- 
-int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
-{
-	/*if (!is_found) {*/
-        /*debug(SUBMISSION, "not found velocity%d\r\n", new_velocity);*/
-		/*int idx = velocity_data->node[src].num_velocity;*/
-		/*velocity_data->node[src].dest[idx] = dest;*/
-		/*velocity_data->node[src].velocity[idx] = new_velocity;*/
-		/*velocity_data->node[src].num_velocity++;*/
-	/*}*/
-	int i;
-    /*debug(SUBMISSION, "src%d dest%d\r\n", src, dest);*/
-    /*debug(SUBMISSION, "num_velocity%d\r\n",velocity_data->node[src].num_velocity);*/
-	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
-		if (velocity_data->node[src].dest[i] == dest) {
-			//irq_debug(SUBMISSION, "velocity_lookup src = %c%d, dest = %c%d, velocity = %d",
-			//	num_to_sensor(src).group + SENSOR_LABEL_BASE, num_to_sensor(src).id,
-			//	num_to_sensor(velocity_data->node[src].dest[i]).group + SENSOR_LABEL_BASE,
-			//	num_to_sensor(velocity_data->node[src].dest[i]).id,
-			//	velocity_data->node[src].velocity[0]);
-			return velocity_data->node[src].velocity[i];
-		}
-	}
-    /*debug(SUBMISSION, "!not found\r\n");*/
-	return -1;
-}
-
-void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocity_data)
-{
-    if (new_velocity > 600){
-        // indicates the trains once stopped 
-        // currently only take into consideration speed as low as 6 
-        // probably need a smarter way to determine this in the future
-        return;
-    }
-
-	int is_found = 0;
-	int dest_idx = -1;
+	velocity_model->train_id = 69;
 
 	int i;
-	for (i = 0; i < velocity_data->node[src].num_velocity; i++) {
-		if (velocity_data->node[src].dest[i] == dest) {
-			is_found = 1;
-			dest_idx = i;
-		}
+	for (i = 0; i < MAX_SPEED + 1; i++) {
+		velocity_model->speed[i] = 0;
+		velocity_model->velocity[i] = 0.;	// to be hardcoded
+		velocity_model->stopping_distance[i] = 0;
 	}
 
-	if (!is_found) {
-        /*debug(SUBMISSION, "src=%d dest=%d\r\n", src, dest);*/
-		int idx = velocity_data->node[src].num_velocity;
-		velocity_data->node[src].dest[idx] = dest;
-		velocity_data->node[src].velocity[idx] = new_velocity;
-		velocity_data->node[src].num_velocity++;
+    velocity_model->stopping_distance[6] = 405;
+    velocity_model->stopping_distance[8] = 550;
+	velocity_model->stopping_distance[10] = 685;
+	velocity_model->stopping_distance[14] = 935;
+
+	velocity_model->acceleration = 0.;	// to be hardcoded
+	velocity_model->deacceleration = 0.;	// to be hardcoded
+}
+ 
+void velocity_update(int speed, double real_velocity, Velocity_model *velocity_model)
+{
+	if (real_velocity <= 0 || real_velocity >= MAX_VELOCITY) {
+		return;
+	}
+
+	if (velocity_model->velocity[speed] == 0) {
+		velocity_model->velocity[speed] = real_velocity;
 	}
 	else {
-        /*debug(SUBMISSION, "is found velocity%d\r\n", new_velocity);*/
-		int hit = velocity_data->node[src].updates[dest_idx];
-		velocity_data->node[src].updates[dest_idx]++;
-
-		int old_velocity = velocity_data->node[src].velocity[dest_idx];
-		if (new_velocity != old_velocity) {
-			if (((new_velocity + hit * old_velocity) % (hit + 1)) >= ((hit + 1) / 2)) {
-				velocity_data->node[src].velocity[dest_idx] = 1 + (new_velocity + hit * old_velocity) / (hit + 1);
-			}
-			else {
-				velocity_data->node[src].velocity[dest_idx] = (new_velocity + hit * old_velocity) / (hit + 1);
-			}
-		}
+		double alpha = ALPHA;
+		velocity_model->velocity[speed] = alpha * real_velocity + velocity_model->velocity[speed] * (1 - alpha);
 	}
+}
+
+Command get_tr_command(char id, char speed)
+{
+	Command tr_cmd;
+	tr_cmd.type = TR;
+	tr_cmd.arg0 = id;
+	tr_cmd.arg1 = speed;
+	return tr_cmd;
 }
 
 Command get_sw_command(char id, char state)
@@ -712,9 +265,17 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
-			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4)) {
+			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
+			 !strcmp(command_buffer->data, "mc", 2) || !strcmp(command_buffer->data, "walk", 4)) {
 		// parse arguments
-		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
+		int pos;
+		if (!strcmp(command_buffer->data, "park", 4) || !strcmp(command_buffer->data, "walk", 4)) {
+			pos = 4;
+		}
+		else {
+			pos = 2;
+		}
+
 		char num_buffer[10];
 		int i = 0;
 		for (i = 0; i < 10; i++) {
@@ -735,17 +296,13 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 			}
 			else if (is_alpha(command_buffer->data[pos])) {
 				// current char is a switch state
-                int temp = argc;
 				args[argc++] = command_buffer->data[pos];
-                /*irq_debug(SUBMISSION, "alpha data=%c\r\n", args[temp]);*/
 			}
 			else if (command_buffer->data[pos] == ' ' || (pos == command_buffer->pos)) {
 				// skip space
 				if (num_buffer_pos != 0) {
 					// at the end of a number
-                    int temp = argc;
 					args[argc++] = atoi(num_buffer);
-                    /*irq_debug(SUBMISSION, "converted value=%d\r\n", args[temp]);*/
 				}
 				// clear num_buffer
 				num_buffer_pos = 0;
@@ -761,8 +318,6 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else {
 		return -1;
 	}
-    /*debug(SUBMISSION, "args%s\r\n", args);*/
-    /*debug(SUBMISSION, "argc num = %d\r\n", argc);*/
     
     // currently no commands need more than two arguments
     // there will probably won't be in the future as well
@@ -825,6 +380,20 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         }
 		pcmd->type = PARK;
 		break;
+	case 'm':
+		if (argc != 2) {
+			return -1;
+		}
+		if (args[0] > MAX_SPEED) {
+			return -1;
+		}
+		pcmd->type = MC;
+		break;
+	case 'w':
+		if (argc != 1) {
+			return -1;
+		}
+		pcmd->type = WALK;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];

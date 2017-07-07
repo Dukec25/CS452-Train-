@@ -42,14 +42,14 @@ Cli_request get_update_sensor_request(Sensor sensor, int last_stop, int next_sto
 	return update_sensor_request;	
 }
 
-Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int time, int velocity)
+Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int real_velocity, int velocity)
 {
 	Cli_request update_calibration_request;
 	update_calibration_request.type = CLI_UPDATE_CALIBRATION;
 	update_calibration_request.calibration_update.src = last_stop;
 	update_calibration_request.calibration_update.dest = current_stop;
 	update_calibration_request.calibration_update.distance = distance;
-	update_calibration_request.calibration_update.time = time;
+	update_calibration_request.calibration_update.real_velocity = real_velocity;
 	update_calibration_request.calibration_update.velocity = velocity;
 	return update_calibration_request;
 }
@@ -97,8 +97,8 @@ void cli_server()
 	Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
 
-//	int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
-//	Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
+	int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
+	Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
 
 	int num_track_updates = 0;
@@ -204,7 +204,7 @@ void cli_server()
 	int num_exit = 0;
 	int exit_list[2];
 	exit_list[0] = cli_clock_tid;
-//	exit_list[1] = cli_io_tid;
+	exit_list[1] = cli_io_tid;
 	while(num_exit < expected_num_exit) {
 		Handshake exit_handshake;
 		Handshake exit_reply = HANDSHAKE_AKG;

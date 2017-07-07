@@ -33,21 +33,14 @@ typedef struct Train_server {
 
 	Train train;
 
-#define SENSOR_LIFO_SIZE	100
-	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
-	int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
-	int num_sensor_query;
+	int last_sensor_triggered_time;
 
     int switches_status[NUM_SWITCHES];
 
     Switch br_update[10];			// switches to flip such that train can at a sensor 
-	Velocity_data velocity14_data;
-	Velocity_data velocity10_data;
-	Velocity_data velocity8_data;
-	Velocity_data velocity6_data;
 
-    Velocity_data *current_velocity_data;
+    Velocity_model velocity69_model;
 } Train_server;
 
 void train_server_init(Train_server *train_server);

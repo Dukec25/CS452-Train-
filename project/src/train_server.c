@@ -17,9 +17,8 @@ void train_server_init(Train_server *train_server)
 	train_server->cli_req_fifo_head = 0;
 	train_server->cli_req_fifo_tail = 0;
 
-	train_server->sensor_lifo_top = -1;
 	train_server->last_stop = -1;
-	train_server->num_sensor_query = 0;
+	train_server->last_sensor_triggered_time = 0;
 
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
@@ -27,13 +26,7 @@ void train_server_init(Train_server *train_server)
 		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
-	velocity14_initialization(&train_server->velocity14_data);
-
-	velocity10_initialization(&train_server->velocity10_data);
-
-	velocity8_initialization(&train_server->velocity8_data);
-
-	velocity6_initialization(&train_server->velocity6_data);
+	velocity69_initialization(&train_server->velocity69_model);
 }
 
 void train_server()
@@ -51,7 +44,7 @@ void train_server()
 
 	// track A initialization
 	track_node track[TRACK_MAX];
-	init_tracka(track);
+	init_trackb(track);
 
 	RegisterAs("TRAIN_SERVER");
 	int cli_server_tid = INVALID_TID;
@@ -113,23 +106,6 @@ void train_server()
 			train_server.train.id = cmd.arg0;
 			train_server.train.speed = cmd.arg1;
 
-			switch(train_server.train.speed){
-				case 14:
-					train_server.current_velocity_data = &train_server.velocity14_data;
-					break;
-				case 10:
-					train_server.current_velocity_data = &train_server.velocity10_data;
-					break;
-				case 8:
-					train_server.current_velocity_data = &train_server.velocity8_data;
-					break;
-				case 6:
-					train_server.current_velocity_data = &train_server.velocity6_data;
-					break;
-				default:
-					break;
-			}
-
 			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
 			push_cli_req_fifo(&train_server, cli_update_request);
 	
@@ -169,7 +145,11 @@ void train_server()
 			train_server.special_cmd = cmd;
 			br_handle(&train_server, cmd);
 			break;
-				
+
+		case MC:
+			mc_handle(&train_server, cmd);
+			break;
+			
 		default:
 			break;
 		}
@@ -226,7 +206,6 @@ void sensor_reader_task()
 	Train_server *train_server = (Train_server *) train_server_address;
 	
 	while (train_server->is_shutdown == 0) {
-		Delay(20);	// update every 200ms
 		Command sensor_cmd = get_sensor_command();
 		TS_request ts_request;
 		ts_request.type = TS_COMMAND;
@@ -245,7 +224,7 @@ void sensor_handle(Train_server *train_server)
 {
 	// track A initialization
 	track_node track[TRACK_MAX];
-	init_tracka(track);
+	init_trackb(track);
 
 	// sensor query
 	/*irq_debug(SUBMISSION, "%s", "sensor cmd");*/
@@ -257,8 +236,6 @@ void sensor_handle(Train_server *train_server)
 		char upper = Getc(COM1);
 		sensor_data[(int) sensor_group] = upper << 8 | lower;
 	}
-	train_server->num_sensor_query++;
-	/*irq_debug(SUBMISSION, "num_sensor_query = %d", train_server->num_sensor_query);*/
 
 	// parse sensor data
 	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
@@ -272,10 +249,9 @@ void sensor_handle(Train_server *train_server)
 			if (!(sensor_data[(int) sensor_group] & (0x1 << bit))) {
 				continue;
 			}
+
 			Sensor sensor;
 			sensor.group = sensor_group;
-			sensor.triggered_time = Time();
-			sensor.triggered_query = train_server->num_sensor_query;
 			if (bit + 1 <= 8) {
 				sensor.id = 8 - bit;
 			}
@@ -285,42 +261,34 @@ void sensor_handle(Train_server *train_server)
 
 			int current_stop = sensor_to_num(sensor);
 			int last_stop = train_server->last_stop;
-	
-			Sensor last_sensor;
-			while (train_server->sensor_lifo_top != -1) {
-				pop_sensor_lifo(train_server, &last_sensor);
-				if (sensor_to_num(last_sensor) == last_stop) {
-					break;
-				}
-			}
+			int current_sensor_triggered_time = Time();
+			int last_sensor_triggered_time = train_server->last_sensor_triggered_time;
 
-			push_sensor_lifo(train_server, sensor);
-
-			// update last triggered sensor
-			train_server->last_stop = current_stop;
-	
-			if ((current_stop == last_stop) || (last_stop == -1)) {
+			//if ((current_stop == last_stop) || (last_stop == -1)) {
+			if (current_stop == last_stop) {
 				return;
 			}
+
+			// update last triggered sensor: if a sensor is triggered consecutively, only record the the earliest time
+			train_server->last_stop = current_stop;
+			train_server->last_sensor_triggered_time = current_sensor_triggered_time; 
 
 			// calculate distance, next stop, time, and new_velocity
 			int distance = cal_distance(track, last_stop, current_stop);
 			int next_stop = predict_next(track, current_stop, train_server);
-			int time = sensor.triggered_time - last_sensor.triggered_time;
-			int query = sensor.triggered_query - last_sensor.triggered_query;
-			// int new_velocity = 19 * query;
-			// irq_debug(SUBMISSION, "last_stop = %d, current_stop = %d, distance = %d, time = %d", last_stop, current_stop, distance);
+			int time = current_sensor_triggered_time - last_sensor_triggered_time;
+			double real_velocity = (double) distance / (double) time;
+			///irq_debug(SUBMISSION, "distance = %d, time = %d", distance, time);
 
 			// update velocity_data
-			// velocity_update(last_stop, current_stop, new_velocity, &velocity_data);
-			velocity_update(last_stop, current_stop, time, train_server->current_velocity_data);
+			velocity_update(train_server->train.speed, real_velocity, &train_server->velocity69_model);
 
 			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
 			push_cli_req_fifo(train_server, update_sensor_request);
 
-			int velocity = velocity_lookup(last_stop, current_stop, train_server->current_velocity_data); 
-			Cli_request update_calibration_request =
-				get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
+			Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
+													(int) real_velocity,
+													(int) train_server->velocity69_model.velocity[train_server->train.speed]);
 			push_cli_req_fifo(train_server, update_calibration_request);
 		}
 	}
@@ -348,7 +316,7 @@ void br_handle(Train_server *train_server, Command br_cmd)
 {
 	// track A initialization
 	track_node track[TRACK_MAX];
-	init_tracka(track);
+	init_trackb(track);
 
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(br_cmd);
@@ -372,7 +340,7 @@ void park_handle(Train_server *train_server, Command park_cmd)
 {
 	// track A initialization
 	track_node track[TRACK_MAX];
-	init_tracka(track);
+	init_trackb(track);
 
 	// parse destination
 	Sensor stop_sensor = parse_stop_sensor(park_cmd);
@@ -380,8 +348,7 @@ void park_handle(Train_server *train_server, Command park_cmd)
 	//irq_debug(SUBMISSION, "park_task, stop sensor is %d, %d, stop = %d\r\n", stop_sensor.group, stop_sensor.id, stop);
 
 	// retrieve stopping distance
-	int stopping_distance = train_server->current_velocity_data->stopping_distance; 
-	/*irq_debug(SUBMISSION, "park_task: stopping_distance = %d", stopping_distance);*/
+	int stopping_distance = train_server->velocity69_model.stopping_distance[train_server->train.speed]; 
 
 	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 	int num_park_stops = find_stops_by_distance(track, train_server->last_stop, stop, stopping_distance, park_stops);
@@ -391,42 +358,19 @@ void park_handle(Train_server *train_server, Command park_cmd)
 
 	// retrieve the sensor_to_deaccelate_train
 	int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
-	//irq_debug(SUBMISSION, "park_task: deaccelarate_stop = %c%d",
-					  //num_to_sensor(deaccelarate_stop).group + SENSOR_LABEL_BASE, num_to_sensor(deaccelarate_stop).id);
 
 	// calculate the delta = the distance between sensor_to_deaccelate_train
 	// calculate average velocity measured in [tick]
 	int delta = 0;
-	int park_delay_time = 0;
-	int first_stop_distance = 0;
-	int first_stop_velocity = 0;
+	int velocity = train_server->velocity69_model.velocity[train_server->train.speed];
 	int i;
 	for (i = 0; i < num_park_stops; i++) {
-		int sensor_distance = park_stops[i].distance;
-		int sensor_src = park_stops[i].sensor_id;
-		int sensor_dest = (i - 1 < 0) ? stop : park_stops[i - 1].sensor_id;
-		/*irq_debug(SUBMISSION, "last_stop=%d, current_stop=%d\r\n", sensor_src, sensor_dest);*/
-		int sensor_velocity = velocity_lookup(sensor_src, sensor_dest, train_server->current_velocity_data);
-			
-		sensor_velocity = (sensor_velocity == -1) ? 0: sensor_velocity;
-
-		delta += sensor_velocity ? sensor_distance : 0; 
-		park_delay_time += sensor_distance * sensor_velocity;
-		if( i == num_park_stops - 1 ){
-			first_stop_distance = sensor_distance; 
-			first_stop_velocity = sensor_velocity;
-		}
+		delta += park_stops[i].distance;
 	}
-	park_delay_time /= delta;
 
-	/*irq_debug(SUBMISSION, "delta=%d, first_dist=%d,first_velo=%d, stop_dist=%d",delta, first_stop_distance, first_stop_velocity, stopping_distance);*/
-	irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);
-	/*irq_debug(SUBMISSION, "first_stop[%d]\r\n", park_stops[num_park_stops-1].sensor_id);*/
-	vint delay_distance = delta - stopping_distance;
-	vint delay_velocity = first_stop_distance/first_stop_velocity;
-	park_delay_time = delay_distance/ delay_velocity;
-
-	//irq_debug(SUBMISSION, "park_task: delta = %d, park_delay_time = %d", delta, park_delay_time);
+	int park_delay_time = (delta - stopping_distance * 1000) / velocity;
+	irq_debug(SUBMISSION, "deaccelarate_stop=%d, delta=%d, stop_dist=%d, park_delay_time = %d",
+							deaccelarate_stop, delta, stopping_distance, park_delay_time);
 
 	int last_stop = train_server->last_stop;
 	if (last_stop != deaccelarate_stop) {
@@ -435,10 +379,25 @@ void park_handle(Train_server *train_server, Command park_cmd)
 	else {
 		//irq_debug(SUBMISSION, "park_task current stop = %d, start delay", last_stop);
 		Delay(park_delay_time);
-		//irq_debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
+		//irq_debug(SUBMISSION, "park_task send tr %d", tr_cmd.arg0);
 		push_cmd_fifo(train_server, tr_cmd);
 
 		train_server->is_special_cmd = 0;
 	}
+}
+
+void mc_handle(Train_server *train_server, Command mc_cmd)
+{
+	int speed = mc_cmd.arg0;
+	int delay_time = mc_cmd.arg1;
+	irq_debug(SUBMISSION, "mc: speed = %d, delay_time = %d 100ms", speed, delay_time);
+
+	Command tr_cmd = get_tr_command(train_server->train.id, speed);
+	command_handle(&tr_cmd);
+
+	Delay(delay_time * 10);
+	
+	Command tr_stop_cmd = get_tr_stop_command(train_server->train.id);
+	command_handle(&tr_stop_cmd);
 }
