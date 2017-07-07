@@ -4,7 +4,7 @@
 #include <clock.h>
 #include <train.h>
 
-#define WIDTH 46
+#define WIDTH 70 
 #define HEIGHT 30
 #define RIGHT_COL_WIDTH 9
 #define SENSOR_LABEL_BASE 'A'
@@ -34,6 +34,12 @@
 #define SENSOR_INDENT_HEIGHT	1
 #define SENSOR_PREDICTION_ROW	BOTTOM_BORDER - 2
 #define SENSOR_PREDICTION_COL	SENSOR_COL
+/* Track map */
+#define MAP_LINE1_ROW           SENSOR_ROW 
+#define MAP_LINE2_ROW           MAP_LINE1_ROW+1 
+
+
+
 /* Switch */
 #define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
 #define SWITCH_ROW			LABEL_BORDER + 1

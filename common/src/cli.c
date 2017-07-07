@@ -13,30 +13,31 @@ void cli_startup()
 	// clear screen
 	bw_cls();
 
+
 	// draw borders
 	for (col = LEFT_BORDER + 1; col <= RIGHT_BORDER - 1; col++) {
 		// upper border
 		bw_pos(UPPER_BORDER, col);
-		bwputc(COM2, '-');
+		/*bwputc(COM2, '-');*/
 		// status border
 		bw_pos(STATUS_BORDER, col);
-		bwputc(COM2, '-');
+		/*bwputc(COM2, '-');*/
 		// label border
 		bw_pos(LABEL_BORDER, col);
-		bwputc(COM2, '-');
+		/*bwputc(COM2, '-');*/
 		// bottom borders
 		bw_pos(BOTTOM_BORDER, col);
-		bwputc(COM2, '-');
+        /*bwputc(COM2, '-');*/
 	}
 	// left, middle, and right borders
-	for (row = UPPER_BORDER; row <= BOTTOM_BORDER; row++) {
-		bw_pos(row, LEFT_BORDER);
-		bwputc(COM2, '|');
-		bw_pos(row, MIDDLE_BORDER);
-		bwputc(COM2, '|');
-		bw_pos(row, RIGHT_BORDER);
-		bwputc(COM2, '|');
-	}
+	/*for (row = UPPER_BORDER; row <= BOTTOM_BORDER; row++) {*/
+		/*bw_pos(row, LEFT_BORDER);*/
+		/*bwputc(COM2, '|');*/
+		/*bw_pos(row, MIDDLE_BORDER);*/
+		/*bwputc(COM2, '|');*/
+		/*bw_pos(row, RIGHT_BORDER);*/
+		/*bwputc(COM2, '|');*/
+	/*}*/
 
 	// Place clock
 	bw_pos(CLOCK_ROW, CLOCK_COL);
@@ -48,16 +49,16 @@ void cli_startup()
 
 	// Place sensors
 	bw_pos(SENSOR_LABEL_ROW, SENSOR_COL);
-	bwputstr(COM2, "Sensors");
+	bwputstr(COM2, "Track Map");
 	int sensor_num;
     bwprintf(COM2, "\033[32m"); // make sensor display green
-	for (sensor_num = 0; sensor_num < SENSOR_GROUPS * SENSORS_PER_GROUP; sensor_num++) {
-		Sensor sensor = num_to_sensor(sensor_num);
-		int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;
-		int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH;
-		bw_pos(row, col);
-		bwprintf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);
-	}
+	/*for (sensor_num = 0; sensor_num < SENSOR_GROUPS * SENSORS_PER_GROUP; sensor_num++) {*/
+		/*Sensor sensor = num_to_sensor(sensor_num);*/
+		/*int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;*/
+		/*int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH;*/
+		/*bw_pos(row, col);*/
+		/*bwprintf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);*/
+	/*}*/
     bwprintf(COM2, "\033[0m"); // reset special format
 
 	// Place switches
@@ -65,14 +66,15 @@ void cli_startup()
 	bwputstr(COM2, "Switches");
 	int sw;
     bwprintf(COM2, "\033[36m"); // make switches display cyan
-	for (sw = 0; sw < NUM_SWITCHES; sw++) {
-		int sw_address = switch_id_to_byte(sw + 1);
-		// Place sw id
-		bw_pos(SWITCH_ROW + sw, SWITCH_COL);
-		bwputx(COM2, sw_address);
-	}
+	/*for (sw = 0; sw < NUM_SWITCHES; sw++) {*/
+		/*int sw_address = switch_id_to_byte(sw + 1);*/
+		/*// Place sw id*/
+		/*bw_pos(SWITCH_ROW + sw, SWITCH_COL);*/
+		/*bwputx(COM2, sw_address);*/
+	/*}*/
     bwprintf(COM2, "\033[0m"); // reset special format
 
+    cli_draw_track();
 	// Place input cursor at the end
 	bw_pos(HEIGHT, 0);
 	bwputstr(COM2, "> ");
@@ -189,4 +191,66 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 				calibration_pkg.distance, calibration_pkg.time, calibration_pkg.velocity);
     irq_printf(COM2, "\033[0m"); // reset special format
 	irq_restore();
+}
+
+void cli_draw_track(){
+    char* map_a;
+    map_a =  ""
+        "-------X----O---------O-------X-----------X--------\n"
+        "           /         /                             X\n"
+        "-----X----O         O----X------O--X-X--O---X---X---O\n"
+        "         /         /             X     X             \\\n"
+        "---X-----         X               X | X               \\\n"
+        "                 |                 O|O                 |\n"
+        "                 |                  |                  |\n"
+        "                 |                 O|O                 |\n"
+        "-X-------         X               X | X               /\n"
+        "         \\         \\             X     X             /\n"
+        "-X----X---O         O---X-------O--X-X--O---X---X---O\n"
+        "           \\         \\                             /\n"
+        "-X------X---O         --X---O-----X---X-----O--X---\n"
+        "             \\               \\             /\n"
+        "-X--------X---O---------X-----O-----------O----X--------\n"
+        ;
+
+    int columns = 0;
+    // draw the track 
+	bw_pos(SENSOR_ROW, SENSOR_COL);
+    int temp;
+    int idx = 0;
+
+    while(1){
+        if(map_a[idx] == '\n'){
+            cli_next_line();
+        } else if (map_a[idx] == 0){
+            break;
+        } else{
+            bwputc(COM2, map_a[idx]);
+        }
+        idx++;
+    }
+
+    char* map_b;
+    map_b = ""
+        "----------X----O---------O----X-------O----X---------X--\n"
+        "              /           \\            \\\n"
+        "      ---X---O---X-----X---O---X---     O----X-------X--\n"
+        "     X                             \\     \\\n"
+        "    O---X---X---O-X---X-O-----X-----O     O----X-----X--\n"
+        "   /             X     X             \\     \\\n"
+        "  /               X | X               X     X\n"
+        " |                 O|O                 |     |\n"
+        " |                  |                  |     |\n"
+        " O                 O|O                 |     |\n"
+        " |\\               X | X               X     X\n"
+        " | X             X     X             /     /\n"
+        " |  ------X-----O-X---X-O-----X-----O     O----X--------\n"
+        "  X                                /     /\n"
+        "   -------X----------------X------O-----O----X----------\n"
+        ;
+}
+
+// use busy wait 
+cli_next_line(){
+    bwprintf(COM2, "\033E"); 
 }
