@@ -146,10 +146,6 @@ void train_server()
 			br_handle(&train_server, cmd);
 			break;
 
-		case MC:
-			mc_handle(&train_server, cmd);
-			break;
-			
 		default:
 			break;
 		}
@@ -385,19 +381,4 @@ void park_handle(Train_server *train_server, Command park_cmd)
 
 		train_server->is_special_cmd = 0;
 	}
-}
-
-void mc_handle(Train_server *train_server, Command mc_cmd)
-{
-	int speed = mc_cmd.arg0;
-	int delay_time = mc_cmd.arg1;
-	irq_debug(SUBMISSION, "mc: speed = %d, delay_time = %d 100ms", speed, delay_time);
-
-	Command tr_cmd = get_tr_command(train_server->train.id, speed);
-	command_handle(&tr_cmd);
-
-	Delay(delay_time * 10);
-	
-	Command tr_stop_cmd = get_tr_stop_command(train_server->train.id);
-	command_handle(&tr_stop_cmd);
 }

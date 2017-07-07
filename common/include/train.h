@@ -94,9 +94,7 @@ typedef enum {
 				SENSOR,		/* Dump sensor modules */
 /* br e 13 */	BR,			/* Flip the switches to get the train from one point to another */
 /* dc e 13 */	DC,			/* Stop train after pass a certain sensor to collect stopping distances data */
-/* park e 13 */	PARK,		/* Flip the switches to get the train from one point to another, and park train at a sensor */
-/* mc 12 30 */	MC,			/* Set train at the desired speed then delay some time [0.1s], stop it to collect short moves data */
-/* walk 50 */   WALK		/* Flip the switches to get the train from one point to another, and walk train a distance */
+/* park e 13 */	PARK		/* Flip the switches to get the train from one point to another, and park train at a sensor */
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;

@@ -265,11 +265,10 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	}
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
-			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
-			 !strcmp(command_buffer->data, "mc", 2) || !strcmp(command_buffer->data, "walk", 4)) {
+			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4)) {
 		// parse arguments
 		int pos;
-		if (!strcmp(command_buffer->data, "park", 4) || !strcmp(command_buffer->data, "walk", 4)) {
+		if (!strcmp(command_buffer->data, "park", 4)) {
 			pos = 4;
 		}
 		else {
@@ -380,20 +379,6 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         }
 		pcmd->type = PARK;
 		break;
-	case 'm':
-		if (argc != 2) {
-			return -1;
-		}
-		if (args[0] > MAX_SPEED) {
-			return -1;
-		}
-		pcmd->type = MC;
-		break;
-	case 'w':
-		if (argc != 1) {
-			return -1;
-		}
-		pcmd->type = WALK;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
