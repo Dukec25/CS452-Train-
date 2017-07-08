@@ -68,6 +68,7 @@ typedef struct Map{
     char *ascii;
     loc sensors[NUM_SENSORS];
     loc switches[NUM_SWITCHES+1]; // start with 1 
+    int test;
 } Map;
 
 /*
@@ -104,8 +105,8 @@ void cli_update_switch(Switch sw);
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
-//void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map);
+//void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
+void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map);
 
 /*
  * Update the track A display

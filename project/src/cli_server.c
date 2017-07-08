@@ -100,6 +100,12 @@ void cli_server()
     Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
 
+    vint train_server_address;
+    irq_printf(COM2, "HELLO cli\r\n");
+    Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
+    Reply(train_server_tid, &handshake, sizeof(handshake));
+    Train_server *train_server = (Train_server *) train_server_address;
+
 	int num_track_updates = 0;
 
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
@@ -185,7 +191,7 @@ void cli_server()
 				//irq_debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
 				//			update_request->sensor_update.group, update_request->sensor_update.id,
 				//			update_request->sensor_update.triggered_time);		
-				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update);
+				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_CALIBRATION:
 				//irq_debug(SUBMISSION, "%s", "cli pop calibration update req");

@@ -153,26 +153,44 @@ void cli_update_switch(Switch sw)
 	irq_restore();
 }
 
-void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update)
+/*void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update)*/
+/*{*/
+	/*irq_save();*/
+
+	/*Sensor last_sensor = num_to_sensor(last_sensor_update);*/
+	/*int last_row = SENSOR_ROW + last_sensor.id * SENSOR_INDENT_HEIGHT;*/
+	/*int last_col = SENSOR_COL + last_sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;*/
+	/*irq_pos(last_row, last_col);*/
+	/*irq_printf(COM2, "%s", "  ");*/
+
+	/*int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;*/
+	/*int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;*/
+	/*irq_pos(row, col);*/
+	/*irq_printf(COM2, "%s", "<-");*/
+
+	/*Sensor next_sensor = num_to_sensor(next_sensor_update);*/
+	/*irq_pos(SENSOR_PREDICTION_ROW, SENSOR_PREDICTION_COL);*/
+	/*irq_printf(COM2, "Next Sensor: %c%s%d", SENSOR_LABEL_BASE + next_sensor.group, next_sensor.id < 10 ? "0" : "", next_sensor.id);*/
+
+	/*irq_restore();*/
+/*}*/
+
+void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map)
 {
+    irq_printf(COM2, "INVOKED %c %d", SENSOR_LABEL_BASE+ sensor.group, sensor.id);
 	irq_save();
-
-	Sensor last_sensor = num_to_sensor(last_sensor_update);
-	int last_row = SENSOR_ROW + last_sensor.id * SENSOR_INDENT_HEIGHT;
-	int last_col = SENSOR_COL + last_sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;
-	irq_pos(last_row, last_col);
-	irq_printf(COM2, "%s", "  ");
-
-	int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;
-	int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH + SENSOR_LABEL_WIDTH;
-	irq_pos(row, col);
-	irq_printf(COM2, "%s", "<-");
+    int cur_sensor = sensor_to_num(sensor);
+    irq_pos(map->sensors[cur_sensor].row, map->sensors[cur_sensor].col);
+    irq_printf(COM2, "\033[31m"); // make sensor display red
+    Putc(COM2, 'X');
+    irq_printf(COM2, "\033[0m"); // reset special format
 
 	Sensor next_sensor = num_to_sensor(next_sensor_update);
 	irq_pos(SENSOR_PREDICTION_ROW, SENSOR_PREDICTION_COL);
 	irq_printf(COM2, "Next Sensor: %c%s%d", SENSOR_LABEL_BASE + next_sensor.group, next_sensor.id < 10 ? "0" : "", next_sensor.id);
 
 	irq_restore();
+
 }
 
 void cli_update_track(Calibration_package calibration_pkg, int updates)
@@ -227,7 +245,7 @@ void cli_draw_trackA(Map *map_a){
         idx++;
     }
     // row 0
-    col_idx = 7; // A1,2
+    col_idx = 8; // A1,2
     map_a->sensors[0].row = map_first_row;
     map_a->sensors[0].col = col_idx;
     map_a->sensors[1].row = map_first_row;
@@ -249,14 +267,14 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[71].row = map_first_row;
     map_a->sensors[71].col = col_idx;
     // row 1 
-    col_idx = 51; // D7,8
+    col_idx = 52; // D7,8
     map_a->sensors[54].row = map_first_row+1;
     map_a->sensors[54].col = col_idx;
     map_a->sensors[55].row = map_first_row+1;
     map_a->sensors[55].col = col_idx;
     
     // row 2
-    col_idx = 5; // A13, 14
+    col_idx = 6; // A13, 14
     map_a->sensors[12].row = map_first_row+2;
     map_a->sensors[12].col = col_idx;
     map_a->sensors[13].row = map_first_row+2;
@@ -267,7 +285,7 @@ void cli_draw_trackA(Map *map_a){
     col_idx+=10; // 14 
     map_a->switches[14].row = map_first_row+2;
     map_a->switches[14].col = col_idx;
-    col_idx += 5; // A13, 14
+    col_idx += 5; // C11, 12
     map_a->sensors[42].row = map_first_row+2;
     map_a->sensors[42].col = col_idx;
     map_a->sensors[43].row = map_first_row+2;
@@ -303,7 +321,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->switches[9].col = col_idx;
     
     // row 3
-    col_idx = 33; // E15, 16
+    col_idx = 34; // E15, 16
     map_a->sensors[78].row = map_first_row+3;
     map_a->sensors[78].col = col_idx;
     map_a->sensors[79].row = map_first_row+3;
@@ -314,7 +332,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[67].row = map_first_row+3;
     map_a->sensors[67].col = col_idx;
     // row 4 
-    col_idx = 3; // A15, 16
+    col_idx = 4; // A15, 16
     map_a->sensors[14].row = map_first_row+4;
     map_a->sensors[14].col = col_idx;
     map_a->sensors[15].row = map_first_row+4;
@@ -335,21 +353,21 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[49].row = map_first_row+4;
     map_a->sensors[49].col = col_idx;
     // row 5
-    col_idx = 35; // 22
+    col_idx = 36; // 22
     map_a->switches[22].row = map_first_row+5;
     map_a->switches[22].col = col_idx;
     col_idx += 2; // 21
     map_a->switches[21].row = map_first_row+5;
     map_a->switches[21].col = col_idx;
     // row 7
-    col_idx = 35; // 19
+    col_idx = 36; // 19
     map_a->switches[19].row = map_first_row+7;
     map_a->switches[19].col = col_idx;
     col_idx += 2; // 20
     map_a->switches[20].row = map_first_row+7;
     map_a->switches[20].col = col_idx;
     // row 8
-    col_idx = 1; // A11, 12
+    col_idx = 2; // A11, 12
     map_a->sensors[10].row = map_first_row+8;
     map_a->sensors[10].col = col_idx;
     map_a->sensors[11].row = map_first_row+8;
@@ -371,7 +389,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[29].col = col_idx;
     // row 9
     // B3, B4
-    col_idx = 33;
+    col_idx = 34;
     map_a->sensors[18].row = map_first_row+9;
     map_a->sensors[18].col = col_idx;
     map_a->sensors[19].row = map_first_row+9;
@@ -441,7 +459,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->switches[8].row = map_first_row+10;
     map_a->switches[8].col = col_idx;
     // row 12
-    col_idx = 1; //B11, B12
+    col_idx = 2; //B11, B12
     map_a->sensors[26].row = map_first_row+12;
     map_a->sensors[26].col = col_idx;
     map_a->sensors[27].row = map_first_row+12;
@@ -487,7 +505,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[57].col = col_idx;
     
     // row 14
-    col_idx = 1;
+    col_idx = 2;
     //B9, 10
     map_a->sensors[24].row = map_first_row+14;
     map_a->sensors[24].col = col_idx;
@@ -533,13 +551,106 @@ void cli_draw_trackB(Map *map_b){
         "  /               X | X               X     X\n"
         " |                 O|O                 |     |\n"
         " |                  |                  |     |\n"
-        " O                 O|O                 |     |\n"
+        "                   O|O                 |     |\n"
         " |\\               X | X               X     X\n"
-        " | X             X     X             /     /\n"
-        " |  ------X-----O-X---X-O-----X-----O     O----X--------\n"
+        " |               X     X             /     /\n"
+        " O-------X--X---O-X---X-O-----X-----O     O----X--------\n"
         "  X                                /     /\n"
         "   -------X----------------X------O-----O----X----------\n"
         ;
+
+    int col_idx=0;
+    int map_first_row = MAP_FIRST_ROW;
+    // draw the track 
+    irq_pos(SENSOR_ROW, SENSOR_COL);
+    int idx = 0;
+    while(1){
+        if(map_b->ascii[idx] == '\n'){
+            cli_next_line();
+        } else if (map_b->ascii[idx] == 0){
+            break;
+        } else{
+            Putc(COM2, map_b->ascii[idx]);
+        }
+        idx++;
+    }
+
+    // Row 12
+    col_idx = 2; // 9
+    map_b->switches[9].row = map_first_row+12;
+    map_b->switches[9].col = col_idx;
+    col_idx += 8; // D5, 6
+    map_b->sensors[52].row = map_first_row+12;
+    map_b->sensors[52].col = col_idx;
+    map_b->sensors[53].row = map_first_row+12;
+    map_b->sensors[53].col = col_idx;
+    col_idx += 3; // E5, 6
+    map_b->sensors[68].row = map_first_row+12;
+    map_b->sensors[68].col = col_idx;
+    map_b->sensors[69].row = map_first_row+12;
+    map_b->sensors[69].col = col_idx;
+    col_idx += 4; // 10
+    map_b->switches[10].row = map_first_row+12;
+    map_b->switches[10].col = col_idx;
+    col_idx += 2; // D3, 4
+    map_b->sensors[50].row = map_first_row+12;
+    map_b->sensors[50].col = col_idx;
+    map_b->sensors[51].row = map_first_row+12;
+    map_b->sensors[51].col = col_idx;
+    col_idx += 4; // B5, 6
+    map_b->sensors[20].row = map_first_row+12;
+    map_b->sensors[20].col = col_idx;
+    map_b->sensors[21].row = map_first_row+12;
+    map_b->sensors[21].col = col_idx;
+    col_idx += 2; // 13
+    map_b->switches[13].row = map_first_row+12;
+    map_b->switches[13].col = col_idx;
+    col_idx += 6; // C11, 12
+    map_b->sensors[42].row = map_first_row+12;
+    map_b->sensors[42].col = col_idx;
+    map_b->sensors[43].row = map_first_row+12;
+    map_b->sensors[43].col = col_idx;
+    col_idx += 6; // 14
+    map_b->switches[14].row = map_first_row+12;
+    map_b->switches[14].col = col_idx;
+    col_idx += 6; // 4
+    map_b->switches[4].row = map_first_row+12;
+    map_b->switches[4].col = col_idx;
+    col_idx += 5; // A13, 14
+    map_b->sensors[12].row = map_first_row+12;
+    map_b->sensors[12].col = col_idx;
+    map_b->sensors[13].row = map_first_row+12;
+    map_b->sensors[13].col = col_idx;
+
+    // Row 13
+    col_idx = 3; // D7, 8
+    map_b->sensors[54].row = map_first_row+13;
+    map_b->sensors[54].col = col_idx;
+    map_b->sensors[55].row = map_first_row+13;
+    map_b->sensors[55].col = col_idx;
+
+    // Row 14
+    col_idx = 10; // E7, 8
+    map_b->sensors[70].row = map_first_row+14;
+    map_b->sensors[70].col = col_idx;
+    map_b->sensors[71].row = map_first_row+14;
+    map_b->sensors[71].col = col_idx;
+    col_idx += 17; // C13, 14
+    map_b->sensors[44].row = map_first_row+14;
+    map_b->sensors[44].col = col_idx;
+    map_b->sensors[45].row = map_first_row+14;
+    map_b->sensors[45].col = col_idx;
+    col_idx += 7; // 11
+    map_b->switches[11].row = map_first_row+14;
+    map_b->switches[11].col = col_idx;
+    col_idx += 6; // 12
+    map_b->switches[12].row = map_first_row+14;
+    map_b->switches[12].col = col_idx;
+    col_idx += 5; // A1, 2
+    map_b->sensors[0].row = map_first_row+14;
+    map_b->sensors[0].col = col_idx;
+    map_b->sensors[1].row = map_first_row+14;
+    map_b->sensors[1].col = col_idx;
 }
 
 // use busy wait 

@@ -20,6 +20,7 @@ void train_server_init(Train_server *train_server)
 	train_server->sensor_lifo_top = -1;
 	train_server->last_stop = -1;
 	train_server->num_sensor_query = 0;
+    train_server->cli_map.test = 5;
 
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
@@ -58,11 +59,13 @@ void train_server()
 	while(!(cli_server_tid > 0 && cli_server_tid < MAX_NUM_TASKS)) {
 		cli_server_tid = WhoIs("CLI_SERVER");
 	}
+
 	/*irq_debug(SUBMISSION, "cli_server %d", cli_server_tid);*/
 
 	Handshake handshake = HANDSHAKE_AKG;
 	vint train_server_address = (vint) &train_server;
 	/*irq_debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
+    Send(cli_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	int sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
 	/*irq_debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
