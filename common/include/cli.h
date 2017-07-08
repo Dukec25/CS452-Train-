@@ -34,11 +34,9 @@
 #define SENSOR_INDENT_HEIGHT	1
 #define SENSOR_PREDICTION_ROW	BOTTOM_BORDER - 2
 #define SENSOR_PREDICTION_COL	SENSOR_COL
+
 /* Track map */
-#define MAP_LINE1_ROW           SENSOR_ROW 
-#define MAP_LINE2_ROW           MAP_LINE1_ROW+1 
-
-
+#define MAP_FIRST_ROW       SENSOR_ROW
 
 /* Switch */
 #define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
@@ -60,6 +58,17 @@
 #define TRACK_DATA_PER_COL			26
 #define TRACK_LABEL_LENGTH			7
 #define TRACK_DATA_LENGTH			33
+
+typedef struct loc{
+    int row;
+    int col;
+} loc;
+
+typedef struct Map{
+    char *ascii;
+    loc sensors[NUM_SENSORS];
+    loc switches[NUM_SWITCHES+1]; // start with 1 
+} Map;
 
 /*
  * Draw the initial command line interface
@@ -90,11 +99,13 @@ void cli_update_train(Train train);
  * Update the switch status in the command line interface
  */
 void cli_update_switch(Switch sw);
+//void cli_update_switch(Switch sw, Map *map);
 
 /*
  * Update the last triggered sensor in the command line interface 
  */
 void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
+//void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map);
 
 /*
  * Update the track A display
@@ -102,13 +113,3 @@ void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_up
 void cli_update_track(Calibration_package calibration_pkg, int updates);
 #endif // __CLI_H__
 
-typedef struct loc{
-    int row;
-    int col;
-} loc;
-
-typedef struct Map{
-    char *ascii;
-    loc sensors[NUM_SENSORS];
-    loc switches[NUM_SWITCHES+1]; // start with 1 
-} Map;
