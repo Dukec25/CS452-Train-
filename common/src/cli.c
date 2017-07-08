@@ -177,8 +177,11 @@ void cli_update_switch(Switch sw)
 
 void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map)
 {
-    irq_printf(COM2, "INVOKED %c %d", SENSOR_LABEL_BASE+ sensor.group, sensor.id);
 	irq_save();
+
+    irq_pos(map->sensors[last_sensor_update].row, map->sensors[last_sensor_update].col);
+    Putc(COM2, 'X');
+
     int cur_sensor = sensor_to_num(sensor);
     irq_pos(map->sensors[cur_sensor].row, map->sensors[cur_sensor].col);
     irq_printf(COM2, "\033[31m"); // make sensor display red
@@ -401,7 +404,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[63].row = map_first_row+9;
     map_a->sensors[63].col = col_idx;
     // row 10 
-    col_idx = 1;
+    col_idx = 2;
     //B7, 8
     map_a->sensors[22].row = map_first_row+10;
     map_a->sensors[22].col = col_idx;
