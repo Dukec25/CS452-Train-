@@ -34,11 +34,9 @@
 #define SENSOR_INDENT_HEIGHT	1
 #define SENSOR_PREDICTION_ROW	BOTTOM_BORDER - 2
 #define SENSOR_PREDICTION_COL	SENSOR_COL
+
 /* Track map */
-#define MAP_LINE1_ROW           SENSOR_ROW 
-#define MAP_LINE2_ROW           MAP_LINE1_ROW+1 
-
-
+#define MAP_FIRST_ROW       SENSOR_ROW
 
 /* Switch */
 #define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
@@ -94,7 +92,8 @@ void cli_update_switch(Switch sw);
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
+void cli_update_sensor(Sensor sensor, int next_sensor_update, Map *map);
+//void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
 
 /*
  * Update the track A display
