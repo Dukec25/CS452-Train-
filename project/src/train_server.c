@@ -109,8 +109,11 @@ void train_server()
         case MAP: 
             if(cmd.arg0 == 'A' || cmd.arg0 == 'a'){
                 init_tracka(train_server.track);
-            } else{
+                /*bwprintf(COM2, "TRIGGER train_server"); */
+                cli_draw_trackA(&(train_server.cli_map));
+            } else if(cmd.arg0 == 'B' || cmd.arg0 == 'b'){
                 init_trackb(train_server.track);
+                cli_draw_trackB(&(train_server.cli_map));
             }
             break;
 		case TR:

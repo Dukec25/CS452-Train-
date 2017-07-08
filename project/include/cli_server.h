@@ -3,6 +3,7 @@
 #include <train.h>
 #include <fifo.h>
 #include <clock.h>
+#include <cli.h>
 
 typedef enum {
 	CLI_NULL,

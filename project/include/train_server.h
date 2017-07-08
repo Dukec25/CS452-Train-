@@ -49,6 +49,7 @@ typedef struct Train_server {
 	Velocity_data velocity6_data;
 
     Velocity_data *current_velocity_data;
+    Map cli_map;
 } Train_server;
 
 void train_server_init(Train_server *train_server);

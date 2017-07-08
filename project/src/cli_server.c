@@ -3,7 +3,6 @@
 #include <log.h>
 #include <user_functions.h>
 #include <train.h>
-#include <cli.h>
 #include <calculation.h>
 
 Cli_request get_train_command_request(Command cmd)

@@ -832,13 +832,15 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		pcmd->type = PARK;
 		break;
     case 'm':
+        /*bwprintf(COM2, "TRIGGER train.c, 1%c 2%c", args[0], args[1]); */
         if (argc != 1){
             return -1;
         }
-        if (args[0] != 'A' || args[0] != 'B' || args[0] != 'a' || args[0] != 'b'){
+        if (args[0] != 'A' && args[0] != 'B' && args[0] != 'a' && args[0] != 'b'){
             return -1;
         }
         pcmd->type = MAP;
+        break;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
