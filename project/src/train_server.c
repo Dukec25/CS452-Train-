@@ -64,6 +64,9 @@ void train_server()
 	vint train_server_address = (vint) &train_server;
 	/*irq_debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
 
+    /*bwprintf(COM2, "HELLO train\r\n");*/
+    /*Send(cli_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));*/
+
 	int sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
 	/*irq_debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
 	Send(sensor_reader_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
@@ -109,8 +112,10 @@ void train_server()
         case MAP: 
             if(cmd.arg0 == 'A' || cmd.arg0 == 'a'){
                 init_tracka(train_server.track);
+                cli_draw_trackA();
             } else{
                 init_trackb(train_server.track);
+                cli_draw_trackB();
             }
             break;
 		case TR:

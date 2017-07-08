@@ -3,7 +3,6 @@
 #include <log.h>
 #include <user_functions.h>
 #include <train.h>
-#include <cli.h>
 #include <calculation.h>
 
 Cli_request get_train_command_request(Command cmd)
@@ -93,6 +92,7 @@ void cli_server()
 	vint cli_server_address = (vint) &cli_server;
 	/*irq_debug(SUBMISSION, "cli_server cli_server_address = 0x%x", cli_server_address);	 */
 
+
 	int cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); 
 	Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
@@ -100,6 +100,13 @@ void cli_server()
     int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
     Send(cli_io_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
 	/*irq_debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
+
+	/*vint train_server_address;*/
+    /*bwprintf(COM2, "HELLO cli\r\n");*/
+	/*Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));*/
+	/*Reply(train_server_tid, &handshake, sizeof(handshake));*/
+	/*Train_server *train_server = (Train_server *) train_server_address;*/
+    Train_server *train_server = 0;
 
 	int num_track_updates = 0;
 
@@ -180,13 +187,13 @@ void cli_server()
 				break;
 			case CLI_UPDATE_SWITCH:
 				/*irq_debug(SUBMISSION, "%s", "cli pop switch update req");*/
-				cli_update_switch(update_request->switch_update);
+				cli_update_switch(update_request->switch_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_SENSOR:
 				//irq_debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
 				//			update_request->sensor_update.group, update_request->sensor_update.id,
 				//			update_request->sensor_update.triggered_time);		
-				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update);
+				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_CALIBRATION:
 				//irq_debug(SUBMISSION, "%s", "cli pop calibration update req");

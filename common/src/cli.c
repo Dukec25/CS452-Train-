@@ -146,10 +146,10 @@ void cli_update_train(Train train)
 	irq_restore();
 }
 
-void cli_update_switch(Switch sw, Map *map);
+void cli_update_switch(Switch sw, Map *map)
 {
 	irq_save();
-	irq_pos(map->switches[sw.id].row, map->swtiches[sw.id].col);
+	irq_pos(map->switches[sw.id].row, map->switches[sw.id].col);
 	Putc(COM2, toupper(sw.state));
 	irq_restore();
 }
@@ -163,12 +163,12 @@ void cli_update_switch(Switch sw, Map *map);
 /*}*/
 
 
-void cli_update_sensor(Sensor sensor, int next_sensor_update, Map *map)
+void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map)
 {
 	irq_save();
     int cur_sensor = sensor_to_num(sensor);
     irq_pos(map->sensors[cur_sensor].row, map->sensors[cur_sensor].col);
-    irq_printf(COM2, "\033[32m"); // make sensor display green
+    irq_printf(COM2, "\033[31m"); // make sensor display red
     Putc(COM2, 'X');
     irq_printf(COM2, "\033[0m"); // reset special format
 
@@ -218,8 +218,8 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 	irq_restore();
 }
 
-void cli_draw_trackA(Map map_a){
-    map_a.ascii =  ""
+void cli_draw_trackA(Map *map_a){
+    map_a->ascii =  ""
         "-------X----O---------O-------X-----------X--------\n"
         "           /         /                             X\n"
         "-----X----O         O----X------O--X-X--O---X---X---O\n"
@@ -240,16 +240,16 @@ void cli_draw_trackA(Map map_a){
     int map_first_row = MAP_FIRST_ROW;
 
     // draw the track 
-	bw_pos(SENSOR_ROW, SENSOR_COL);
+	irq_pos(SENSOR_ROW, SENSOR_COL);
     int idx = 0;
 
     while(1){
-        if(map_a.ascii[idx] == '\n'){
+        if(map_a->ascii[idx] == '\n'){
             cli_next_line();
-        } else if (map_a.ascii[idx] == 0){
+        } else if (map_a->ascii[idx] == 0){
             break;
         } else{
-            bwputc(COM2, map_a.ascii[idx]);
+            Putc(COM2, map_a->ascii[idx]);
         }
         idx++;
     }
@@ -436,8 +436,8 @@ void cli_draw_trackA(Map map_a){
     col_idx+=10;
     map_a->switches[15].row = map_first_row+10;
     map_a->switches[15].col = col_idx;
-    //C9,->10
-    col_i->x+=4;
+    //C9,10
+    col_idx+=4;
     map_a->sensors[40].row = map_first_row+10;
     map_a->sensors[40].col = col_idx;
     map_a->sensors[41].row = map_first_row+10;
@@ -558,9 +558,8 @@ void cli_draw_trackA(Map map_a){
     map_a->sensors[35].col = col_idx;
 }
 
-void cli_draw_trackB(){
-    char* map_b;
-    map_b = ""
+void cli_draw_trackB(Map *map_b){
+    map_b->ascii = ""
         "----------X----O---------O----X-------O----X---------X--\n"
         "              /           \\            \\\n"
         "      ---X---O---X-----X---O---X---     O----X-------X--\n"
@@ -582,5 +581,5 @@ void cli_draw_trackB(){
 
 // use busy wait 
 cli_next_line(){
-    bwprintf(COM2, "\033E"); 
+    irq_printf(COM2, "\033E"); 
 }

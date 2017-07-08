@@ -59,6 +59,17 @@
 #define TRACK_LABEL_LENGTH			7
 #define TRACK_DATA_LENGTH			33
 
+typedef struct loc{
+    int row;
+    int col;
+} loc;
+
+typedef struct Map{
+    char *ascii;
+    loc sensors[NUM_SENSORS];
+    loc switches[NUM_SWITCHES+1]; // start with 1 
+} Map;
+
 /*
  * Draw the initial command line interface
  */
@@ -87,12 +98,12 @@ void cli_update_train(Train train);
 /*
  * Update the switch status in the command line interface
  */
-void cli_update_switch(Switch sw);
+void cli_update_switch(Switch sw, Map *map);
 
 /*
  * Update the last triggered sensor in the command line interface 
  */
-void cli_update_sensor(Sensor sensor, int next_sensor_update, Map *map);
+void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map);
 //void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
 
 /*
@@ -101,13 +112,3 @@ void cli_update_sensor(Sensor sensor, int next_sensor_update, Map *map);
 void cli_update_track(Calibration_package calibration_pkg, int updates);
 #endif // __CLI_H__
 
-typedef struct loc{
-    int row;
-    int col;
-} loc;
-
-typedef struct Map{
-    char *ascii;
-    loc sensors[NUM_SENSORS];
-    loc switches[NUM_SWITCHES+1]; // start with 1 
-} Map;
