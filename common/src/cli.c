@@ -74,7 +74,7 @@ void cli_startup()
 	/*}*/
     bwprintf(COM2, "\033[0m"); // reset special format
 
-    cli_draw_track();
+    cli_draw_trackA();
 	// Place input cursor at the end
 	bw_pos(HEIGHT, 0);
 	bwputstr(COM2, "> ");
@@ -193,7 +193,7 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 	irq_restore();
 }
 
-void cli_draw_track(){
+void cli_draw_trackA(){
     Map map_a;
     map_a.ascii =  ""
         "-------X----O---------O-------X-----------X--------\n"
@@ -213,6 +213,7 @@ void cli_draw_track(){
         "-X--------X---O---------X-----O-----------O----X--------\n"
         ;
     int col_idx=0;
+    int map_first_row;
 
     // draw the track 
 	bw_pos(SENSOR_ROW, SENSOR_COL);
@@ -221,171 +222,319 @@ void cli_draw_track(){
     while(1){
         if(map_a.ascii[idx] == '\n'){
             cli_next_line();
-        } else if (map_a[idx] == 0){
+        } else if (map_a.ascii[idx] == 0){
             break;
         } else{
-            bwputc(COM2, map_a[idx]);
+            bwputc(COM2, map_a.ascii[idx]);
         }
         idx++;
     }
+    // row 0
+    col_idx = 7; // A1,2
+    map_a.sensors[0].row = map_first_row;
+    map_a.sensors[0].col = col_idx;
+    map_a.sensors[1].row = map_first_row;
+    map_a.sensors[1].col = col_idx;
+    col_idx+=5;  // 12
+    map_a.switches[12].row = map_first_row;
+    map_a.switches[12].col = col_idx;
+    col_idx+=10; // 11
+    map_a.switches[11].row = map_first_row;
+    map_a.switches[11].col = col_idx;
+    col_idx += 8; // C13,14
+    map_a.sensors[44].row = map_first_row;
+    map_a.sensors[44].col = col_idx;
+    map_a.sensors[45].row = map_first_row;
+    map_a.sensors[45].col = col_idx;
+    col_idx += 12; // E7,8
+    map_a.sensors[70].row = map_first_row;
+    map_a.sensors[70].col = col_idx;
+    map_a.sensors[71].row = map_first_row;
+    map_a.sensors[71].col = col_idx;
+
+    // row 1 
+    col_idx = 51; // D7,8
+    map_a.sensors[54].row = map_first_row+1;
+    map_a.sensors[54].col = col_idx;
+    map_a.sensors[55].row = map_first_row+1;
+    map_a.sensors[55].col = col_idx;
+    
+    // row 2
+    col_idx = 5; // A13, 14
+    map_a.sensors[12].row = map_first_row+2;
+    map_a.sensors[12].col = col_idx;
+    map_a.sensors[13].row = map_first_row+2;
+    map_a.sensors[13].col = col_idx;
+    col_idx+=5; // 4
+    map_a.switches[4].row = map_first_row+2;
+    map_a.switches[4].col = col_idx;
+    col_idx+=10; // 14 
+    map_a.switches[14].row = map_first_row+2;
+    map_a.switches[14].col = col_idx;
+    col_idx += 5; // A13, 14
+    map_a.sensors[42].row = map_first_row+2;
+    map_a.sensors[42].col = col_idx;
+    map_a.sensors[43].row = map_first_row+2;
+    map_a.sensors[43].col = col_idx;
+    col_idx+=7; // 13 
+    map_a.switches[13].row = map_first_row+2;
+    map_a.switches[13].col = col_idx;
+    col_idx += 3; // B5, 6
+    map_a.sensors[20].row = map_first_row+2;
+    map_a.sensors[20].col = col_idx;
+    map_a.sensors[21].row = map_first_row+2;
+    map_a.sensors[21].col = col_idx;
+    col_idx += 2; // D3, 4
+    map_a.sensors[50].row = map_first_row+2;
+    map_a.sensors[50].col = col_idx;
+    map_a.sensors[51].row = map_first_row+2;
+    map_a.sensors[51].col = col_idx;
+    col_idx+=3; // 10
+    map_a.switches[10].row = map_first_row+2;
+    map_a.switches[10].col = col_idx;
+    col_idx += 4; // E5, 6
+    map_a.sensors[68].row = map_first_row+2;
+    map_a.sensors[68].col = col_idx;
+    map_a.sensors[69].row = map_first_row+2;
+    map_a.sensors[69].col = col_idx;
+    col_idx += 4; // D5, 6
+    map_a.sensors[52].row = map_first_row+2;
+    map_a.sensors[52].col = col_idx;
+    map_a.sensors[53].row = map_first_row+2;
+    map_a.sensors[53].col = col_idx;
+    col_idx+=4; // 9
+    map_a.switches[9].row = map_first_row+2;
+    map_a.switches[9].col = col_idx;
+    
+    // row 3
+    col_idx = 33; // E15, 16
+    map_a.sensors[78].row = map_first_row+3;
+    map_a.sensors[78].col = col_idx;
+    map_a.sensors[79].row = map_first_row+3;
+    map_a.sensors[79].col = col_idx;
+    col_idx += 6; // E3, 4 
+    map_a.sensors[66].row = map_first_row+3;
+    map_a.sensors[66].col = col_idx;
+    map_a.sensors[67].row = map_first_row+3;
+    map_a.sensors[67].col = col_idx;
+
+    // row 4 
+    col_idx = 3; // A15, 16
+    map_a.sensors[14].row = map_first_row+4;
+    map_a.sensors[14].col = col_idx;
+    map_a.sensors[15].row = map_first_row+4;
+    map_a.sensors[15].col = col_idx;
+    col_idx += 15; // A3, 4
+    map_a.sensors[2].row = map_first_row+4;
+    map_a.sensors[2].col = col_idx;
+    map_a.sensors[3].row = map_first_row+4;
+    map_a.sensors[3].col = col_idx;
+    col_idx += 16; // E1, 2
+    map_a.sensors[64].row = map_first_row+4;
+    map_a.sensors[64].col = col_idx;
+    map_a.sensors[65].row = map_first_row+4;
+    map_a.sensors[65].col = col_idx;
+    col_idx += 4; // D1, 2
+    map_a.sensors[48].row = map_first_row+4;
+    map_a.sensors[48].col = col_idx;
+    map_a.sensors[49].row = map_first_row+4;
+    map_a.sensors[49].col = col_idx;
+
+    // row 5
+    col_idx = 35; // 22
+    map_a.switches[22].row = map_first_row+5;
+    map_a.switches[22].col = col_idx;
+    col_idx += 2; // 21
+    map_a.switches[21].row = map_first_row+5;
+    map_a.switches[21].col = col_idx;
+
+    // row 7
+    col_idx = 35; // 19
+    map_a.switches[19].row = map_first_row+7;
+    map_a.switches[19].col = col_idx;
+    col_idx += 2; // 20
+    map_a.switches[20].row = map_first_row+7;
+    map_a.switches[20].col = col_idx;
+
+    // row 8
+    col_idx = 1; // A11, 12
+    map_a.sensors[10].row = map_first_row+8;
+    map_a.sensors[10].col = col_idx;
+    map_a.sensors[11].row = map_first_row+8;
+    map_a.sensors[11].col = col_idx;
+    col_idx += 17; // B15, 16
+    map_a.sensors[30].row = map_first_row+8;
+    map_a.sensors[30].col = col_idx;
+    map_a.sensors[31].row = map_first_row+8;
+    map_a.sensors[31].col = col_idx;
+    col_idx += 16; // C1, 2
+    map_a.sensors[32].row = map_first_row+8;
+    map_a.sensors[32].col = col_idx;
+    map_a.sensors[33].row = map_first_row+8;
+    map_a.sensors[33].col = col_idx;
+    col_idx += 4; // B13, 14
+    map_a.sensors[28].row = map_first_row+8;
+    map_a.sensors[28].col = col_idx;
+    map_a.sensors[29].row = map_first_row+8;
+    map_a.sensors[29].col = col_idx;
+
     // row 9
     // B3, B4
     col_idx = 33;
-    map_a.sensors[18].row = 9;
+    map_a.sensors[18].row = map_first_row+9;
     map_a.sensors[18].col = col_idx;
-    map_a.sensors[19].row = 9;
+    map_a.sensors[19].row = map_first_row+9;
     map_a.sensors[19].col = col_idx;
     // D15, D16
     col_idx += 8;
-    map_a.sensors[62].row = 9;
+    map_a.sensors[62].row = map_first_row+9;
     map_a.sensors[62].col = col_idx;
-    map_a.sensors[63].row = 9;
+    map_a.sensors[63].row = map_first_row+9;
     map_a.sensors[63].col = col_idx;
 
     // row 10 
     col_idx = 1;
     //B7, 8
-    map_a.sensors[22].row = 10;
+    map_a.sensors[22].row = map_first_row+10;
     map_a.sensors[22].col = col_idx;
-    map_a.sensors[23].row = 10;
+    map_a.sensors[23].row = map_first_row+10;
     map_a.sensors[23].col = col_idx;
     //A9, 10
     col_idx+=5;
-    map_a.sensors[8].row = 10;
+    map_a.sensors[8].row = map_first_row+10;
     map_a.sensors[8].col = col_idx;
-    map_a.sensors[9].row = 10;
+    map_a.sensors[9].row = map_first_row+10;
     map_a.sensors[9].col = col_idx;
     col_idx+=4;
-    map_a.switches[1].row = 10;
+    map_a.switches[1].row = map_first_row+10;
     map_a.switches[1].col = col_idx;
     col_idx+=10;
-    map_a.switches[15].row = 10;
+    map_a.switches[15].row = map_first_row+10;
     map_a.switches[15].col = col_idx;
     //C9, 10
     col_idx+=4;
-    map_a.sensors[40].row = 10;
+    map_a.sensors[40].row = map_first_row+10;
     map_a.sensors[40].col = col_idx;
-    map_a.sensors[41].row = 10;
+    map_a.sensors[41].row = map_first_row+10;
     map_a.sensors[41].col = col_idx;
     col_idx+=6;
-    map_a.switches[16].row = 10;
+    map_a.switches[16].row = map_first_row+10;
     map_a.switches[16].col = col_idx;
     //B1, 2
     col_idx+=3;
-    map_a.sensors[16].row = 10;
+    map_a.sensors[16].row = map_first_row+10;
     map_a.sensors[16].col = col_idx;
-    map_a.sensors[17].row = 10;
+    map_a.sensors[17].row = map_first_row+10;
     map_a.sensors[17].col = col_idx;
     //D13, 14
     col_idx+=6;
-    map_a.sensors[60].row = 10;
+    map_a.sensors[60].row = map_first_row+10;
     map_a.sensors[60].col = col_idx;
-    map_a.sensors[61].row = 10;
+    map_a.sensors[61].row = map_first_row+10;
     map_a.sensors[61].col = col_idx;
     col_idx+=3;
-    map_a.switches[17].row = 10;
+    map_a.switches[17].row = map_first_row+10;
     map_a.switches[17].col = col_idx;
     //E13, 14
     col_idx+=2;
-    map_a.sensors[76].row = 10;
+    map_a.sensors[76].row = map_first_row+10;
     map_a.sensors[76].col = col_idx;
-    map_a.sensors[77].row = 10;
+    map_a.sensors[77].row = map_first_row+10;
     map_a.sensors[77].col = col_idx;
     //E9, 10
     col_idx+=4;
-    map_a.sensors[72].row = 10;
+    map_a.sensors[72].row = map_first_row+10;
     map_a.sensors[72].col = col_idx;
-    map_a.sensors[73].row = 10;
+    map_a.sensors[73].row = map_first_row+10;
     map_a.sensors[73].col = col_idx;
     col_idx+=4;
-    map_a.switches[8].row = 10;
+    map_a.switches[8].row = map_first_row+10;
     map_a.switches[8].col = col_idx;
 
 
     // row 12
     col_idx = 1;
     // B11, B12
-    map_a.sensors[26].row = 12;
+    map_a.sensors[26].row = map_first_row+12;
     map_a.sensors[26].col = col_idx;
-    map_a.sensors[27].row = 12;
+    map_a.sensors[27].row = map_first_row+12;
     map_a.sensors[27].col = col_idx;
     // A7, A8
-    map_a.sensors[6].row = 12;
+    map_a.sensors[6].row = map_first_row+12;
     map_a.sensors[6].col = col_idx+7;
-    map_a.sensors[7].row = 12;
+    map_a.sensors[7].row = map_first_row+12;
     map_a.sensors[7].col = col_idx+7;
     col_idx+=7;
-    map_a.switches[2].row = 12;
+    map_a.switches[2].row = map_first_row+12;
     map_a.switches[2].col = col_idx+4;
     col_idx+=4;
     // C5, C6
-    map_a.sensors[36].row = 12;
+    map_a.sensors[36].row = map_first_row+12;
     map_a.sensors[36].col = col_idx+12;
-    map_a.sensors[37].row = 12;
+    map_a.sensors[37].row = map_first_row+12;
     map_a.sensors[37].col = col_idx+12;
     col_idx+=12;
-    map_a.switches[6].row = 12;
+    map_a.switches[6].row = map_first_row+12;
     map_a.switches[6].col = col_idx+4;
     col_idx+=4;
     // C15, C16
-    map_a.sensors[46].row = 12;
+    map_a.sensors[46].row = map_first_row+12;
     map_a.sensors[46].col = col_idx+6;
-    map_a.sensors[47].row = 12;
+    map_a.sensors[47].row = map_first_row+12;
     map_a.sensors[47].col = col_idx+6;
     col_idx+=6;
     // D11, D12
-    map_a.sensors[58].row = 12;
+    map_a.sensors[58].row = map_first_row+12;
     map_a.sensors[58].col = col_idx+4;
-    map_a.sensors[59].row = 12;
+    map_a.sensors[59].row = map_first_row+12;
     map_a.sensors[59].col = col_idx+4;
     col_idx+=4;
-    map_a.switches[7].row = 12;
+    map_a.switches[7].row = map_first_row+12;
     map_a.switches[7].col = col_idx+6;
     col_idx+=6;
     // E11, E12
-    map_a.sensors[74].row = 12;
+    map_a.sensors[74].row = map_first_row+12;
     map_a.sensors[74].col = col_idx+3;
-    map_a.sensors[75].row = 12;
+    map_a.sensors[75].row = map_first_row+12;
     map_a.sensors[75].col = col_idx+3;
     
-    // row 13 
     // row 14
     col_idx = 1;
     //B9, 10
-    map_a.sensors[24].row = 14;
-    map_a.sensors[24].col = 1;
-    map_a.sensors[25].row = 14;
-    map_a.sensors[25].col = 1;
+    map_a.sensors[24].row = map_first_row+14;
+    map_a.sensors[24].col = col_idx;
+    map_a.sensors[25].row = map_first_row+14;
+    map_a.sensors[25].col = col_idx;
     //A5, 6
-    map_a.sensors[4].row = 14;
-    map_a.sensors[4].col = col_idx+9;
-    map_a.sensors[5].row = 14;
-    map_a.sensors[5].col = col_idx+9;
     col_idx += 9;
-    map_a.switches[3].row = 14;
-    map_a.switches[3].col = col_idx + 4;
-    col_idx +=4;
+    map_a.sensors[4].row = map_first_row+14;
+    map_a.sensors[4].col = col_idx;
+    map_a.sensors[5].row = map_first_row+14;
+    map_a.sensors[5].col = col_idx;
+    col_idx +=4; // 3
+    map_a.switches[3].row = map_first_row+14;
+    map_a.switches[3].col = col_idx;
     // C7, 8
-    map_a.sensors[38].row = 14;
-    map_a.sensors[38].col = col_idx+10;
-    map_a.sensors[39].row = 14;
-    map_a.sensors[39].col = col_idx+10;
     col_idx += 10;
-    map_a.switches[18].row = 14;
-    map_a.switches[18].col = col_idx + 6;
-    col_idx += 6;
-    map_a.switches[5].row = 14;
-    map_a.switches[5].col = col_idx + 12;
-    col_idx + =12;
+    map_a.sensors[38].row = map_first_row+14;
+    map_a.sensors[38].col = col_idx;
+    map_a.sensors[39].row = map_first_row+14;
+    map_a.sensors[39].col = col_idx;
+    col_idx += 6; // 6
+    map_a.switches[18].row = map_first_row+14;
+    map_a.switches[18].col = col_idx;
+    col_idx +=12; // 12
+    map_a.switches[5].row = map_first_row+14;
+    map_a.switches[5].col = col_idx;
     // C3, 4 
-    map_a.switches[34].row = 14;
-    map_a.switches[34].col = col_idx + 5;
-    map_a.switches[35].row = 14;
-    map_a.switches[35].col = col_idx + 5;
+    col_idx += 5;
+    map_a.switches[34].row = map_first_row+14;
+    map_a.switches[34].col = col_idx;
+    map_a.switches[35].row = map_first_row+14;
+    map_a.switches[35].col = col_idx;
+}
 
-    
-
-
+void cli_draw_trackB(){
     char* map_b;
     map_b = ""
         "----------X----O---------O----X-------O----X---------X--\n"
@@ -404,6 +553,7 @@ void cli_draw_track(){
         "  X                                /     /\n"
         "   -------X----------------X------O-----O----X----------\n"
         ;
+
 }
 
 // use busy wait 
