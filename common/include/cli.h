@@ -99,8 +99,8 @@ void cli_update_train(Train train);
 /*
  * Update the switch status in the command line interface
  */
-void cli_update_switch(Switch sw);
-//void cli_update_switch(Switch sw, Map *map);
+//void cli_update_switch(Switch sw);
+void cli_update_switch(Switch sw, Map *map);
 
 /*
  * Update the last triggered sensor in the command line interface 

@@ -185,7 +185,7 @@ void cli_server()
 				break;
 			case CLI_UPDATE_SWITCH:
 				/*irq_debug(SUBMISSION, "%s", "cli pop switch update req");*/
-				cli_update_switch(update_request->switch_update);
+				cli_update_switch(update_request->switch_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_SENSOR:
 				//irq_debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
