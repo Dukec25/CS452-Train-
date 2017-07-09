@@ -147,7 +147,7 @@ void cli_update_train(Train train)
 void cli_update_switch(Switch sw, Map *map)
 {
 	irq_save();
-	irq_pos(map->sensors[sw.id].row, map->sensors[sw.id].col);
+	irq_pos(map->switches[sw.id].row, map->switches[sw.id].col);
 	Putc(COM2, toupper(sw.state));
 	irq_restore();
 }
@@ -202,7 +202,7 @@ void cli_draw_trackA(Map *map_a){
         "                 |                  |                  |\n"
         "                 |                 C|O                 |\n"
         "-X-------         X               X | X               /\n"
-        "         \\           \\          X       X            /\n"
+        "         \\         \\            X       X            /\n"
         "-X----X---S         S---X-----C--X-----X--S-X---X---S\n"
         "           \\         \\                             /\n"
         "-X------X---S         --X---S-----X---X-----S--X--X\n"
@@ -371,7 +371,7 @@ void cli_draw_trackA(Map *map_a){
     map_a->sensors[29].col = col_idx;
     // row 9
     // B3, B4
-    col_idx = 34;
+    col_idx = 33;
     map_a->sensors[18].row = map_first_row+9;
     map_a->sensors[18].col = col_idx;
     map_a->sensors[19].row = map_first_row+9;
@@ -520,7 +520,7 @@ void cli_draw_trackA(Map *map_a){
 
 void cli_draw_trackB(Map *map_b){
     map_b->ascii = ""
-        "----------X----O---------O----X-------O----X---------X--\n"
+        "----------X---O---------O-----X-------O----X---------X--\n"
         "              /           \\            \\\n"
         "      X--X---O---X-----X---O---X---     O----X-------X--\n"
         "     /                             \\     \\\n"
@@ -529,12 +529,12 @@ void cli_draw_trackB(Map *map_b){
         "  /               X | X               X     X\n"
         " |                 O|O                 |     |\n"
         " |                  |                  |     |\n"
-        "                   O|O                 |     |\n"
-        " |\\               X | X               X     X\n"
+        " |                 O|O                 |     |\n"
+        " |                X | X               X     X\n"
         " |               X     X             /     /\n"
-        " O-------X--X---O-X---X-O-----X-----O     O----X--------\n"
-        "  X                                /     /\n"
-        "   -------X----------------X------O-----O----X----------\n"
+        "  O------X--X---O-X---X-O-----X-----O     O----X--------\n"
+        "    X                              /     /\n"
+        "     -----X----------------X------O-----O----X----------\n"
         ;
 
     int col_idx=0;
@@ -559,10 +559,10 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[34].col = col_idx;
     map_b->sensors[35].row = map_first_row;
     map_b->sensors[35].col = col_idx;
-    col_idx += 5; // 5
+    col_idx += 4; // 5
     map_b->switches[5].row = map_first_row;
     map_b->switches[5].col = col_idx;
-    col_idx += 10; // 18
+    col_idx += 9; // 18
     map_b->switches[18].row = map_first_row;
     map_b->switches[18].col = col_idx;
     col_idx += 5; // C7, 8
@@ -631,7 +631,7 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[27].col = col_idx;
     
     // Row 4
-    col_idx = 6; // 8
+    col_idx = 5; // 8
     map_b->switches[8].row = map_first_row+4;
     map_b->switches[8].col = col_idx;
     col_idx += 4; // E9, 10
@@ -683,7 +683,7 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[23].col = col_idx;
 
     // Row 5
-    col_idx = 19; // D15, 16
+    col_idx = 18; // D15, 16
     map_b->sensors[62].row = map_first_row+5;
     map_b->sensors[62].col = col_idx;
     map_b->sensors[63].row = map_first_row+5;
@@ -695,7 +695,7 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[19].col = col_idx;
 
     // Row 6
-    col_idx = 20; // B13, 14
+    col_idx = 19; // B13, 14
     map_b->sensors[28].row = map_first_row+6;
     map_b->sensors[28].col = col_idx;
     map_b->sensors[29].row = map_first_row+6;
@@ -733,7 +733,7 @@ void cli_draw_trackB(Map *map_b){
     map_b->switches[22].col = col_idx;
 
     // Row 10
-    col_idx = 20; // D1, 2
+    col_idx = 19; // D1, 2
     map_b->sensors[48].row = map_first_row+10;
     map_b->sensors[48].col = col_idx;
     map_b->sensors[49].row = map_first_row+10;
@@ -755,7 +755,7 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[15].col = col_idx;
 
     // Row 11
-    col_idx = 19; // E3, 4
+    col_idx = 18; // E3, 4
     map_b->sensors[66].row = map_first_row+11;
     map_b->sensors[66].col = col_idx;
     map_b->sensors[67].row = map_first_row+11;
@@ -814,14 +814,14 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[13].col = col_idx;
 
     // Row 13
-    col_idx = 3; // D7, 8
+    col_idx = 5; // D7, 8
     map_b->sensors[54].row = map_first_row+13;
     map_b->sensors[54].col = col_idx;
     map_b->sensors[55].row = map_first_row+13;
     map_b->sensors[55].col = col_idx;
 
     // Row 14
-    col_idx = 10; // E7, 8
+    col_idx = 11; // E7, 8
     map_b->sensors[70].row = map_first_row+14;
     map_b->sensors[70].col = col_idx;
     map_b->sensors[71].row = map_first_row+14;

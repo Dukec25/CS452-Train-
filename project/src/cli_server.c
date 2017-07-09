@@ -92,8 +92,8 @@ void cli_server()
 	vint cli_server_address = (vint) &cli_server;
 	/*irq_debug(SUBMISSION, "cli_server cli_server_address = 0x%x", cli_server_address);	 */
 
-	int cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); 
-	Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));
+	/*int cli_clock_tid = Create(PRIOR_MEDIUM, cli_clock_task); */
+	/*Send(cli_clock_tid, &cli_server_address, sizeof(cli_server_address), &handshake, sizeof(handshake));*/
 	/*irq_debug(SUBMISSION, "cli_clock_tid %d", cli_clock_tid);*/
 
     int cli_io_tid = Create(PRIOR_MEDIUM, cli_io_task);
@@ -208,8 +208,8 @@ void cli_server()
 	int expected_num_exit = 2;
 	int num_exit = 0;
 	int exit_list[2];
-	exit_list[0] = cli_clock_tid;
-//	exit_list[1] = cli_io_tid;
+	/*exit_list[0] = cli_clock_tid;*/
+    exit_list[1] = cli_io_tid;
 	while(num_exit < expected_num_exit) {
 		Handshake exit_handshake;
 		Handshake exit_reply = HANDSHAKE_AKG;
