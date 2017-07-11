@@ -60,8 +60,6 @@ void train_server()
 		cli_server_tid = WhoIs("CLI_SERVER");
 	}
 
-	/*irq_debug(SUBMISSION, "cli_server %d", cli_server_tid);*/
-
 	Handshake handshake = HANDSHAKE_AKG;
 	vint train_server_address = (vint) &train_server;
 	/*irq_debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
@@ -94,6 +92,42 @@ void train_server()
 			}
 			Reply(requester_tid, &cli_req, sizeof(cli_req));
 		}
+        else if (ts_request.type == TS_SENSOR){
+            Sensor_result sensor_result= ts_request.sensor;
+            int num_sensor = Sensor_result.num_sensor;
+
+            int temp;
+
+            for(temp = 0; temp < num_sensor; temp++){
+                Sensor sensor = sensor_result.sensors[temp];
+                int current_stop = sensor_to_num(sensor);
+
+                int last_stop = train_server->last_stop;
+                                
+                // update last triggered sensor
+                train_server->last_stop = current_stop;
+        
+                if ((current_stop == last_stop) || (last_stop == -1)) {
+                    continue;
+                }
+
+                // calculate distance, next stop, time, and new_velocity
+                int distance = cal_distance(train_server.track, last_stop, current_stop);
+                int next_stop = predict_next(train_server.track, current_stop, train_server);
+                int time = sensor.triggered_time - last_sensor.triggered_time;
+
+                // update velocity_data
+                velocity_update(last_stop, current_stop, time, train_server->current_velocity_data);
+
+                Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
+                push_cli_req_fifo(train_server, update_sensor_request);
+
+                int velocity = velocity_lookup(last_stop, current_stop, train_server->current_velocity_data); 
+                Cli_request update_calibration_request =
+                get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
+                push_cli_req_fifo(train_server, update_calibration_request);
+            }
+        }
 		else {
 			Reply(requester_tid, &handshake, sizeof(handshake));
 		}
@@ -229,108 +263,6 @@ void train_server()
 	Exit();
 }
 
-void sensor_reader_task()
-{
-	Handshake handshake = HANDSHAKE_AKG;
-	int train_server_tid = INVALID_TID;
-	vint train_server_address;
-	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
-	Reply(train_server_tid, &handshake, sizeof(handshake));
-	Train_server *train_server = (Train_server *) train_server_address;
-	
-	while (train_server->is_shutdown == 0) {
-        Delay(20); // update every 200ms
-		Command sensor_cmd = get_sensor_command();
-		TS_request ts_request;
-		ts_request.type = TS_COMMAND;
-		ts_request.cmd = sensor_cmd;
-		Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
-	}
-
-	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
-	Handshake exit_reply;
-	Send(train_server_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
-	
-	Exit();
-}
-
-void sensor_handle(Train_server *train_server)
-{
-	// sensor query
-	/*irq_debug(SUBMISSION, "%s", "sensor cmd");*/
-	Putc(COM1, SENSOR_QUERY);
-	uint16 sensor_data[SENSOR_GROUPS];
-	int sensor_group = 0;
-	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
-		char lower = Getc(COM1);
-		char upper = Getc(COM1);
-		sensor_data[(int) sensor_group] = upper << 8 | lower;
-	}
-	train_server->num_sensor_query++;
-	/*irq_debug(SUBMISSION, "num_sensor_query = %d", train_server->num_sensor_query);*/
-
-	// parse sensor data
-	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
-		if (sensor_data[(int) sensor_group] == 0) {
-			continue;
-		}
-		/*irq_debug(SUBMISSION, "sensor_data[%d] = %d", sensor_group, sensor_data[(int) sensor_group]);*/
-		char bit = 0;
-		for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
-			//sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
-			if (!(sensor_data[(int) sensor_group] & (0x1 << bit))) {
-				continue;
-			}
-			Sensor sensor;
-			sensor.group = sensor_group;
-			sensor.triggered_time = Time();
-			sensor.triggered_query = train_server->num_sensor_query;
-			if (bit + 1 <= 8) {
-				sensor.id = 8 - bit;
-			}
-			else {
-				sensor.id = 8 + 16 - bit;
-			}
-
-			int current_stop = sensor_to_num(sensor);
-			int last_stop = train_server->last_stop;
-	
-			Sensor last_sensor;
-			while (train_server->sensor_lifo_top != -1) {
-				pop_sensor_lifo(train_server, &last_sensor);
-				if (sensor_to_num(last_sensor) == last_stop) {
-					break;
-				}
-			}
-
-			push_sensor_lifo(train_server, sensor);
-
-			// update last triggered sensor
-			train_server->last_stop = current_stop;
-	
-			if ((current_stop == last_stop) || (last_stop == -1)) {
-				return;
-			}
-
-			// calculate distance, next stop, time, and new_velocity
-			int distance = cal_distance(train_server->track, last_stop, current_stop);
-			int next_stop = predict_next(train_server->track, current_stop, train_server);
-			int time = sensor.triggered_time - last_sensor.triggered_time;
-			int query = sensor.triggered_query - last_sensor.triggered_query;
-			// int new_velocity = 19 * query;
-			// irq_debug(SUBMISSION, "last_stop = %d, current_stop = %d, distance = %d, time = %d", last_stop, current_stop, distance);
-
-			// update velocity_data
-			// velocity_update(last_stop, current_stop, new_velocity, &velocity_data);
-			velocity_update(last_stop, current_stop, time, train_server->current_velocity_data);
-
-			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
-			push_cli_req_fifo(train_server, update_sensor_request);
-
-			int velocity = velocity_lookup(last_stop, current_stop, train_server->current_velocity_data); 
-			Cli_request update_calibration_request =
-				get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
-			push_cli_req_fifo(train_server, update_calibration_request);
 		}
 	}
 }
