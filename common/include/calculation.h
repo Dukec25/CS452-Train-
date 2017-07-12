@@ -3,6 +3,7 @@
 #include <track_node.h>
 #include <train_task.h>
 #include <string.h>
+#include <train_server.h>
 
 /*
  * the base function of most the functions listed below, used to return a

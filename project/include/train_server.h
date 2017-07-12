@@ -1,29 +1,45 @@
 #ifndef __TRAIN_SERVER__
 #define __TRAIN_SERVER__
+
 #include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
 #include <sensor_server.h>
+#include <park_server.h>
 
 // try this forward declaration in the future 
 // typedef struct Sensor_result Sensor_result
+
+typedef struct Park_result{
+    int park_delay_time;
+    int deaccelarate_stop;
+} Park_result;
 
 typedef struct Sensor_result{
     Sensor *sensors;
     int num_sensor;
 } Sensor_result;
 
+// will expand in the future
+typedef struct Park_request{
+    //int train_id;
+    Command park_cmd;
+} Park_request;
+
 typedef enum {
 	TS_NULL,
 	TS_WANT_CLI_REQ,
 	TS_COMMAND,
-    TS_SENSOR_SERVER
+    TS_SENSOR_SERVER,
+    TS_TRAIN_TO_PARK_REQ,
+    TS_PARK_SERVER
 } TS_request_type;
 
 typedef struct TS_request {
 	TS_request_type type;
 	Command cmd;
     Sensor_result sensor;
+    Park_result park_result;
 } TS_request;
 
 typedef struct Train_server {
@@ -31,6 +47,11 @@ typedef struct Train_server {
 
 	int is_special_cmd;
 	Command special_cmd;
+
+#define PARK_REQ_FIFO_SIZE	100
+	Park_request park_req_fifo[PARK_REQ_FIFO_SIZE];
+	int park_req_fifo_head;
+	int park_req_fifo_tail;
 
 #define COMMAND_FIFO_SIZE	100
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
@@ -59,6 +80,8 @@ typedef struct Train_server {
 	Velocity_data velocity10_data;
 	Velocity_data velocity8_data;
 	Velocity_data velocity6_data;
+    int deaccelarate_stop;
+    int park_delay_time;
 
     Velocity_data *current_velocity_data;
     Map cli_map;

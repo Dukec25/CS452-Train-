@@ -1,4 +1,4 @@
-SRC			= archive_tasks.c rps.c cli_server.c  main.c train_server.c train_server_helper.c train_task.c  user_tasks.c sensor_server.c
+SRC			= archive_tasks.c rps.c cli_server.c  main.c train_server.c train_server_helper.c train_task.c  user_tasks.c sensor_server.c park_server.c
 SRC			+= milestone1_test.c
 TARGET_ELF 	= main.elf
 

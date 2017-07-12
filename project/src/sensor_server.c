@@ -12,15 +12,13 @@ void sensor_server()
 	while (train_server->is_shutdown == 0) {
         // size = num of trains 
         Sensor sensors_output[6];
-        Sensor_result work_result;
 
 		TS_request ts_request;
 		ts_request.type = TS_SENSOR_SERVER;
 
         int num_sensor = sensor_handle(sensors_output);
-        work_result.num_sensor = num_sensor;
-        work_result.sensors = sensors_output;
-        ts_request.sensor = work_result;
+        ts_request.sensor.num_sensor = num_sensor;
+        ts_request.sensor.sensors = sensors_output;
         Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
 	}
 

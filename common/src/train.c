@@ -583,13 +583,6 @@ void velocity14_initialization(Velocity_data *velocity_data)
  
 int velocity_lookup(int src, int dest, Velocity_data *velocity_data)
 {
-	/*if (!is_found) {*/
-        /*debug(SUBMISSION, "not found velocity%d\r\n", new_velocity);*/
-		/*int idx = velocity_data->node[src].num_velocity;*/
-		/*velocity_data->node[src].dest[idx] = dest;*/
-		/*velocity_data->node[src].velocity[idx] = new_velocity;*/
-		/*velocity_data->node[src].num_velocity++;*/
-	/*}*/
 	int i;
     /*debug(SUBMISSION, "src%d dest%d\r\n", src, dest);*/
     /*debug(SUBMISSION, "num_velocity%d\r\n",velocity_data->node[src].num_velocity);*/
