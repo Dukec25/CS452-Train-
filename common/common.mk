@@ -6,6 +6,11 @@ XCC = gcc
 AS	= as
 AR	= ar
 
+#XCC 	= arm-none-eabi-gcc
+#AS	= arm-none-eabi-as
+#AR	= arm-none-eabi-ar
+#LD	= arm-none-eabi-ld
+
 CFLAGS  = -c -fPIC -Wall $(INCLUDE) -mcpu=arm920t -msoft-float --no-builtin -O2
 ASFLAGS	= -mcpu=arm920t -mapcs-32
 ARFLAGS = rcs

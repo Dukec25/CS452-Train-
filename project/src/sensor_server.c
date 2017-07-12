@@ -1,9 +1,5 @@
 #include <sensor_server.h>
 
-void sensor_server_init(){
-	train_server->sensor_lifo_top = -1;
-}
-
 void sensor_server()
 {
 	Handshake handshake = HANDSHAKE_AKG;
@@ -13,19 +9,19 @@ void sensor_server()
 	Reply(train_server_tid, &handshake, sizeof(handshake));
 	Train_server *train_server = (Train_server *) train_server_address;
     
-    Sensor sensors_output[10];
-
 	while (train_server->is_shutdown == 0) {
+        // size = num of trains 
+        Sensor sensors_output[6];
         Sensor_result work_result;
 
 		TS_request ts_request;
-		ts_request.type = TS_SENSOR;
+		ts_request.type = TS_SENSOR_SERVER;
 
         int num_sensor = sensor_handle(sensors_output);
         work_result.num_sensor = num_sensor;
         work_result.sensors = sensors_output;
         ts_request.sensor = work_result;
-        send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
+        Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
 	}
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
@@ -39,7 +35,7 @@ int sensor_handle(Sensor *sensor_output)
 {
 	Putc(COM1, SENSOR_QUERY);
 	uint16 sensor_data[SENSOR_GROUPS];
-    int num_hit_sensors = 0;
+    int num_hit_sensor = 0;
 	int sensor_group = 0;
 	for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
 		char lower = Getc(COM1);
@@ -69,6 +65,7 @@ int sensor_handle(Sensor *sensor_output)
 			else {
 				sensor.id = 8 + 16 - bit;
 			}
+            sensor_output[num_hit_sensor] = sensor;
         }
     }
     return num_hit_sensor;

@@ -3,16 +3,27 @@
 #include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
+#include <sensor_server.h>
+
+// try this forward declaration in the future 
+// typedef struct Sensor_result Sensor_result
+
+typedef struct Sensor_result{
+    Sensor *sensors;
+    int num_sensor;
+} Sensor_result;
 
 typedef enum {
 	TS_NULL,
 	TS_WANT_CLI_REQ,
-	TS_COMMAND
+	TS_COMMAND,
+    TS_SENSOR_SERVER
 } TS_request_type;
 
 typedef struct TS_request {
 	TS_request_type type;
 	Command cmd;
+    Sensor_result sensor;
 } TS_request;
 
 typedef struct Train_server {
@@ -36,7 +47,8 @@ typedef struct Train_server {
 #define SENSOR_LIFO_SIZE	100
 	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
 	int sensor_lifo_top;
-	int last_stop;	// last sensor converted to num
+	Sensor last_sensor;	// last sensor converted to num
+    int last_stop;
 	int num_sensor_query;
 
     int switches_status[NUM_SWITCHES];
@@ -54,8 +66,6 @@ typedef struct Train_server {
 
 void train_server_init(Train_server *train_server);
 void train_server();
-void sensor_reader_task();
-void sensor_handle(Train_server *train_server);
 void dc_handle(Train_server *train_server, Command dc_cmd);
 void br_handle(Train_server *train_server, Command br_cmd);
 void park_handle(Train_server *train_server, Command park_cmd);

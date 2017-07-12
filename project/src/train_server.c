@@ -17,9 +17,10 @@ void train_server_init(Train_server *train_server)
 	train_server->cli_req_fifo_head = 0;
 	train_server->cli_req_fifo_tail = 0;
 
-	train_server->sensor_lifo_top = -1;
-	train_server->last_stop = -1;
-	train_server->num_sensor_query = 0;
+	train_server->last_sensor.group = 0;
+    train_server->last_sensor.id = 0;
+    train_server->last_stop=-1;
+
     train_server->cli_map.test = 5;
 
 	int sw;
@@ -65,9 +66,9 @@ void train_server()
 	/*irq_debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
     Send(cli_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
-	int sensor_reader_tid = Create(PRIOR_MEDIUM, sensor_reader_task);
+	int sensor_server_tid = Create(PRIOR_MEDIUM, sensor_server);
 	/*irq_debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
-	Send(sensor_reader_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
+	Send(sensor_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
 		// receive command request
@@ -92,40 +93,40 @@ void train_server()
 			}
 			Reply(requester_tid, &cli_req, sizeof(cli_req));
 		}
-        else if (ts_request.type == TS_SENSOR){
+        else if (ts_request.type == TS_SENSOR_SERVER) {
             Sensor_result sensor_result= ts_request.sensor;
-            int num_sensor = Sensor_result.num_sensor;
+            int num_sensor = sensor_result.num_sensor;
+            int idx = 0;
 
-            int temp;
+            for( ; idx < num_sensor; idx++){
+                Sensor current_sensor = sensor_result.sensors[idx];
+                Sensor last_sensor = train_server.last_sensor;
+                int last_stop = sensor_to_num(last_sensor);
+                int current_stop = sensor_to_num(current_sensor);
 
-            for(temp = 0; temp < num_sensor; temp++){
-                Sensor sensor = sensor_result.sensors[temp];
-                int current_stop = sensor_to_num(sensor);
-
-                int last_stop = train_server->last_stop;
-                                
                 // update last triggered sensor
-                train_server->last_stop = current_stop;
+                train_server.last_sensor = current_sensor;
+                train_server.last_stop = current_stop; // to be deleted 
         
-                if ((current_stop == last_stop) || (last_stop == -1)) {
+                if ((current_stop == last_stop) ||  (last_stop == -1)) {
                     continue;
                 }
 
                 // calculate distance, next stop, time, and new_velocity
                 int distance = cal_distance(train_server.track, last_stop, current_stop);
-                int next_stop = predict_next(train_server.track, current_stop, train_server);
-                int time = sensor.triggered_time - last_sensor.triggered_time;
+                int next_stop = predict_next(train_server.track, current_stop, &train_server);
+                int time = current_sensor.triggered_time - last_sensor.triggered_time;
 
                 // update velocity_data
-                velocity_update(last_stop, current_stop, time, train_server->current_velocity_data);
+                velocity_update(last_stop, current_stop, time, train_server.current_velocity_data);
 
-                Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
-                push_cli_req_fifo(train_server, update_sensor_request);
+                Cli_request update_sensor_request = get_update_sensor_request(current_sensor, last_stop, next_stop);
+                push_cli_req_fifo(&train_server, update_sensor_request);
 
-                int velocity = velocity_lookup(last_stop, current_stop, train_server->current_velocity_data); 
+                int velocity = velocity_lookup(last_stop, current_stop, train_server.current_velocity_data); 
                 Cli_request update_calibration_request =
                 get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
-                push_cli_req_fifo(train_server, update_calibration_request);
+                push_cli_req_fifo(&train_server, update_calibration_request);
             }
         }
 		else {
@@ -197,10 +198,6 @@ void train_server()
 			command_handle(&cmd);
 			break;
 
-		case SENSOR:
-			sensor_handle(&train_server);
-			break;
-
 		case DC:
 			train_server.is_special_cmd = 1;
 			train_server.special_cmd = cmd;
@@ -242,7 +239,7 @@ void train_server()
 	int expected_num_exit = 1;
 	int num_exit = 0;
 	int exit_list[1];
-	exit_list[0] = sensor_reader_tid;
+	exit_list[0] = sensor_server_tid;
 	while(num_exit < expected_num_exit) {
 		Handshake exit_handshake;
 		Handshake exit_reply = HANDSHAKE_AKG;
@@ -263,9 +260,6 @@ void train_server()
 	Exit();
 }
 
-		}
-	}
-}
 
 void dc_handle(Train_server *train_server, Command dc_cmd)
 {
