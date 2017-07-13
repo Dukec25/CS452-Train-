@@ -19,7 +19,7 @@ void train_task_admin()
 	bwputc(COM1, START); // switches won't work without start command
 	irq_io_tasks_cluster();
 
-    /*reverse_initialize_switch();*/
+    reverse_initialize_switch();
 	initialize_switch();
 	sensor_initialization();
 
@@ -37,6 +37,9 @@ void train_task_admin()
 	int cli_request_courier_tid = Create(PRIOR_MEDIUM, cli_request_courier);
 	Send(cli_request_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
+    int train_to_park_courier_tid = Create(PRIOR_MEDIUM, train_to_park_courier);
+    Send(train_to_park_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+  
 	/*int tid = Create(PRIOR_MEDIUM, 	milestone1_test);*/
 
 	int expected_num_exit = 5;
@@ -184,4 +187,38 @@ void cli_request_courier()
 	Handshake exit_reply;
 	Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
 	Exit();
+}
+
+void train_to_park_courier()
+{
+    Handshake kill_all_reply = HANDSHAKE_AKG;
+    int train_task_admin_tid = INVALID_TID;
+    vint kill_all_addr;
+    Receive(&train_task_admin_tid, &kill_all_addr, sizeof(kill_all_addr));
+    Reply(train_task_admin_tid, &kill_all_reply, sizeof(kill_all_reply));
+    Handshake *kill_all = kill_all_addr;
+
+    int train_server_tid = INVALID_TID;
+    while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
+        train_server_tid = WhoIs("TRAIN_SERVER");
+    }
+    int park_server_tid = INVALID_TID;
+    while(!(park_server_tid > 0 && park_server_tid < MAX_NUM_TASKS)) {
+        park_server_tid = WhoIs("PARK_SERVER");
+    }
+
+    Handshake handshake = HANDSHAKE_AKG;
+    bwprintf(COM2, "train_to_park_courier get trigger");
+    while (*kill_all != HANDSHAKE_SHUTDOWN) {
+        TS_request train_server_msg;
+        train_server_msg.type = TS_TRAIN_TO_PARK_REQ;
+        Park_request park_req;
+        Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &park_req, sizeof(park_req));
+        Send(park_server_tid, &park_req, sizeof(park_req), &handshake, sizeof(handshake)); 
+    }
+
+    Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
+    Handshake exit_reply;
+    Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
+    Exit();
 }

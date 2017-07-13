@@ -3,16 +3,32 @@
 #include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
+#include <park_server.h>
+
+
+typedef struct Park_result{
+    int park_delay_time;
+    int deaccelarate_stop;
+} Park_result;
+
+// will expand in the future
+typedef struct Park_request{
+    //int train_id;
+    Command park_cmd;
+} Park_request;
 
 typedef enum {
 	TS_NULL,
 	TS_WANT_CLI_REQ,
-	TS_COMMAND
+	TS_COMMAND,
+    TS_TRAIN_TO_PARK_REQ,
+    TS_PARK_SERVER
 } TS_request_type;
 
 typedef struct TS_request {
 	TS_request_type type;
 	Command cmd;
+    Park_result park_result;
 } TS_request;
 
 typedef struct Train_server {
@@ -20,6 +36,11 @@ typedef struct Train_server {
 
 	int is_special_cmd;
 	Command special_cmd;
+
+#define PARK_REQ_FIFO_SIZE  100
+    Park_request park_req_fifo[PARK_REQ_FIFO_SIZE];
+    int park_req_fifo_head;
+    int park_req_fifo_tail;
 
 #define COMMAND_FIFO_SIZE	100
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
@@ -48,8 +69,13 @@ typedef struct Train_server {
 	Velocity_data velocity8_data;
 	Velocity_data velocity6_data;
 
+    int deaccelarate_stop;
+    int park_delay_time;
+
     Velocity_data *current_velocity_data;
     Map cli_map;
+    int cli_courier_on_wait;
+    int park_courier_on_wait;
 } Train_server;
 
 void train_server_init(Train_server *train_server);
