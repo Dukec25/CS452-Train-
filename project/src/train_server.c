@@ -22,6 +22,7 @@ void train_server_init(Train_server *train_server)
     train_server->last_stop=-1;
 
     train_server->cli_map.test = 5;
+    train_server->cli_courier_on_wait = 0;
 
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
@@ -63,12 +64,11 @@ void train_server()
 
 	Handshake handshake = HANDSHAKE_AKG;
 	vint train_server_address = (vint) &train_server;
+
+
 	/*irq_debug(SUBMISSION, "train_server train_server_address = 0x%x", train_server_address);	 */
     Send(cli_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
-	int sensor_server_tid = Create(PRIOR_MEDIUM, sensor_server);
-	/*irq_debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
-	Send(sensor_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
 		// receive command request
@@ -77,58 +77,27 @@ void train_server()
 		Receive(&requester_tid, &ts_request, sizeof(ts_request));
 		if (ts_request.type == TS_COMMAND) {
 			// from train_command_courier
+            /*irq_debug(SUBMISSION, "%s", "receive_cli_req");*/
+            bwprintf(COM2, "receive cli command");
 			push_cmd_fifo(&train_server, ts_request.cmd);
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
 		}
 		else if (ts_request.type == TS_WANT_CLI_REQ) {
+            irq_debug(SUBMISSION, "%s", "receive_cli_req");
+
 			// from cli_request_courier
 			Cli_request cli_req;
 			if (train_server.cli_req_fifo_head == train_server.cli_req_fifo_tail) {
 				cli_req.type = CLI_NULL;
+                train_server.cli_courier_on_wait = requester_tid;
 			}
 			else {
 				pop_cli_req_fifo(&train_server, &cli_req);
 				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
+                Reply(requester_tid, &cli_req, sizeof(cli_req));
 			}
-			Reply(requester_tid, &cli_req, sizeof(cli_req));
 		}
-        else if (ts_request.type == TS_SENSOR_SERVER) {
-            Sensor_result sensor_result= ts_request.sensor;
-            int num_sensor = sensor_result.num_sensor;
-            int idx = 0;
-
-            for( ; idx < num_sensor; idx++){
-                Sensor current_sensor = sensor_result.sensors[idx];
-                Sensor last_sensor = train_server.last_sensor;
-                int last_stop = sensor_to_num(last_sensor);
-                int current_stop = sensor_to_num(current_sensor);
-
-                // update last triggered sensor
-                train_server.last_sensor = current_sensor;
-                train_server.last_stop = current_stop; // to be deleted 
-        
-                if ((current_stop == last_stop) ||  (last_stop == -1)) {
-                    continue;
-                }
-
-                // calculate distance, next stop, time, and new_velocity
-                int distance = cal_distance(train_server.track, last_stop, current_stop);
-                int next_stop = predict_next(train_server.track, current_stop, &train_server);
-                int time = current_sensor.triggered_time - last_sensor.triggered_time;
-
-                // update velocity_data
-                velocity_update(last_stop, current_stop, time, train_server.current_velocity_data);
-
-                Cli_request update_sensor_request = get_update_sensor_request(current_sensor, last_stop, next_stop);
-                push_cli_req_fifo(&train_server, update_sensor_request);
-
-                int velocity = velocity_lookup(last_stop, current_stop, train_server.current_velocity_data); 
-                Cli_request update_calibration_request =
-                get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
-                push_cli_req_fifo(&train_server, update_calibration_request);
-            }
-        }
 		else {
 			Reply(requester_tid, &handshake, sizeof(handshake));
 		}
@@ -155,7 +124,6 @@ void train_server()
             }
             break;
 		case TR:
-			/*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
 			command_handle(&cmd);
 
 			train_server.train.id = cmd.arg0;
@@ -180,7 +148,7 @@ void train_server()
 
 			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
 			push_cli_req_fifo(&train_server, cli_update_request);
-	
+
 			break;
 		case SW:
 			irq_debug(SUBMISSION, "%s", "handle sw cmd");
@@ -218,6 +186,8 @@ void train_server()
 			break;
 		}
 
+        sensor_handle(&train_server);
+
 		if (train_server.is_special_cmd) {
 			switch (train_server.special_cmd.type) {
 			case DC:
@@ -232,6 +202,16 @@ void train_server()
 				break;
 			}
 		}
+
+        if (train_server.cli_courier_on_wait && 
+			train_server.cli_req_fifo_head != train_server.cli_req_fifo_tail)
+        {
+			Cli_request cli_req;
+            pop_cli_req_fifo(&train_server, &cli_req);
+            int courier_id =  train_server.cli_courier_on_wait;
+            Reply(courier_id, &cli_req, sizeof(cli_req));
+            train_server.cli_courier_on_wait = 0;
+        }
 	}
 
 	train_server.is_shutdown = 1;
@@ -239,7 +219,7 @@ void train_server()
 	int expected_num_exit = 1;
 	int num_exit = 0;
 	int exit_list[1];
-	exit_list[0] = sensor_server_tid;
+    /*exit_list[0] = sensor_server_tid;*/
 	while(num_exit < expected_num_exit) {
 		Handshake exit_handshake;
 		Handshake exit_reply = HANDSHAKE_AKG;
@@ -368,4 +348,71 @@ void park_handle(Train_server *train_server, Command park_cmd)
 
 		train_server->is_special_cmd = 0;
 	}
+}
+
+void sensor_handle(Train_server *train_server)
+{
+    // sensor query
+    Putc(COM1, SENSOR_QUERY);
+    uint16 sensor_data[SENSOR_GROUPS];
+    int sensor_group = 0;
+    for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
+        char lower = Getc(COM1);
+        char upper = Getc(COM1);
+        sensor_data[(int) sensor_group] = upper << 8 | lower;
+    }
+    train_server->num_sensor_query++;
+    /*irq_debug(SUBMISSION, "num_sensor_query = %d", train_server->num_sensor_query);*/
+    // parse sensor data
+    for (sensor_group = 0; sensor_group < SENSOR_GROUPS; sensor_group++) {
+        if (sensor_data[(int) sensor_group] == 0) {
+            continue;
+        }
+        /*irq_debug(SUBMISSION, "sensor_data[%d] = %d", sensor_group, sensor_data[(int) sensor_group]);*/
+        char bit = 0;
+        for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
+            //sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
+            if (!(sensor_data[(int) sensor_group] & (0x1 << bit))) {
+                continue;
+            }
+            Sensor sensor;
+            sensor.group = sensor_group;
+            sensor.triggered_time = Time();
+            sensor.triggered_query = train_server->num_sensor_query;
+            if (bit + 1 <= 8) {
+                sensor.id = 8 - bit;
+            }
+            else {
+                sensor.id = 8 + 16 - bit;
+            }
+
+            Sensor current_sensor = sensor;
+            Sensor last_sensor = train_server->last_sensor;
+            int last_stop = sensor_to_num(last_sensor);
+            int current_stop = sensor_to_num(current_sensor);
+
+            // update last triggered sensor
+            train_server->last_sensor = current_sensor;
+            train_server->last_stop = current_stop; // to be deleted 
+        
+            if ((current_stop == last_stop) ||  (last_stop == -1)) {
+                continue;
+            }
+
+            // calculate distance, next stop, time, and new_velocity
+            int distance = cal_distance(train_server->track, last_stop, current_stop);
+            int next_stop = predict_next(train_server->track, current_stop, train_server);
+            int time = sensor.triggered_time - last_sensor.triggered_time;
+            int query = sensor.triggered_query - last_sensor.triggered_query;
+
+            velocity_update(last_stop, current_stop, time, train_server->current_velocity_data);
+            Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
+            push_cli_req_fifo(train_server, update_sensor_request);
+            int velocity = velocity_lookup(last_stop, current_stop, train_server->current_velocity_data); 
+
+            Cli_request update_calibration_request =
+                get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
+            push_cli_req_fifo(train_server, update_calibration_request);
+        }
+    }
 }

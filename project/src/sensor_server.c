@@ -1,4 +1,5 @@
 #include <sensor_server.h>
+#include <debug.h>
 
 void sensor_server()
 {
@@ -8,6 +9,8 @@ void sensor_server()
 	Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
 	Reply(train_server_tid, &handshake, sizeof(handshake));
 	Train_server *train_server = (Train_server *) train_server_address;
+
+	irq_debug(SUBMISSION, "%s", "sensor_server get invoked");
     
 	while (train_server->is_shutdown == 0) {
         // size = num of trains 
@@ -17,12 +20,17 @@ void sensor_server()
 		TS_request ts_request;
 		ts_request.type = TS_SENSOR_SERVER;
 
+        /*irq_debug(SUBMISSION, "%s", "for");*/
         int num_sensor = sensor_handle(sensors_output);
-        work_result.num_sensor = num_sensor;
-        work_result.sensors = sensors_output;
-        ts_request.sensor = work_result;
-        Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
-	}
+
+        /*irq_debug(SUBMISSION, "%d", num_sensor);*/
+        if(num_sensor != 0){
+            work_result.num_sensor = num_sensor;
+            work_result.sensors = sensors_output;
+            ts_request.sensor = work_result;
+            Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
+        }
+    }
 
 	Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
 	Handshake exit_reply;
@@ -33,6 +41,7 @@ void sensor_server()
 
 int sensor_handle(Sensor *sensor_output)
 {
+    /*irq_debug(SUBMISSION, "%s", "sensor handle get called");*/
 	Putc(COM1, SENSOR_QUERY);
 	uint16 sensor_data[SENSOR_GROUPS];
     int num_hit_sensor = 0;
@@ -51,10 +60,12 @@ int sensor_handle(Sensor *sensor_output)
 
 		char bit = 0;
 		for (bit = 0; bit < SENSORS_PER_GROUP; bit++) {
+            
 			//sensor_data actually looks like 9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8
 			if (!(sensor_data[(int) sensor_group] & (0x1 << bit))) {
 				continue;
 			}
+            /*irq_debug(SUBMISSION, "%s", "sensor get triggered");*/
             num_hit_sensor++;
 			Sensor sensor;
 			sensor.group = sensor_group;

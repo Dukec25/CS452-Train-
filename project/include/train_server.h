@@ -3,7 +3,6 @@
 #include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
-#include <sensor_server.h>
 
 // try this forward declaration in the future 
 // typedef struct Sensor_result Sensor_result
@@ -62,12 +61,14 @@ typedef struct Train_server {
 
     Velocity_data *current_velocity_data;
     Map cli_map;
+    int cli_courier_on_wait;
 } Train_server;
 
 void train_server_init(Train_server *train_server);
 void train_server();
 void dc_handle(Train_server *train_server, Command dc_cmd);
 void br_handle(Train_server *train_server, Command br_cmd);
+void sensor_handle(Train_server *train_server);
 void park_handle(Train_server *train_server, Command park_cmd);
 
 /* helper functions */
