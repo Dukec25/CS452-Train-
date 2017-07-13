@@ -4,6 +4,7 @@
 #include <fifo.h>
 #include <cli_server.h>
 #include <park_server.h>
+#include <workers.h>
 
 
 typedef struct Park_result{
@@ -17,12 +18,17 @@ typedef struct Park_request{
     Command park_cmd;
 } Park_request;
 
+typedef struct Delay_request{
+    vint delay_time;
+} Delay_request;
+
 typedef enum {
 	TS_NULL,
 	TS_WANT_CLI_REQ,
 	TS_COMMAND,
     TS_TRAIN_TO_PARK_REQ,
-    TS_PARK_SERVER
+    TS_PARK_SERVER,
+    TS_DELAY_TIME_UP
 } TS_request_type;
 
 typedef struct TS_request {
@@ -81,7 +87,7 @@ typedef struct Train_server {
 void train_server_init(Train_server *train_server);
 void train_server();
 void sensor_reader_task();
-void sensor_handle(Train_server *train_server);
+void sensor_handle(Train_server *train_server, int delay_task_tid);
 void dc_handle(Train_server *train_server, Command dc_cmd);
 void br_handle(Train_server *train_server, Command br_cmd);
 void park_handle(Train_server *train_server, Command park_cmd);

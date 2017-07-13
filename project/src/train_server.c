@@ -84,6 +84,9 @@ void train_server()
     int park_server_tid = Create(PRIOR_MEDIUM, park_server);
     Send(park_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
   
+    int delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
+    Send(delay_task_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
+
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
 		// receive command request
 		int requester_tid;
@@ -124,7 +127,13 @@ void train_server()
         else if (ts_request.type == TS_PARK_SERVER) {
             train_server.park_delay_time = ts_request.park_result.park_delay_time; 
             train_server.deaccelarate_stop = ts_request.park_result.deaccelarate_stop;
-            bwprintf(COM2, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train_server.deaccelarate_stop, train_server.park_delay_time);
+            irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train_server.deaccelarate_stop, train_server.park_delay_time);
+			Reply(requester_tid, &handshake, sizeof(handshake));
+        }
+        else if (ts_request.type == TS_DELAY_TIME_UP){
+            Command tr_cmd = get_tr_stop_command(train_server.train.id);
+            push_cmd_fifo(&train_server, tr_cmd);
+            train_server.deaccelarate_stop = -1;
 			Reply(requester_tid, &handshake, sizeof(handshake));
         }
 		else {
@@ -197,7 +206,7 @@ void train_server()
 			break;
 
 		case SENSOR:
-			sensor_handle(&train_server);
+			sensor_handle(&train_server, delay_task_tid);
 			break;
 
 		case DC:
@@ -307,7 +316,7 @@ void sensor_reader_task()
 	Exit();
 }
 
-void sensor_handle(Train_server *train_server)
+void sensor_handle(Train_server *train_server, int delay_task_tid)
 {
 	// sensor query
 	/*irq_debug(SUBMISSION, "%s", "sensor cmd");*/
@@ -382,13 +391,13 @@ void sensor_handle(Train_server *train_server)
 			push_cli_req_fifo(train_server, update_calibration_request);
 
             if (current_stop == train_server->deaccelarate_stop){
-                bwprintf(COM2, "about to delay");
-                Delay(train_server->park_delay_time);
-                Command tr_cmd = get_tr_stop_command(train_server->train.id);
-                push_cmd_fifo(train_server, tr_cmd);
-                train_server->deaccelarate_stop = -1;
-            }
+                irq_debug(SUBMISSION, "%s", "about to delay");
 
+                Delay_request delay_req;
+                Handshake handshake = HANDSHAKE_AKG;
+                delay_req.delay_time = train_server->park_delay_time; 
+                Send(delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
+            }
 		}
 	}
 }
