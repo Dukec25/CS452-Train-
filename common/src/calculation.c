@@ -3,7 +3,7 @@
 #include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
-    /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
+    irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         debug(SUBMISSION, "invalid data src = %d, dest %d, in choose_destination", src, dest);

@@ -75,16 +75,16 @@ void pop_cli_req_fifo(Train_server *train_server, Cli_request *cli_req)
 	train_server->cli_req_fifo_tail = cli_req_fifo_get_next;
 }
 
-void push_sensor_lifo(Train_server *train_server, Sensor sensor)
-{
-	if (train_server->sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {
-		train_server->sensor_lifo_top += 1;
-		train_server->sensor_lifo[train_server->sensor_lifo_top] = sensor;
-	}
-}
+/*void push_sensor_lifo(Train_server *train_server, Sensor sensor)*/
+/*{*/
+    /*if (train_server->sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {*/
+        /*train_server->sensor_lifo_top += 1;*/
+        /*train_server->sensor_lifo[train_server->sensor_lifo_top] = sensor;*/
+    /*}*/
+/*}*/
 
-void pop_sensor_lifo(Train_server *train_server, Sensor *sensor)
-{
-	*sensor = train_server->sensor_lifo[train_server->sensor_lifo_top];
-	train_server->sensor_lifo_top -= 1;
-}
+/*void pop_sensor_lifo(Train_server *train_server, Sensor *sensor)*/
+/*{*/
+    /**sensor = train_server->sensor_lifo[train_server->sensor_lifo_top];*/
+    /*train_server->sensor_lifo_top -= 1;*/
+/*}*/

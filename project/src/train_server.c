@@ -44,7 +44,7 @@ void train_server_init(Train_server *train_server)
 
 	velocity8_initialization(&train_server->velocity8_data);
 
-	velocity6_initialization(&train_server->velocity6_data);
+	/*velocity6_initialization(&train_server->velocity6_data);*/
 }
 
 void train_server()
@@ -179,7 +179,7 @@ void train_server()
 					train_server.current_velocity_data = &train_server.velocity8_data;
 					break;
 				case 6:
-					train_server.current_velocity_data = &train_server.velocity6_data;
+					/*train_server.current_velocity_data = &train_server.velocity6_data;*/
 					break;
 				default:
 					break;
@@ -357,15 +357,17 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 			int current_stop = sensor_to_num(sensor);
 			int last_stop = train_server->last_stop;
 	
-			Sensor last_sensor;
-			while (train_server->sensor_lifo_top != -1) {
-				pop_sensor_lifo(train_server, &last_sensor);
-				if (sensor_to_num(last_sensor) == last_stop) {
-					break;
-				}
-			}
+            Sensor last_sensor = train_server->last_sensor;
+            /*Sensor last_sensor;*/
+            /*while (train_server->sensor_lifo_top != -1) {*/
+                /*pop_sensor_lifo(train_server, &last_sensor);*/
+                /*if (sensor_to_num(last_sensor) == last_stop) {*/
+                    /*break;*/
+                /*}*/
+            /*}*/
 
-			push_sensor_lifo(train_server, sensor);
+            /*push_sensor_lifo(train_server, sensor);*/
+            train_server->last_sensor = sensor;
 
 			// update last triggered sensor
 			train_server->last_stop = current_stop;
@@ -433,7 +435,7 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
 	int i;
 	for(i = 0; i < num_switch; i++) {
-		/*irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);*/
+        /*irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);*/
 		Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
 		push_cmd_fifo(train_server, sw_cmd);
 	}

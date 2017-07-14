@@ -40,6 +40,8 @@ typedef struct TS_request {
 typedef struct Train_server {
 	int is_shutdown;
 
+    Sensor last_sensor;
+
 	int is_special_cmd;
 	Command special_cmd;
 
@@ -61,8 +63,8 @@ typedef struct Train_server {
 	Train train;
 
 #define SENSOR_LIFO_SIZE	100
-	Sensor sensor_lifo[SENSOR_LIFO_SIZE];
-	int sensor_lifo_top;
+	//Sensor sensor_lifo[SENSOR_LIFO_SIZE];
+    int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
 	int num_sensor_query;
 
