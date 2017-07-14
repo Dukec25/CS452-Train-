@@ -3,14 +3,13 @@
 #include <debug.h>
 
 int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
-    irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);
+    /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         debug(SUBMISSION, "invalid data src = %d, dest %d, in choose_destination", src, dest);
         return -1;
     }
 
-    /*dump(SUBMISSION, "src = %d, dest=%d \r\n", src, dest);*/
     track_node *temp;
     temp = find_path(track, src, dest);
     return switches_need_changes(src, temp, train_server);
@@ -82,7 +81,6 @@ track_node* find_path(track_node *track, int src, int dest)
 }
 
 int switches_need_changes(int src, track_node *node, Train_server *train_server){
-    /*dump(SUBMISSION, "%s", "get into switches need change");*/
     /*debug(SUBMISSION, "switches_need_changes=%d\r\n", src);*/
     int idx = 0; // br_update size is 10
 
@@ -119,18 +117,56 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 /*debug(SUBMISSION, "straight \r\n");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
+                    int reverse_num = convert_sw_track_data(node->previous->num, 1);
+                    int next_stop = predict_next(train_server->track, reverse_num, train_server);
+
+                    // revert the direction 
+                    if(next_stop %2 == 0){
+                        next_stop += 1;
+                    } else{
+                        next_stop -= 1;
+                    }
+
+                    irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
+
+                    /*train_server->br_sensor_update[idx] = next_stop;*/
                     /*debug(SUBMISSION, "status curve \r\n");*/
-                    train_server->br_update[idx].id = node_id;
-                    train_server->br_update[idx++].state = 's';
+                    /*train_server->br_switch_update[idx].id = node_id;*/
+                    /*train_server->br_switch_update[idx++].state = 's';*/
+
+                    Train_br_switch br_switch;
+                    br_switch.sensor_stop = next_stop;
+                    br_switch.id  = node_id;
+                    br_switch.state = 's';
+                    push_br_lifo(train_server, br_switch);
+
                 } else{
                     /*debug(SUBMISSION, "status straight \r\n");*/
                 }
             } else{
                 /*debug(SUBMISSION, "curve \r\n");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
+                    int reverse_num = convert_sw_track_data(node->previous->num, 1);
+                    int next_stop = predict_next(train_server->track, reverse_num, train_server);
+
+                    // revert the direction 
+                    if(next_stop %2 == 0){
+                        next_stop += 1;
+                    } else{
+                        next_stop -= 1;
+                    }
+
+                    irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
+                    /*train_server->br_sensor_update[idx] = next_stop;*/
                     /*debug(SUBMISSION, "status straight \r\n");*/
-                    train_server->br_update[idx].id = node_id;
-                    train_server->br_update[idx++].state = 'c';
+                    /*train_server->br_update[idx].id = node_id;*/
+                    /*train_server->br_update[idx++].state = 'c';*/
+
+                    Train_br_switch br_switch;
+                    br_switch.sensor_stop = next_stop;
+                    br_switch.id  = node_id;
+                    br_switch.state = 'c';
+                    push_br_lifo(train_server, br_switch);
                 } else{
                     /*debug(SUBMISSION, "status curve \r\n");*/
                 }

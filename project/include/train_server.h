@@ -22,6 +22,12 @@ typedef struct Delay_request{
     vint delay_time;
 } Delay_request;
 
+typedef struct Train_br_switch{
+    int sensor_stop;
+    char id;
+    char state;
+} Train_br_switch;
+
 typedef enum {
 	TS_NULL,
 	TS_WANT_CLI_REQ,
@@ -62,7 +68,7 @@ typedef struct Train_server {
 
 	Train train;
 
-#define SENSOR_LIFO_SIZE	100
+//#define SENSOR_LIFO_SIZE	100
 	//Sensor sensor_lifo[SENSOR_LIFO_SIZE];
     int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
@@ -70,7 +76,12 @@ typedef struct Train_server {
 
     int switches_status[NUM_SWITCHES];
 
-    Switch br_update[10];			// switches to flip such that train can at a sensor 
+// switches to flip such that train can at a sensor 
+// sensors that locate right before the br switch
+#define BR_LIFO_SIZE    10
+    Train_br_switch br_lifo[BR_LIFO_SIZE];
+    int br_lifo_top;
+
     track_node track[TRACK_MAX];    // Data for the current using track
 	Velocity_data velocity14_data;
 	Velocity_data velocity10_data;
@@ -102,5 +113,11 @@ void push_cli_req_fifo(Train_server *train_server, Cli_request cli_req);
 void pop_cli_req_fifo(Train_server *train_server, Cli_request *cli_req);
 void push_sensor_lifo(Train_server *train_server, Sensor sensor);
 void pop_sensor_lifo(Train_server *train_server, Sensor *sensor);
+void push_br_lifo(Train_server *train_server, Train_br_switch br_switch);
+void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
+int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
+
+// type = 0 branch, 1 merge
+int convert_sw_track_data(int num, int type);
 
 #endif // __TRAIN_SERVER__

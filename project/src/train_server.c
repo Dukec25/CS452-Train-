@@ -20,7 +20,8 @@ void train_server_init(Train_server *train_server)
     train_server->park_req_fifo_head = 0;
 	train_server->park_req_fifo_tail = 0;
     
-	train_server->sensor_lifo_top = -1;
+	/*train_server->sensor_lifo_top = -1;*/
+    train_server->br_lifo_top = -1;
 	train_server->last_stop = -1;
 	train_server->num_sensor_query = 0;
     train_server->cli_map.test = 5;
@@ -358,15 +359,7 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 			int last_stop = train_server->last_stop;
 	
             Sensor last_sensor = train_server->last_sensor;
-            /*Sensor last_sensor;*/
-            /*while (train_server->sensor_lifo_top != -1) {*/
-                /*pop_sensor_lifo(train_server, &last_sensor);*/
-                /*if (sensor_to_num(last_sensor) == last_stop) {*/
-                    /*break;*/
-                /*}*/
-            /*}*/
 
-            /*push_sensor_lifo(train_server, sensor);*/
             train_server->last_sensor = sensor;
 
 			// update last triggered sensor
@@ -399,6 +392,17 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 Handshake handshake = HANDSHAKE_AKG;
                 delay_req.delay_time = train_server->park_delay_time; 
                 Send(delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
+            }
+
+            // some condition not takes into account here, like lifo
+            // contains the same sensor multiple times 
+            Train_br_switch br_switch;
+            int temp = peek_br_lifo(train_server, &br_switch);
+            if( current_stop == br_switch.sensor_stop){
+                train_server->br_lifo_top -= 1; // equivalent with pop 
+                irq_debug(SUBMISSION, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
+                Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
+                push_cmd_fifo(train_server, sw_cmd);
             }
 		}
 	}
@@ -433,11 +437,11 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
 	//irq_debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
-	int i;
-	for(i = 0; i < num_switch; i++) {
+	/*int i;*/
+	/*for(i = 0; i < num_switch; i++) {*/
         /*irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);*/
-		Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);
-		push_cmd_fifo(train_server, sw_cmd);
-	}
+		/*Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);*/
+		/*push_cmd_fifo(train_server, sw_cmd);*/
+	/*}*/
 	//irq_debug(SUBMISSION, "br_task: flip %d br done", num_switch);
 }

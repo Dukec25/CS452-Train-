@@ -1,7 +1,7 @@
 #ifndef __LIFO_H__
 #define __LIFO_H__
 
-#define LIFO_SIZE 1000
+#define LIFO_SIZE 100
 
 typedef struct Lifo_t {
     void *items[LIFO_SIZE];

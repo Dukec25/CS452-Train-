@@ -75,6 +75,38 @@ void pop_cli_req_fifo(Train_server *train_server, Cli_request *cli_req)
 	train_server->cli_req_fifo_tail = cli_req_fifo_get_next;
 }
 
+void push_br_lifo(Train_server *train_server, Train_br_switch br_switch)
+{
+    if (train_server->br_lifo_top != BR_LIFO_SIZE - 1) {
+        train_server->br_lifo_top += 1;
+        train_server->br_lifo[train_server->br_lifo_top] = br_switch;
+    }
+}
+
+void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
+{
+    *br_switch = train_server->br_lifo[train_server->br_lifo_top];
+    train_server->br_lifo_top -= 1;
+}
+
+int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
+{
+    if(train_server->br_lifo_top == -1){
+        return -1;
+    }
+    *br_switch = train_server->br_lifo[train_server->br_lifo_top];
+    return 0;
+}
+
+int convert_sw_track_data(int num, int type){
+    int result = 80 + (num-1)*2;
+    if(type){
+        result += 1;
+    }
+    return result;
+}
+
+
 /*void push_sensor_lifo(Train_server *train_server, Sensor sensor)*/
 /*{*/
     /*if (train_server->sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {*/
