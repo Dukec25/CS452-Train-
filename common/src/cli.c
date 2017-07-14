@@ -66,12 +66,12 @@ void cli_startup()
 	bwputstr(COM2, "Switches");
 	int sw;
     bwprintf(COM2, "\033[36m"); // make switches display cyan
-	/*for (sw = 0; sw < NUM_SWITCHES; sw++) {*/
-		/*int sw_address = switch_id_to_byte(sw + 1);*/
-		/*// Place sw id*/
-		/*bw_pos(SWITCH_ROW + sw, SWITCH_COL);*/
-		/*bwputx(COM2, sw_address);*/
-	/*}*/
+    for (sw = 0; sw < NUM_SWITCHES; sw++) {
+        int sw_address = switch_id_to_byte(sw + 1);
+        // Place sw id
+        bw_pos(SWITCH_ROW + sw, SWITCH_COL);
+        bwputx(COM2, sw_address);
+    }
     bwprintf(COM2, "\033[0m"); // reset special format
 
 	// Place input cursor at the end
@@ -193,21 +193,21 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 void cli_draw_trackA(Map *map_a){
 	irq_save();
     map_a->ascii =  ""
-        "-------X----S---------S-------X-----------X--------\n"
+        "-------X----C---------C-------X-----------X--------\n"
         "           /         /                             X\n"
-        "-----X----S         S----X------S--X-X--C---X---X---S\n"
+        "-----X----C         C----X------C--X-X--S---X---X---C\n"
         "         /         /             X     X             \\\n"
         "---X-----         X               X | X               \\\n"
-        "                 |                 O|C                 |\n"
+        "                 |                 C|S                 |\n"
         "                 |                  |                  |\n"
-        "                 |                 C|O                 |\n"
+        "                 |                 S|C                 |\n"
         "-X-------         X               X | X               /\n"
         "         \\         \\            X       X            /\n"
-        "-X----X---S         S---X-----C--X-----X--S-X---X---S\n"
+        "-X----X---C         C---X-----S--X-----X--C-X---X---C\n"
         "           \\         \\                             /\n"
-        "-X------X---S         --X---S-----X---X-----S--X--X\n"
+        "-X------X---C         --X---S-----X---X-----S--X--X\n"
         "             \\               \\             /\n"
-        "-X--------X---S---------X-----S-----------S----X--------\n"
+        "-X--------X---C---------X-----S-----------S----X--------\n"
         ;
     int col_idx=0;
     int map_first_row = MAP_FIRST_ROW;
