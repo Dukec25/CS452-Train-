@@ -40,7 +40,6 @@ void train_server_init(Train_server *train_server)
 	}
 
     velocity69_initialization(&train_server->velocity69_model);
-
     /*velocity71_initialization(&train_server->velocity71_model);*/
 }
 
