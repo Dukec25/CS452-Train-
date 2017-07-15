@@ -39,42 +39,11 @@ char switch_state_to_byte(char state);
 typedef struct Sensor {
 	char group;
 	char id;
-	int triggered_time;
-	int triggered_query;
 } Sensor;
+
 void sensor_initialization();
 int sensor_to_num(Sensor sensor);
 Sensor num_to_sensor(int num);
-
-/* Calibration */
-typedef struct Calibration_package {
-	int src;
-	int dest;
-	int distance;
-	int time; // actual time, [tick] = [10ms]
-	int velocity; // virtual velocity measured in [tick]
-} Calibration_package;
-
-/* Velocity */
-#define VELOCITY_DATA_LENGTH	80
-#define MAX_NUM_VELOCITIES		3
-typedef struct Velocity_node {
-	int src;
-	int num_velocity;
-	int dest[MAX_NUM_VELOCITIES];
-	int velocity[MAX_NUM_VELOCITIES];
-	int updates[MAX_NUM_VELOCITIES];
-} Velocity_node;
-typedef struct Velocity_data {
-	Velocity_node node[TRACK_MAX];	// virtual velocity measured in [tick]
-	int stopping_distance;	// mm
-} Velocity_data;
-int track_node_name_to_num(char *name);
-void velocity14_initialization(Velocity_data *velocity_data); 
-void velocity10_initialization(Velocity_data *velocity_data);
-void velocity8_initialization(Velocity_data *velocity_data);
-int velocity_lookup(int src, int dest, Velocity_data *velocity_data);
-void velocity_update(int src, int dest, int new_velocity, Velocity_data *velocity_data);
 
 /* Train */
 #define TRAINS 80
@@ -89,6 +58,32 @@ typedef enum {
 	START = 96,
 	HALT = 97
 } Train_state;
+
+/* Calibration */
+typedef struct Calibration_package {
+    int src;
+    int dest;
+    int distance;
+    int real_velocity;  // in um / tick
+    int velocity;       // virtual velocity measured in um / tick
+} Calibration_package;
+
+/* Velocity */
+#define ALPHA           0.9
+#define MAX_VELOCITY    8000    // um / tick
+typedef struct Velocity_model {
+    int train_id;
+    int speed[MAX_SPEED + 1];               // 0 - 14
+    int stopping_distance[MAX_SPEED + 1];   // in mm
+    double velocity[MAX_SPEED + 1];         // in um / tick
+    double acceleration;                    // in um / tick^2
+    double deacceleration;                  // in um / tick^2
+} Velocity_model;
+int track_node_name_to_num(char *name);
+void velocity69_initialization(Velocity_model *velocity_model); 
+void velocity71_initialization(Velocity_model *velocity_model); 
+void velocity58_initialization(Velocity_model *velocity_model); 
+void velocity_update(int speed, double real_velocity, Velocity_model *velocity_model);
 
 /* Command */
 #define COMMAND_SIZE 100
@@ -114,6 +109,8 @@ typedef struct Command_buffer
 	char data[COMMAND_SIZE];
 	int pos;
 } Command_buffer;
+
+Command get_tr_command(char id, char speed);
 Command get_sw_command(char id, char state);
 Command get_sensor_command();
 Command get_tr_stop_command(char id);

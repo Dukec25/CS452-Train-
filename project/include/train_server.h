@@ -46,8 +46,6 @@ typedef struct TS_request {
 typedef struct Train_server {
 	int is_shutdown;
 
-    Sensor last_sensor;
-
 	int is_special_cmd;
 	Command special_cmd;
 
@@ -72,7 +70,7 @@ typedef struct Train_server {
 	//Sensor sensor_lifo[SENSOR_LIFO_SIZE];
     int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
-	int num_sensor_query;
+    int last_sensor_triggered_time;
 
     int switches_status[NUM_SWITCHES];
 
@@ -83,18 +81,14 @@ typedef struct Train_server {
     int br_lifo_top;
 
     track_node track[TRACK_MAX];    // Data for the current using track
-	Velocity_data velocity14_data;
-	Velocity_data velocity10_data;
-	Velocity_data velocity8_data;
-	Velocity_data velocity6_data;
 
     int deaccelarate_stop;
     int park_delay_time;
 
-    Velocity_data *current_velocity_data;
     Map cli_map;
     int cli_courier_on_wait;
     int park_courier_on_wait;
+    Velocity_model velocity69_model;
 } Train_server;
 
 void train_server_init(Train_server *train_server);

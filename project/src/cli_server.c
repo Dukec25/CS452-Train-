@@ -41,14 +41,14 @@ Cli_request get_update_sensor_request(Sensor sensor, int last_stop, int next_sto
 	return update_sensor_request;	
 }
 
-Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int time, int velocity)
+Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int real_velocity, int velocity)
 {
 	Cli_request update_calibration_request;
 	update_calibration_request.type = CLI_UPDATE_CALIBRATION;
 	update_calibration_request.calibration_update.src = last_stop;
 	update_calibration_request.calibration_update.dest = current_stop;
 	update_calibration_request.calibration_update.distance = distance;
-	update_calibration_request.calibration_update.time = time;
+	update_calibration_request.calibration_update.real_velocity = real_velocity;
 	update_calibration_request.calibration_update.velocity = velocity;
 	return update_calibration_request;
 }

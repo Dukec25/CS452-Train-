@@ -23,7 +23,7 @@ void train_server_init(Train_server *train_server)
 	/*train_server->sensor_lifo_top = -1;*/
     train_server->br_lifo_top = -1;
 	train_server->last_stop = -1;
-	train_server->num_sensor_query = 0;
+	train_server->last_sensor_triggered_time = 0;
     train_server->cli_map.test = 5;
 
     // to be removed 
@@ -39,13 +39,9 @@ void train_server_init(Train_server *train_server)
 		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
-	velocity14_initialization(&train_server->velocity14_data);
+    velocity69_initialization(&train_server->velocity69_model);
 
-	velocity10_initialization(&train_server->velocity10_data);
-
-	velocity8_initialization(&train_server->velocity8_data);
-
-	/*velocity6_initialization(&train_server->velocity6_data);*/
+    /*velocity71_initialization(&train_server->velocity71_model);*/
 }
 
 void train_server()
@@ -169,22 +165,13 @@ void train_server()
 			train_server.train.id = cmd.arg0;
 			train_server.train.speed = cmd.arg1;
 
-			switch(train_server.train.speed){
-				case 14:
-					train_server.current_velocity_data = &train_server.velocity14_data;
-					break;
-				case 10:
-					train_server.current_velocity_data = &train_server.velocity10_data;
-					break;
-				case 8:
-					train_server.current_velocity_data = &train_server.velocity8_data;
-					break;
-				case 6:
-					/*train_server.current_velocity_data = &train_server.velocity6_data;*/
-					break;
-				default:
-					break;
-			}
+			/*switch(train_server.train.speed){*/
+				/*case 14:*/
+					/*train_server.current_velocity_data = &train_server.velocity14_data;*/
+					/*break;*/
+				/*default:*/
+					/*break;*/
+			/*}*/
 
 			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
 			push_cli_req_fifo(&train_server, cli_update_request);
@@ -329,7 +316,6 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 		char upper = Getc(COM1);
 		sensor_data[(int) sensor_group] = upper << 8 | lower;
 	}
-	train_server->num_sensor_query++;
 	/*irq_debug(SUBMISSION, "num_sensor_query = %d", train_server->num_sensor_query);*/
 
 	// parse sensor data
@@ -346,8 +332,6 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 			}
 			Sensor sensor;
 			sensor.group = sensor_group;
-			sensor.triggered_time = Time();
-			sensor.triggered_query = train_server->num_sensor_query;
 			if (bit + 1 <= 8) {
 				sensor.id = 8 - bit;
 			}
@@ -357,33 +341,33 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 
 			int current_stop = sensor_to_num(sensor);
 			int last_stop = train_server->last_stop;
+            int current_sensor_triggered_time = Time();
+            int last_sensor_triggered_time = train_server->last_sensor_triggered_time;
 	
-            Sensor last_sensor = train_server->last_sensor;
-
-            train_server->last_sensor = sensor;
+			/*if ((current_stop == last_stop) || (last_stop == -1)) {*/
+            if ((current_stop == last_stop)){
+				return;
+			}
 
 			// update last triggered sensor
 			train_server->last_stop = current_stop;
-	
-			if ((current_stop == last_stop) || (last_stop == -1)) {
-				return;
-			}
+            train_server->last_sensor_triggered_time = current_sensor_triggered_time; 
 
 			// calculate distance, next stop, time, and new_velocity
 			int distance = cal_distance(train_server->track, last_stop, current_stop);
 			int next_stop = predict_next(train_server->track, current_stop, train_server);
-			int time = sensor.triggered_time - last_sensor.triggered_time;
+            int time = current_sensor_triggered_time - last_sensor_triggered_time;
+            double real_velocity = (double) distance / (double) time;
 
 			// update velocity_data
-			velocity_update(last_stop, current_stop, time, train_server->current_velocity_data);
+            velocity_update(train_server->train.speed, real_velocity, &train_server->velocity69_model);
 
 			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
 			push_cli_req_fifo(train_server, update_sensor_request);
 
-			int velocity = velocity_lookup(last_stop, current_stop, train_server->current_velocity_data); 
-			Cli_request update_calibration_request =
-				get_update_calibration_request(last_stop, current_stop, distance, time, velocity);
-			push_cli_req_fifo(train_server, update_calibration_request);
+            Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
+                (int) real_velocity, (int) train_server->velocity69_model.velocity[train_server->train.speed]); 
+            push_cli_req_fifo(train_server, update_calibration_request);
 
             if (current_stop == train_server->deaccelarate_stop){
                 irq_debug(SUBMISSION, "%s", "about to delay");

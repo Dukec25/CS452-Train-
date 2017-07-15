@@ -26,7 +26,7 @@ int cal_distance(track_node *track, int src, int dest)
     track_node *temp;
     temp = find_path(track, src, dest);
     if (temp) {
-        return temp->buf;
+        return temp->buf*1000;
     }
     else{
         return 0;
@@ -260,7 +260,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 			/*irq_debug(SUBMISSION, "add %s", node->name);*/
             Sensor_dist sensor_dist;
             sensor_dist.sensor_id = node->num;
-            sensor_dist.distance = accumulated_distance;
+            sensor_dist.distance = accumulated_distance*1000;
             accumulated_distance = 0;
             ans[arr_len++]  = sensor_dist;
 
