@@ -44,8 +44,8 @@
 #define SWITCH_COL 			MIDDLE_BORDER + 1
 /* Track */
 #define TRACK_DATA_ROW              UPPER_BORDER
-#define TRACK_DATA_COL              RIGHT_BORDER + 12
-#define TRACK_DATA_PER_ROW			5
+#define TRACK_DATA_COL              RIGHT_BORDER + 10
+#define TRACK_DATA_PER_ROW			4
 #define TRACK_DATA_PER_COL			26
 #define TRACK_LABEL_LENGTH			7
 #define TRACK_DATA_LENGTH			45
