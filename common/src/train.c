@@ -190,10 +190,10 @@ void velocity71_initialization(Velocity_model *velocity_model)
         velocity_model->stopping_distance[i] = 0;
     }
 
-    velocity_model->stopping_distance[6] = 9;
-    velocity_model->stopping_distance[8] = 21;
-    velocity_model->stopping_distance[10] = 363;
-    velocity_model->stopping_distance[14] = 1067;
+    velocity_model->stopping_distance[6] = 90;
+    velocity_model->stopping_distance[8] = 210;
+    velocity_model->stopping_distance[10] = 399;
+    velocity_model->stopping_distance[14] = 1265;
     velocity_model->acceleration = 0.;  // to be hardcoded
     velocity_model->deacceleration = 0.;    // to be hardcoded
 }
@@ -340,9 +340,9 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
     /*debug(SUBMISSION, "args%s\r\n", args);*/
     /*debug(SUBMISSION, "argc num = %d\r\n", argc);*/
     
-    // currently no commands need more than two arguments
+    // currently no commands need more than three arguments
     // there will probably won't be in the future as well
-    if(argc > 2){
+    if(argc > 3){
         return -1;
     }
 
@@ -393,7 +393,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		pcmd->type = DC;
 		break;
 	case 'p':
-        if (argc != 2){
+        if (argc != 3){
             return -1;
         }
         if(args[1] > 16){
@@ -414,6 +414,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
+    pcmd->arg2 = args[2];
 
 	return 0;
 }

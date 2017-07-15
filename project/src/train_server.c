@@ -208,14 +208,12 @@ void train_server()
 
 		case PARK:
 			/*irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);*/
-			train_server.special_cmd = cmd;
 			br_handle(&train_server, cmd);
 
             Park_request park_req;
-            park_req.park_cmd = train_server.special_cmd;
+            park_req.park_cmd = cmd;
 
             push_park_req_fifo(&train_server, park_req);
-
 			break;
 				
 		default:
@@ -419,13 +417,5 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
-	//irq_debug(SUBMISSION, "br_task: send flip %d switches start", num_switch);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
-	/*int i;*/
-	/*for(i = 0; i < num_switch; i++) {*/
-        /*irq_debug(SUBMISSION, "SW ID = %d, STATE = %d", train_server->br_update[i].id, train_server->br_update[i].state);*/
-		/*Command sw_cmd = get_sw_command(train_server->br_update[i].id, train_server->br_update[i].state);*/
-		/*push_cmd_fifo(train_server, sw_cmd);*/
-	/*}*/
-	//irq_debug(SUBMISSION, "br_task: flip %d br done", num_switch);
 }

@@ -1,5 +1,6 @@
 #include <park_server.h>
 #include <calculation.h>
+#include <debug.h>
 
 void park_server()
 {
@@ -21,6 +22,10 @@ void park_server()
         // parse destination
         Sensor stop_sensor = parse_stop_sensor(park_req.park_cmd);
         int stop = sensor_to_num(stop_sensor);
+
+        // get extra distance (offset) in mm
+        int offset = park_req.park_cmd.arg2*10; // was cm 
+        irq_debug(SUBMISSION, "offset value%d", offset);
 
         // retrieve stopping distance
         int stopping_distance = train_server->velocity69_model.stopping_distance[train_server->train.speed]; 
@@ -45,7 +50,7 @@ void park_server()
             delta += park_stops[i].distance;
         }
 
-        int park_delay_time = (delta - stopping_distance * 1000) / velocity;
+        int park_delay_time = (delta + offset*1000 - stopping_distance * 1000) / velocity;
 
         TS_request ts_request;
         ts_request.type = TS_PARK_SERVER;

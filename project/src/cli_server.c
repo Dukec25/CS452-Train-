@@ -188,9 +188,6 @@ void cli_server()
 				cli_update_switch(update_request->switch_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_SENSOR:
-				//irq_debug(SUBMISSION, "cli pop sensor group = %d, id = %d, time = %d",
-				//			update_request->sensor_update.group, update_request->sensor_update.id,
-				//			update_request->sensor_update.triggered_time);		
 				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_CALIBRATION:
