@@ -164,8 +164,8 @@ void velocity69_initialization(Velocity_model *velocity_model)
 {
     velocity_model->train_id = 69;
 
-    int i;
-    for (i = 0; i < MAX_SPEED + 1; i++) {
+    int i = 0;
+    for ( ; i < MAX_SPEED + 1; i++) {
         velocity_model->speed[i] = 0;
         velocity_model->velocity[i] = 0.;   // to be hardcoded
         velocity_model->stopping_distance[i] = 0;
@@ -175,6 +175,25 @@ void velocity69_initialization(Velocity_model *velocity_model)
     velocity_model->stopping_distance[8] = 550;
     velocity_model->stopping_distance[10] = 685;
     velocity_model->stopping_distance[14] = 935;
+    velocity_model->acceleration = 0.;  // to be hardcoded
+    velocity_model->deacceleration = 0.;    // to be hardcoded
+}
+
+void velocity71_initialization(Velocity_model *velocity_model) 
+{
+    velocity_model->train_id = 71;
+
+    int i = 0;
+    for ( ; i < MAX_SPEED + 1; i++) {
+        velocity_model->speed[i] = 0;
+        velocity_model->velocity[i] = 0.;   // to be hardcoded
+        velocity_model->stopping_distance[i] = 0;
+    }
+
+    velocity_model->stopping_distance[6] = 9;
+    velocity_model->stopping_distance[8] = 21;
+    velocity_model->stopping_distance[10] = 363;
+    velocity_model->stopping_distance[14] = 1067;
     velocity_model->acceleration = 0.;  // to be hardcoded
     velocity_model->deacceleration = 0.;    // to be hardcoded
 }
