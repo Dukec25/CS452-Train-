@@ -272,18 +272,14 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	char args[10];
 	int argc = 0;
 
-	if (!strcmp(command_buffer->data, "go", 2)) {
-		pcmd->type = GO;
-		return 0;
-	}
-	else if (!strcmp(command_buffer->data, "stop", 4)) {
+	if (!strcmp(command_buffer->data, "stop", 4)) {
 		pcmd->type = STOP;
 		return 0;
     }
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
 			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
-             !strcmp(command_buffer->data, "map", 3)) {
+             !strcmp(command_buffer->data, "map", 3) || !strcmp(command_buffer->data, "go", 2)) {
 		// parse arguments
 		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
 
@@ -411,6 +407,12 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         }
         pcmd->type = MAP;
         break;
+    case 'g':
+        if (argc != 1){
+            return -1;
+        }
+		pcmd->type = GO;
+		break;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];
@@ -448,9 +450,9 @@ void command_handle(Command *pcmd)
 		irq_debug(DEBUG_K4, "%s", "reached time limit, begin to turn of SOLENOID_OFF");
 		Putc(COM1, SOLENOID_OFF);
 		break;
-	case GO:
-		Putc(COM1, START);
-		break;
+	/*case GO:*/
+		/*Putc(COM1, START);*/
+		/*break;*/
 	case STOP:
 		Putc(COM1, HALT);
 		break;

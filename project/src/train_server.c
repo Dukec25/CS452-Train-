@@ -6,10 +6,15 @@
 #include <cli.h>
 #include <calculation.h>
 
+void trains_init(Train *train_server){
+    int i = 0;
+    for()
+
+}
+
 void train_server_init(Train_server *train_server)
 {
 	train_server->is_shutdown = 0;
-	train_server->is_special_cmd = 0;
 
 	train_server->cmd_fifo_head = 0;
 	train_server->cmd_fifo_tail = 0;
@@ -20,9 +25,7 @@ void train_server_init(Train_server *train_server)
     train_server->park_req_fifo_head = 0;
 	train_server->park_req_fifo_tail = 0;
     
-	/*train_server->sensor_lifo_top = -1;*/
     train_server->br_lifo_top = -1;
-	train_server->last_stop = -1;
 	train_server->last_sensor_triggered_time = 0;
     train_server->cli_map.test = 5;
 
@@ -33,6 +36,8 @@ void train_server_init(Train_server *train_server)
     train_server->cli_courier_on_wait = 0;
     train_server->park_courier_on_wait = 0;
 
+    train_server->go_cmd_state = 0;
+
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
@@ -40,8 +45,7 @@ void train_server_init(Train_server *train_server)
 	}
 
     velocity69_initialization(&train_server->velocity69_model);
-
-    /*velocity71_initialization(&train_server->velocity71_model);*/
+    velocity71_initialization(&train_server->velocity71_model);
 }
 
 void train_server()
@@ -188,7 +192,11 @@ void train_server()
 	
 			break;
 		case RV:
+
 		case GO:
+            go_handle(&train_server, cmd);
+            break;
+
 		case STOP:
 			command_handle(&cmd);
 			break;
@@ -198,8 +206,6 @@ void train_server()
 			break;
 
 		case DC:
-			train_server.is_special_cmd = 1;
-			train_server.special_cmd = cmd;
 			break;
 
 		case BR:
@@ -218,17 +224,6 @@ void train_server()
 				
 		default:
 			break;
-		}
-
-		if (train_server.is_special_cmd) {
-			switch (train_server.special_cmd.type) {
-			case DC:
-				dc_handle(&train_server, train_server.special_cmd);
-				break;
-
-			default:
-				break;
-			}
 		}
 
         if (train_server.cli_courier_on_wait && 
@@ -338,33 +333,62 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 			}
 
 			int current_stop = sensor_to_num(sensor);
-			int last_stop = train_server->last_stop;
             int current_sensor_triggered_time = Time();
-            int last_sensor_triggered_time = train_server->last_sensor_triggered_time;
+			int next_stop = predict_next(train_server->track, current_stop, train_server);
+
+            if( train_server->go_cmd_state == 0 ){
+                Train *train = &(train_server->trains[0]);
+                train->last_sensor = current_stop;
+                train->last_sensor_triggered_time = current_sensor_triggered_time;
+                irq_printf(COM1, "%c%c", MIN_SPEED+16, train->id); // stop the train 
+                train_server->go_cmd_state = 1;
+                continue;
+            } else if (train_server->go_cmd_state == 1){
+                Train train = &(train_server->trains[1]);
+                train->last_sensor = current_stop;
+                train->last_sensor_triggered_time = current_sensor_triggered_time;
+                irq_printf(COM1, "%c%c", GO_CMD_START_SPEED+16, train->id); // start the other train 
+                train_server->go_cmd_state = 2;
+                continue;
+            }
+
+            // sensor attribution, detect which train hits the sensor
+            Train *train;
+            int i = 0;
+            for( ; i < MAX_NUM_TRAINS; i++){
+                if(current_stop == train_server->trains[i].predict_stop){
+                    train = &(train_server->trains[i]);
+                    break;
+                }
+            }
+
+			int last_stop = train->laststop;
+            int last_sensor_triggered_time = train->last_sensor_triggered_time;
 	
-			/*if ((current_stop == last_stop) || (last_stop == -1)) {*/
+			/*if ((current_stop == last_stop) || (last_stop == -1)) { */
             if ((current_stop == last_stop)){
 				return;
 			}
 
-			// update last triggered sensor
-			train_server->last_stop = current_stop;
-            train_server->last_sensor_triggered_time = current_sensor_triggered_time; 
-
 			// calculate distance, next stop, time, and new_velocity
 			int distance = cal_distance(train_server->track, last_stop, current_stop);
-			int next_stop = predict_next(train_server->track, current_stop, train_server);
+
+			// update 
+			train->last_stop = current_stop;
+            train->last_sensor_triggered_time = current_sensor_triggered_time; 
+            train->predict_stop = next_stop;
+
             int time = current_sensor_triggered_time - last_sensor_triggered_time;
             double real_velocity = (double) distance / (double) time;
 
 			// update velocity_data
-            velocity_update(train_server->train.speed, real_velocity, &train_server->velocity69_model);
+            velocity_update(train.speed, real_velocity, &train->velocity_model);
 
 			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
 			push_cli_req_fifo(train_server, update_sensor_request);
 
             Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
-                (int) real_velocity, (int) train_server->velocity69_model.velocity[train_server->train.speed]); 
+                (int) real_velocity, (int) train->velocity_model.velocity[train.speed]); 
             push_cli_req_fifo(train_server, update_calibration_request);
 
             if (current_stop == train_server->deaccelarate_stop){
@@ -386,25 +410,8 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
                 push_cmd_fifo(train_server, sw_cmd);
             }
+
 		}
-	}
-}
-
-void dc_handle(Train_server *train_server, Command dc_cmd)
-{
-	Sensor stop_sensor = parse_stop_sensor(dc_cmd);
-	int stop = sensor_to_num(stop_sensor);
-
-	int last_stop = train_server->last_stop;
-	if (last_stop != stop) {
-		last_stop = train_server->last_stop;
-	}
-	else {
-		//irq_debug(SUBMISSION, "stopping_distance current stop = %d", last_stop);
-		Command tr_cmd = get_tr_stop_command(train_server->train.id);
-		push_cmd_fifo(train_server, tr_cmd);
-
-		train_server->is_special_cmd = 0;
 	}
 }
 
@@ -418,4 +425,32 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
+}
+
+void go_handle(Train_server *train_server, Command go_cmd)
+{
+    // get invoked 
+    int train_id = go_cmd.arg0;
+
+    // can probably change into if in the future 
+    switch(train_server->go_cmd_state){
+        case -1:
+            train_server->go_cmd_state = 0; 
+            train_server->trains[0].id = go_cmd->arg0;
+            
+            // no the setting speed yet, but sensor_handle will 
+            // be responsible to set speed of 2 trains to these when get to
+            // state 2 
+            train_server->trains[0].speed = GO_CMD_START_SPEED;
+            break;
+        case 0:
+            train_server->trains[1].id = go_cmd->arg0;
+            train_server->trains[1].speed = GO_CMD_START_SPEED;
+            break;
+        default:
+            break;
+    }
+
+    // set the train speed 
+    irq_printf(COM1, "%c%c", GO_CMD_START_SPEED+16, go_cmd->arg0);
 }

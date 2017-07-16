@@ -50,7 +50,12 @@ Sensor num_to_sensor(int num);
 typedef struct Train {
 	char id;
 	int speed;
+    int last_stop;
+    int predict_stop;
+    int last_sensor_triggered_time;
+    Velocity_model velocity_model;
 } Train;
+
 typedef enum {
 	MIN_SPEED = 0,
 	MAX_SPEED = 14,

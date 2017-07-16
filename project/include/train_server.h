@@ -6,6 +6,8 @@
 #include <park_server.h>
 #include <workers.h>
 
+#define GO_CMD_FINAL_SPEED 10 
+#define GO_CMD_START_SPEED 6
 
 typedef struct Park_result{
     int park_delay_time;
@@ -46,9 +48,6 @@ typedef struct TS_request {
 typedef struct Train_server {
 	int is_shutdown;
 
-	int is_special_cmd;
-	Command special_cmd;
-
 #define PARK_REQ_FIFO_SIZE  100
     Park_request park_req_fifo[PARK_REQ_FIFO_SIZE];
     int park_req_fifo_head;
@@ -64,11 +63,9 @@ typedef struct Train_server {
 	int cli_req_fifo_head;
 	int cli_req_fifo_tail;
 
-	Train train;
+#define MAX_NUM_TRAINS 5 
+	Train trains[MAX_NUM_TRAINS];
 
-//#define SENSOR_LIFO_SIZE	100
-	//Sensor sensor_lifo[SENSOR_LIFO_SIZE];
-    int sensor_lifo_top;
 	int last_stop;	// last sensor converted to num
     int last_sensor_triggered_time;
 
@@ -89,6 +86,11 @@ typedef struct Train_server {
     int cli_courier_on_wait;
     int park_courier_on_wait;
     Velocity_model velocity69_model;
+    Velocity_model velocity71_model;
+
+    // -1 for normal state for everything, 0 for init state of go
+    //  1 for one train gets initial data, 2 for ready state
+    int go_cmd_state; 
 } Train_server;
 
 void train_server_init(Train_server *train_server);
