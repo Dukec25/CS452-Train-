@@ -283,7 +283,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
 			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
-             !strcmp(command_buffer->data, "map", 3)) {
+             !strcmp(command_buffer->data, "map", 3) || !strcmp(command_buffer->data, "kc", 2)) {
 		// parse arguments
 		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
 
@@ -410,6 +410,15 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
             return -1;
         }
         pcmd->type = MAP;
+        break;
+    case 'k':
+        if (argc != 2) {
+            return -1;
+        }
+        if (args[0] > MAX_SPEED) {
+            return -1;
+        }
+        pcmd->type = KC;
         break;
 	}
 	pcmd->arg0 = args[0];

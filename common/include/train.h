@@ -97,7 +97,8 @@ typedef enum {
     BR,			/* Flip the switches to get the train from one point to another */
 	DC,			/* Stop train to measure stopping distance */
     PARK,		/* Flip the switches to get the train from one point to another, and park train at a sensor */
-    MAP        /* declare the current using track is A or B */
+    MAP,       /* declare the current using track is A or B */
+    KC      /* used to collect shortwalks data */
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;

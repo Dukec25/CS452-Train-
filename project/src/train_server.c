@@ -184,7 +184,7 @@ void train_server()
 
 			cli_update_request = get_update_switch_request(cmd.arg0, cmd.arg1);
 			push_cli_req_fifo(&train_server, cli_update_request);
-	
+
 			break;
 		case RV:
 		case GO:
@@ -204,6 +204,10 @@ void train_server()
 		case BR:
 			br_handle(&train_server, cmd);
 			break;
+
+        case KC:
+            mc_handle(&train_server, cmd);
+            break;
 
 		case PARK:
 			/*irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);*/
@@ -417,4 +421,19 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
+}
+
+void mc_handle(Train_server *train_server, Command mc_cmd)
+{
+       int speed = mc_cmd.arg0;
+       int delay_time = mc_cmd.arg1;
+       irq_debug(SUBMISSION, "mc: speed = %d, delay_time = %d 100ms", speed, delay_time);
+
+       Command tr_cmd = get_tr_command(train_server->train.id, speed);
+       command_handle(&tr_cmd);
+
+       Delay(delay_time * 10);
+
+       Command tr_stop_cmd = get_tr_stop_command(train_server->train.id);
+       command_handle(&tr_stop_cmd);
 }
