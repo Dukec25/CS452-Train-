@@ -7,7 +7,7 @@
 #include <workers.h>
 
 #define GO_CMD_FINAL_SPEED 10 
-#define GO_CMD_START_SPEED 6
+#define GO_CMD_START_SPEED 4
 
 typedef struct Park_result{
     int park_delay_time;
@@ -47,6 +47,7 @@ typedef struct TS_request {
 
 typedef struct Train_server {
 	int is_shutdown;
+    int train_idx; // used mainly by tr command
 
 #define PARK_REQ_FIFO_SIZE  100
     Park_request park_req_fifo[PARK_REQ_FIFO_SIZE];
@@ -85,8 +86,6 @@ typedef struct Train_server {
     Map cli_map;
     int cli_courier_on_wait;
     int park_courier_on_wait;
-    Velocity_model velocity69_model;
-    Velocity_model velocity71_model;
 
     // -1 for normal state for everything, 0 for init state of go
     //  1 for one train gets initial data, 2 for ready state

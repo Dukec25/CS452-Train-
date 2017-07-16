@@ -6,15 +6,18 @@
 /* Switches */
 #define NUM_SWITCHES 22
 #define NUM_SENSORS 80
+
 typedef struct Switch {
 	char id;
 	char state;
 } Switch;
+
 typedef enum {
 	SOLENOID_OFF = 32,
 	STRAIGHT = 33, 
 	CURVE = 34
 } SWITCH_STATE;
+
 /*
  * Initialize all switches except switch 19 and 21 to curved
  */
@@ -45,17 +48,6 @@ void sensor_initialization();
 int sensor_to_num(Sensor sensor);
 Sensor num_to_sensor(int num);
 
-/* Train */
-#define TRAINS 80
-typedef struct Train {
-	char id;
-	int speed;
-    int last_stop;
-    int predict_stop;
-    int last_sensor_triggered_time;
-    Velocity_model velocity_model;
-} Train;
-
 typedef enum {
 	MIN_SPEED = 0,
 	MAX_SPEED = 14,
@@ -84,6 +76,17 @@ typedef struct Velocity_model {
     double acceleration;                    // in um / tick^2
     double deacceleration;                  // in um / tick^2
 } Velocity_model;
+
+/* Train */
+typedef struct Train {
+	char id;
+	int speed;
+    int last_stop;
+    int predict_stop;
+    int last_sensor_triggered_time;
+    Velocity_model velocity_model;
+} Train;
+
 int track_node_name_to_num(char *name);
 void velocity69_initialization(Velocity_model *velocity_model); 
 void velocity71_initialization(Velocity_model *velocity_model); 
