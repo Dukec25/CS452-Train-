@@ -83,9 +83,13 @@ void push_br_lifo(Train_server *train_server, Train_br_switch br_switch)
     }
 }
 
-void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
+void pop_br_lifo(Train_server *train_server)
 {
-    *br_switch = train_server->br_lifo[train_server->br_lifo_top];
+    /**br_switch = train_server->br_lifo[train_server->br_lifo_top];*/
+    if(train_server->br_lifo_top == -1){
+        // lifo is empty 
+        return;
+    }
     train_server->br_lifo_top -= 1;
 }
 
@@ -97,6 +101,7 @@ int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
     *br_switch = train_server->br_lifo[train_server->br_lifo_top];
     return 0;
 }
+
 
 int convert_sw_track_data(int num, int type){
     int result = 80 + (num-1)*2;

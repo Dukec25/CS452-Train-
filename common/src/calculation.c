@@ -12,6 +12,8 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 
     track_node *temp;
     temp = find_path(track, src, dest);
+    irq_debug(SUBMISSION, "nothing wrong with %s\r\n", "find_path");
+    bwprintf(COM2, "nothing wrong with %s\r\n", "find_path");
     return switches_need_changes(src, temp, train_server);
 }
 
@@ -117,8 +119,8 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 /*debug(SUBMISSION, "straight \r\n");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    int reverse_num = convert_sw_track_data(node->previous->num, 1);
-                    int next_stop = predict_next(train_server->track, reverse_num, train_server);
+                    int merge_num = convert_sw_track_data(node->previous->num, 1); // opposite of branch
+                    int next_stop = predict_next(train_server->track, merge_num, train_server);
 
                     // revert the direction 
                     if(next_stop %2 == 0){
@@ -127,18 +129,14 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                         next_stop -= 1;
                     }
 
-                    irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
-
-                    /*train_server->br_sensor_update[idx] = next_stop;*/
-                    /*debug(SUBMISSION, "status curve \r\n");*/
-                    /*train_server->br_switch_update[idx].id = node_id;*/
-                    /*train_server->br_switch_update[idx++].state = 's';*/
+                    irq_debug(SUBMISSION, "merge_num %d, current stop%d, previous sensor%d", merge_num, node_id, next_stop);   
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
                     br_switch.id  = node_id;
                     br_switch.state = 's';
                     push_br_lifo(train_server, br_switch);
+                    idx++;
 
                 } else{
                     /*debug(SUBMISSION, "status straight \r\n");*/
@@ -157,16 +155,13 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                     }
 
                     irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
-                    /*train_server->br_sensor_update[idx] = next_stop;*/
-                    /*debug(SUBMISSION, "status straight \r\n");*/
-                    /*train_server->br_update[idx].id = node_id;*/
-                    /*train_server->br_update[idx++].state = 'c';*/
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
                     br_switch.id  = node_id;
                     br_switch.state = 'c';
                     push_br_lifo(train_server, br_switch);
+                    idx++;
                 } else{
                     /*debug(SUBMISSION, "status curve \r\n");*/
                 }

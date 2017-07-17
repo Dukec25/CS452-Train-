@@ -346,7 +346,7 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             int last_sensor_triggered_time = train_server->last_sensor_triggered_time;
 
             int final_time = Time();
-            irq_debug(SUBMISSION, "final_time is %d", final_time);
+            /*irq_debug(SUBMISSION, "final_time is %d", final_time);*/
 	
 			/*if ((current_stop == last_stop) || (last_stop == -1)) {*/
             if ((current_stop == last_stop)){
@@ -364,13 +364,13 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             double real_velocity = (double) distance / (double) time;
 
 			// update velocity_data
-            velocity_update(train_server->train.speed, real_velocity, &train_server->velocity71_model);
+            velocity_update(train_server->train.speed, real_velocity, &train_server->velocity69_model);
 
 			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
 			push_cli_req_fifo(train_server, update_sensor_request);
 
             Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
-                (int) real_velocity, (int) train_server->velocity71_model.velocity[train_server->train.speed]); 
+                (int) real_velocity, (int) train_server->velocity69_model.velocity[train_server->train.speed]); 
             push_cli_req_fifo(train_server, update_calibration_request);
 
             if (current_stop == train_server->deaccelarate_stop){
@@ -386,12 +386,14 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             // contains the same sensor multiple times 
             Train_br_switch br_switch;
             int temp = peek_br_lifo(train_server, &br_switch);
-            if( current_stop == br_switch.sensor_stop){
-                train_server->br_lifo_top -= 1; // equivalent with pop 
-                irq_debug(SUBMISSION, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
+            while( temp == 0 && current_stop == br_switch.sensor_stop ){
+                pop_br_lifo(train_server);
+                bwprintf(COM2, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
                 Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
                 push_cmd_fifo(train_server, sw_cmd);
+                temp = peek_br_lifo(train_server, &br_switch);
             }
+            /*bwprintf(COM2, "not the sensor correct sensor");*/
 		}
 	}
 }
@@ -424,12 +426,14 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
+    irq_debug(SUBMISSION, "nothing wrong with computation, num_switch%d\r\n", num_switch);
+    bwprintf(COM2, "nothing wrong with computation, num_switch%d\r\n", num_switch);
 }
 
 void mc_handle(Train_server *train_server, Command mc_cmd)
 {
     int start_time = Time();
-    irq_debug(SUBMISSION, "start_time is %d", start_time);
+    /*irq_debug(SUBMISSION, "start_time is %d", start_time);*/
 
     int speed = mc_cmd.arg0;
     int delay_time = mc_cmd.arg1;

@@ -109,7 +109,9 @@ void pop_cli_req_fifo(Train_server *train_server, Cli_request *cli_req);
 void push_sensor_lifo(Train_server *train_server, Sensor sensor);
 void pop_sensor_lifo(Train_server *train_server, Sensor *sensor);
 void push_br_lifo(Train_server *train_server, Train_br_switch br_switch);
-void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
+
+// pop the element but not return it 
+void pop_br_lifo(Train_server *train_server);
 int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
 
 // type = 0 branch, 1 merge
