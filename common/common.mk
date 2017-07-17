@@ -12,7 +12,7 @@ ARFLAGS = rcs
 
 INCLUDE = -I../../common/include -I../../util/include -I../../kernel/include -I../../project/include 
 LDPATHS = -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../../common/lib -L../../kernel/lib -L../../util/lib 
-LIBS 	= -lcommon -lkernel -lutil -lc -lgcc
+LIBS 	+= -lcommon -lkernel -lutil -lc -lgcc
 LDFLAGS = -init main -Map $(MAP) -N  -T ../../common/orex.ld $(LDPATHS) $(LIBS)
 
 BUILD	= build
