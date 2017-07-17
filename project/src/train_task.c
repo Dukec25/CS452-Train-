@@ -39,6 +39,9 @@ void train_task_admin()
 
     int train_to_park_courier_tid = Create(PRIOR_MEDIUM, train_to_park_courier);
     Send(train_to_park_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+
+    int track_to_train_courier = Create(PRIOR_MEDIUM, track_to_train_courier);
+    Send(track_to_train_courier, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
   
 	/*int tid = Create(PRIOR_MEDIUM, 	milestone1_test);*/
 
@@ -202,9 +205,9 @@ void train_to_park_courier()
     while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
         train_server_tid = WhoIs("TRAIN_SERVER");
     }
-    int park_server_tid = INVALID_TID;
-    while(!(park_server_tid > 0 && park_server_tid < MAX_NUM_TASKS)) {
-        park_server_tid = WhoIs("PARK_SERVER");
+    int track_server_tid = INVALID_TID;
+    while(!(track_server_tid > 0 && track_server_tid < MAX_NUM_TASKS)) {
+        track_server_tid = WhoIs("TRACK_SERVER");
     }
 
     Handshake handshake = HANDSHAKE_AKG;
@@ -212,9 +215,42 @@ void train_to_park_courier()
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         TS_request train_server_msg;
         train_server_msg.type = TS_TRAIN_TO_PARK_REQ;
-        Park_request park_req;
-        Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &park_req, sizeof(park_req));
-        Send(park_server_tid, &park_req, sizeof(park_req), &handshake, sizeof(handshake)); 
+        Track_req track_req;
+        Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &track_req, sizeof(track_req));
+        Send(track_server_tid, &track_req, sizeof(track_req), &handshake, sizeof(handshake)); 
+    }
+
+    Handshake exit_handshake = HANDSHAKE_SHUTDOWN;
+    Handshake exit_reply;
+    Send(train_task_admin_tid, &exit_handshake, sizeof(exit_handshake), &exit_reply, sizeof(exit_reply)); 
+    Exit();
+}
+
+void track_to_train_courier(){
+    Handshake kill_all_reply = HANDSHAKE_AKG;
+    int train_task_admin_tid = INVALID_TID;
+    vint kill_all_addr;
+    Receive(&train_task_admin_tid, &kill_all_addr, sizeof(kill_all_addr));
+    Reply(train_task_admin_tid, &kill_all_reply, sizeof(kill_all_reply));
+    Handshake *kill_all = kill_all_addr;
+
+    int train_server_tid = INVALID_TID;
+    while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
+        train_server_tid = WhoIs("TRAIN_SERVER");
+    }
+    int track_server_tid = INVALID_TID;
+    while(!(track_server_tid > 0 && track_server_tid < MAX_NUM_TASKS)) {
+        track_server_tid = WhoIs("TRACK_SERVER");
+    }
+
+    Handshake handshake = HANDSHAKE_AKG;
+    bwprintf(COM2, "train_to_park_courier get trigger");
+    while (*kill_all != HANDSHAKE_SHUTDOWN) {
+        Track_request track_server_msg;
+        train_server_msg.type = TS_TRACK_TO_TRAIN;
+        TS_request ts_request;
+        Send(track_server_tid, &track_server_msg, sizeof(track_server_msg), &ts_request, sizeof(ts_request));
+        Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake)); 
     }
 
     Handshake exit_handshake = HANDSHAKE_SHUTDOWN;

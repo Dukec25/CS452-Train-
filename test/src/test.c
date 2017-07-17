@@ -8,6 +8,7 @@
 #include <train.h>
 #include <calculation.h>
 #include <define.h>
+static uint32 choice_seed = 0;
 
 #define test_assert_str(cond, msg)		 										 			\
 		do {																			\
@@ -198,67 +199,78 @@ void heap_test()
 
 void track_test()
 {
-    //calculate distance between two sensor
-    track_node tracka[TRACK_MAX];
-    init_tracka(tracka);
-    int b = cal_distance(tracka, 0, 44);
-    test_assert((100 == b), "cal_distance test failed, int = %d", b);
+    /*//calculate distance between two sensor*/
+    /*track_node tracka[TRACK_MAX];*/
+    /*init_tracka(tracka);*/
+    /*int b = cal_distance(tracka, 0, 44);*/
+    /*test_assert((100 == b), "cal_distance test failed, int = %d", b);*/
 
-	// track_node_name_to_num
-	int sensor = 0;
-	for (sensor = 0; sensor < 80; sensor++) {
-		char name[4];
-		name[0] = sensor / 16 + 'A';
-		int id = sensor % 16 + 1;
-		if (id > 9) {
-			name[1] = '1';
-			name[2] = id % 10 + '0';
-			name[3] = '\0';
-		}
-		else {
-			name[1] = id + '0';
-			name[2] = '\0';
-		}
-		test_assert(0, "%d: %s is %d", sensor, name, track_node_name_to_num(name));
-	}
-	// velocity initialization
-	Velocity_data velocity_data;
-	velocity14_initialization(&velocity_data); 
-	int i;
-	for (sensor = 0; sensor < 80; sensor++) {
-		for (i = 0; i < velocity_data.node[sensor].num_velocity; i++) {
-			test_assert(0, "%d->%d: %d", velocity_data.node[sensor].src, velocity_data.node[sensor].dest[i],
-										 velocity_data.node[sensor].velocity[i]);
-		}
-	}
+	/*// track_node_name_to_num*/
+	/*int sensor = 0;*/
+	/*for (sensor = 0; sensor < 80; sensor++) {*/
+		/*char name[4];*/
+		/*name[0] = sensor / 16 + 'A';*/
+		/*int id = sensor % 16 + 1;*/
+		/*if (id > 9) {*/
+			/*name[1] = '1';*/
+			/*name[2] = id % 10 + '0';*/
+			/*name[3] = '\0';*/
+		/*}*/
+		/*else {*/
+			/*name[1] = id + '0';*/
+			/*name[2] = '\0';*/
+		/*}*/
+		/*test_assert(0, "%d: %s is %d", sensor, name, track_node_name_to_num(name));*/
+	/*}*/
+	/*// velocity initialization*/
+	/*Velocity_data velocity_data;*/
+	/*velocity14_initialization(&velocity_data); */
+	/*int i;*/
+	/*for (sensor = 0; sensor < 80; sensor++) {*/
+		/*for (i = 0; i < velocity_data.node[sensor].num_velocity; i++) {*/
+			/*test_assert(0, "%d->%d: %d", velocity_data.node[sensor].src, velocity_data.node[sensor].dest[i],*/
+										 /*velocity_data.node[sensor].velocity[i]);*/
+		/*}*/
+	/*}*/
 
-	// find_stops_by_distance
-	Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
-	Sensor sensor_src;
-	sensor_src.group = 'B' - 'A';
-	sensor_src.id = 4;
-	Sensor sensor_dest;
-	sensor_dest.group = 'E' - 'A';
-	sensor_dest.id = 4;
-	test_assert(0, "%c%d->%c%d", sensor_src.group + 'A', sensor_src.id, sensor_dest.group + 'A', sensor_dest.id);
-	int num_park_stops = find_stops_by_distance(tracka, sensor_to_num(sensor_src), sensor_to_num(sensor_dest),
-													940, park_stops);
-    bwprintf(COM2, "num_stops=%d\r\n", num_park_stops);
-    bwprintf(COM2, "first_distance=%d\r\n", park_stops[0].distance);
+	/*// find_stops_by_distance*/
+	/*Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];*/
+	/*Sensor sensor_src;*/
+	/*sensor_src.group = 'B' - 'A';*/
+	/*sensor_src.id = 4;*/
+	/*Sensor sensor_dest;*/
+	/*sensor_dest.group = 'E' - 'A';*/
+	/*sensor_dest.id = 4;*/
+	/*test_assert(0, "%c%d->%c%d", sensor_src.group + 'A', sensor_src.id, sensor_dest.group + 'A', sensor_dest.id);*/
+	/*int num_park_stops = find_stops_by_distance(tracka, sensor_to_num(sensor_src), sensor_to_num(sensor_dest),*/
+													/*940, park_stops);*/
+    /*bwprintf(COM2, "num_stops=%d\r\n", num_park_stops);*/
+    /*bwprintf(COM2, "first_distance=%d\r\n", park_stops[0].distance);*/
 
-	for (i = 0; i < num_park_stops-1; i++) {
-		int distance = park_stops[i+1].distance;
-		int src = park_stops[i + 1].sensor_id;
-		int dest = park_stops[i].sensor_id;
-		test_assert(0, "%c%d->%c%d: %d, expected %d", num_to_sensor(src).group + 'A', num_to_sensor(src).id,
-													  num_to_sensor(dest).group + 'A', num_to_sensor(dest).id,
-													  distance, cal_distance(tracka, src, dest));
-	}
+	/*for (i = 0; i < num_park_stops-1; i++) {*/
+		/*int distance = park_stops[i+1].distance;*/
+		/*int src = park_stops[i + 1].sensor_id;*/
+		/*int dest = park_stops[i].sensor_id;*/
+		/*test_assert(0, "%c%d->%c%d: %d, expected %d", num_to_sensor(src).group + 'A', num_to_sensor(src).id,*/
+													  /*num_to_sensor(dest).group + 'A', num_to_sensor(dest).id,*/
+													  /*distance, cal_distance(tracka, src, dest));*/
+	/*}*/
+}
+
+void rand_test(){
+    int n = 0;
+    for( ; n < 10; n++){
+        int choice = abs(rand(&choice_seed)%100);
+        test_assert( 0, "rand value = %d", choice);
+    }
 }
 
 int main()
 {
 	bwsetfifo(COM2, OFF);
-	track_test();
+	/*track_test();*/
+    rand_test();
+    test_assert( 0, "stop%d", 0);
+    rand_test();
 	return 0;
 }

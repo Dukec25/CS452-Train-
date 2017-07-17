@@ -3,7 +3,7 @@
 #include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
-#include <park_server.h>
+#include <track_server.h>
 #include <workers.h>
 
 #define GO_CMD_FINAL_SPEED 10 
@@ -12,12 +12,14 @@
 typedef struct Park_result{
     int park_delay_time;
     int deaccelarate_stop;
+    int reverse;
 } Park_result;
 
 // will expand in the future
 typedef struct Park_request{
     //int train_id;
     Command park_cmd;
+    int     train_id;
 } Park_request;
 
 typedef struct Delay_request{
@@ -112,7 +114,5 @@ void push_br_lifo(Train_server *train_server, Train_br_switch br_switch);
 void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
 int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
 
-// type = 0 branch, 1 merge
-int convert_sw_track_data(int num, int type);
 
 #endif // __TRAIN_SERVER__

@@ -22,7 +22,6 @@ int cal_distance(track_node *track, int src, int dest)
         return 0;
     }
 	/*irq_debug(SUBMISSION, "%d %d", src, dest);*/
-	/*dump(SUBMISSION, "%d %d", src, dest);*/
     track_node *temp;
     temp = find_path(track, src, dest);
     if (temp) {
@@ -49,8 +48,6 @@ track_node* find_path(track_node *track, int src, int dest)
     while (!is_fifo_empty(&queue)) {
         track_node *temp;
         fifo_get(&queue, &temp);
-
-		/*dump(SUBMISSION, "visit %s", temp->name);*/
 
         if (strlen(temp->name) == strlen(track[dest].name)){
             if (!strcmp(temp->name, track[dest].name, strlen(temp->name))) {
@@ -205,7 +202,8 @@ int predict_next(track_node *track, int src, Train_server *train_server){
     return -1;
 }
 
-int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans){
+int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans, int *resource,
+        int *reverse){
 
     /*debug(SUBMISSION, "src=%d dest=%d dist=%d\r\n", src, dest, stop_distance);*/
 
@@ -216,14 +214,32 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
     }
 
     track_node *node;
-    node = find_path(track, src, dest);
+    node = find_path_with_blocks(track, src, dest, resource);
+    irq_debug(SUBMISSION, "dest value=%d, return dest value=%d", dest, node->num);
+    if(node->num != dest){
+        irq_debug(SUBMISSION, "direction changes %s", "need reverse");
+        *reverse = 1;
+    }
 	
-	track_node *temp = node;
-	while(temp->num != src) {
-		/*debug(SUBMISSION, "%s ", temp->name);*/
-    	temp = temp->previous;
-	}
-    /*debug(SUBMISSION, "%s \r\n", temp->name);*/
+    track_node *temp = node;
+    while(temp->num != src) {
+        /*debug(SUBMISSION, "%s ", temp->name);*/
+        // making all these segment unavailable 
+        if(temp->type == NODE_SENSOR){
+            resource[temp->num] = 0;
+            resource[pair(temp->num)] = 0;
+        } else if(temp->type == NODE_BRANCH){
+            int val = convert_sw_track_data(temp->num, BRANCH);
+            resource[val] = 0;    
+            resource[pair(temp->num)] = 0;
+        } else if(temp->type == NODE_MERGE){
+            int val = convert_sw_track_data(temp->num, MERGE);
+            resource[val] = 0;    
+            resource[pair(temp->num)] = 0;
+        }
+        temp = temp->previous;
+    }
+    debug(SUBMISSION, "%s \r\n", temp->name);
 
     fifo_t queue; 
     fifo_init(&queue);
@@ -279,4 +295,108 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
     }
 }
 
+// path_finding that doesn't take into consideration of stop_direction
+track_node* find_path_with_blocks(track_node *track, int src, int dest, int *resource)
+{
+    if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
+        return NULL;
+    }
+
+    int pair_dest = 0;
+    int pair_src = 0;
+
+    if(src % 2 == 0){
+        pair_dest = dest - 1;
+        pair_src  = src  - 1;
+    } else{
+        pair_dest = dest + 1;
+        pair_src  = src  + 1;
+    }
+
+    fifo_t queue; 
+    fifo_init(&queue);
+
+    track[src].buf = 0; // initialize the distance 
+    fifo_put(&queue, &(track[src]));
+
+    while (!is_fifo_empty(&queue)) {
+        track_node *temp;
+        fifo_get(&queue, &temp);
+
+        if (resource[track->num] == 0){
+            continue;
+        }
+
+        if (strlen(temp->name) == strlen(track[dest].name) || 
+            strlen(temp->name) == strlen(track[pair_dest].name) )
+        {
+            if (!strcmp(temp->name, track[dest].name, strlen(temp->name)) || 
+                 !strcmp(temp->name, track[pair_dest].name, strlen(temp->name))  ) 
+            {
+                return temp;
+            }
+        }
+
+        if (temp->type == NODE_EXIT) {
+            continue; 
+        }
+        else if (temp->type == NODE_BRANCH) {
+            temp->edge[DIR_STRAIGHT].dest->buf = temp->buf + temp->edge[DIR_STRAIGHT].dist;
+            temp->edge[DIR_STRAIGHT].dest->previous = temp;
+            fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
+
+            temp->edge[DIR_CURVED].dest->buf = temp->buf + temp->edge[DIR_CURVED].dist;
+            temp->edge[DIR_CURVED].dest->previous = temp;
+            fifo_put(&queue, temp->edge[DIR_CURVED].dest);
+        }
+        else{
+            temp->edge[DIR_AHEAD].dest->buf = temp->buf + temp->edge[DIR_AHEAD].dist;
+            temp->edge[DIR_AHEAD].dest->previous = temp;
+            fifo_put(&queue, temp->edge[DIR_AHEAD].dest);
+        }
+    }
+
+    // if can't get to the dest as path is blocked
+    // try the other direction, also indicate train needs reverse
+    track[pair_src].buf = 0; // initialize the distance 
+    fifo_put(&queue, &(track[pair_src]));
+
+    while (!is_fifo_empty(&queue)) {
+        track_node *temp;
+        fifo_get(&queue, &temp);
+
+        if (resource[track->num] == 0){
+            continue;
+        }
+
+        if (strlen(temp->name) == strlen(track[dest].name) || 
+            strlen(temp->name) == strlen(track[pair_dest].name) )
+        {
+            if (!strcmp(temp->name, track[dest].name, strlen(temp->name)) || 
+                 !strcmp(temp->name, track[pair_dest].name, strlen(temp->name))  ) 
+            {
+                return temp;
+            }
+        }
+
+        if (temp->type == NODE_EXIT) {
+            continue; 
+        }
+        else if (temp->type == NODE_BRANCH) {
+            temp->edge[DIR_STRAIGHT].dest->buf = temp->buf + temp->edge[DIR_STRAIGHT].dist;
+            temp->edge[DIR_STRAIGHT].dest->previous = temp;
+            fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
+
+            temp->edge[DIR_CURVED].dest->buf = temp->buf + temp->edge[DIR_CURVED].dist;
+            temp->edge[DIR_CURVED].dest->previous = temp;
+            fifo_put(&queue, temp->edge[DIR_CURVED].dest);
+        }
+        else{
+            temp->edge[DIR_AHEAD].dest->buf = temp->buf + temp->edge[DIR_AHEAD].dist;
+            temp->edge[DIR_AHEAD].dest->previous = temp;
+            fifo_put(&queue, temp->edge[DIR_AHEAD].dest);
+        }
+    }
+    return NULL;
+}
 

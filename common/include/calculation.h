@@ -9,6 +9,7 @@
  * path from src and dest  
  */
 track_node* find_path(track_node *track, int src, int dest);
+track_node* find_path_with_blocks(track_node *track, int src, int dest, int *resource);
 
 /*
  * calculate the physical distance between src and dest in um
@@ -44,6 +45,7 @@ typedef struct Sensor_dist {
  *  including the sensors on the way of stop_distance + dest (excluding dest sensors and include the 
  *  sensor that is closest to the stop_location but not on the way)  
  */
-int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans);
+int find_stops_by_distance(track_node *track, int src, int dest, int stop_distance, Sensor_dist* ans, int *resource,
+        int *reverse);
 
 #endif //__CALCULATION_H__

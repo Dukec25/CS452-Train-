@@ -98,15 +98,6 @@ int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
     return 0;
 }
 
-int convert_sw_track_data(int num, int type){
-    int result = 80 + (num-1)*2;
-    if(type){
-        result += 1;
-    }
-    return result;
-}
-
-
 /*void push_sensor_lifo(Train_server *train_server, Sensor sensor)*/
 /*{*/
     /*if (train_server->sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {*/
