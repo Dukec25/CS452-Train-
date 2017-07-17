@@ -89,6 +89,7 @@ typedef struct Train_server {
     int cli_courier_on_wait;
     int park_courier_on_wait;
     Velocity_model velocity69_model;
+    Velocity_model velocity71_model;
 } Train_server;
 
 void train_server_init(Train_server *train_server);

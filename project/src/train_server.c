@@ -40,7 +40,7 @@ void train_server_init(Train_server *train_server)
 	}
 
     velocity69_initialization(&train_server->velocity69_model);
-    /*velocity71_initialization(&train_server->velocity71_model);*/
+    velocity71_initialization(&train_server->velocity71_model);
 }
 
 void train_server()
@@ -344,6 +344,9 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 			int last_stop = train_server->last_stop;
             int current_sensor_triggered_time = Time();
             int last_sensor_triggered_time = train_server->last_sensor_triggered_time;
+
+            int final_time = Time();
+            irq_debug(SUBMISSION, "final_time is %d", final_time);
 	
 			/*if ((current_stop == last_stop) || (last_stop == -1)) {*/
             if ((current_stop == last_stop)){
@@ -361,13 +364,13 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             double real_velocity = (double) distance / (double) time;
 
 			// update velocity_data
-            velocity_update(train_server->train.speed, real_velocity, &train_server->velocity69_model);
+            velocity_update(train_server->train.speed, real_velocity, &train_server->velocity71_model);
 
 			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
 			push_cli_req_fifo(train_server, update_sensor_request);
 
             Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
-                (int) real_velocity, (int) train_server->velocity69_model.velocity[train_server->train.speed]); 
+                (int) real_velocity, (int) train_server->velocity71_model.velocity[train_server->train.speed]); 
             push_cli_req_fifo(train_server, update_calibration_request);
 
             if (current_stop == train_server->deaccelarate_stop){
@@ -425,15 +428,18 @@ void br_handle(Train_server *train_server, Command br_cmd)
 
 void mc_handle(Train_server *train_server, Command mc_cmd)
 {
-       int speed = mc_cmd.arg0;
-       int delay_time = mc_cmd.arg1;
-       irq_debug(SUBMISSION, "mc: speed = %d, delay_time = %d 100ms", speed, delay_time);
+    int start_time = Time();
+    irq_debug(SUBMISSION, "start_time is %d", start_time);
 
-       Command tr_cmd = get_tr_command(train_server->train.id, speed);
-       command_handle(&tr_cmd);
+    int speed = mc_cmd.arg0;
+    int delay_time = mc_cmd.arg1;
+    irq_debug(SUBMISSION, "mc: speed = %d, delay_time = %d 100ms", speed, delay_time);
 
-       Delay(delay_time * 10);
+    Command tr_cmd = get_tr_command(train_server->train.id, speed);
+    command_handle(&tr_cmd);
 
-       Command tr_stop_cmd = get_tr_stop_command(train_server->train.id);
-       command_handle(&tr_stop_cmd);
+    Delay(delay_time * 10);
+
+    Command tr_stop_cmd = get_tr_stop_command(train_server->train.id);
+    command_handle(&tr_stop_cmd);
 }
