@@ -5,7 +5,8 @@
 #include <train_task.h>
 
 typedef enum {
-    TRACK_DEST // select random destination and route 
+    TRAIN_WANT_GUIDANCE, // select random destination and route 
+    TRAIN_WANT_RESULT
 } Track_request_type;
 
 typedef struct Track_request{
@@ -31,6 +32,8 @@ void park_server();
 int pair(int idx);
 // type = 0 branch, 1 merge
 int convert_sw_track_data(int num, int type);
+void push_ts_req_fifo(Track_server *track_server, TS_request ts_req);
+void pop_ts_req_fifo(Track_server *train_server, TS_request *ts_req);
 
 #endif // __TRACK_SERVER__
 

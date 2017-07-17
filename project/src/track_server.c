@@ -25,52 +25,60 @@ void track_server()
     while (train_server->is_shutdown == 0) {
         int requester_tid;
         Track_req track_req;
-        Receive(&requester_tid, &track_req, sizeof(park_req));
+        Receive(&requester_tid, &track_req, sizeof(track_req));
         /*Reply(requester_tid, &handshake, sizeof(handshake)); // pay attention to this line */
+        
+        if(track_req.type == TRAIN_WANT_GUIDANCE){
+            int stop = choose_rand_destination();
 
-        /*// parse destination*/
-        /*Sensor stop_sensor = parse_stop_sensor(park_req.park_cmd);*/
-        /*int stop = sensor_to_num(stop_sensor);*/
+            // retrieve stopping distance
+            int stopping_distance = track_req.train->velocity_model.stopping_distance[train->speed];
 
-        int stop = choose_rand_destination();
+            int reverse = 0;
+            Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
+            int num_park_stops = find_stops_by_distance(train_server->track, train_server->last_stop, stop, stopping_distance, park_stops, resource, &reverse);
 
-        /*// get extra distance (offset) in mm*/
-        /*int offset = park_req.park_cmd.arg2*10; // was cm */
-        /*irq_debug(SUBMISSION, "offset value%d", offset);*/
+            if(num_park_stops == -1){
+                return; // there is error, ignore this iteration
+            }
 
-        // retrieve stopping distance
-        int stopping_distance = track_req.train->velocity_model.stopping_distance[train->speed];
+            // retrieve the sensor_to_deaccelate_train
+            int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
+            // calculate the delta = the distance between sensor_to_deaccelate_train
+            // calculate average velocity measured in [tick]
+            int delta = 0;
+            int velocity = track_req.train->velocity_model.velocity[train_server->train.speed];
 
-        int reverse = 0;
-        Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
-        int num_park_stops = find_stops_by_distance(train_server->track, train_server->last_stop, stop, stopping_distance, park_stops, resource, &reverse);
+            int i = 0;
 
-        if(num_park_stops == -1){
-            return; // there is error, ignore this iteration
+            for ( ; i < num_park_stops; i++) {
+                delta += park_stops[i].distance;
+                track_server.resources[park_stops[i].sensor_id] == 0;
+            }
+
+            int park_delay_time = (delta + offset*1000 - stopping_distance * 1000) / velocity;
+
+            TS_request ts_request;
+            ts_request.type = TS_TRACK_SERVER;
+            ts_request.park_result.deaccelarate_stop = deaccelarate_stop;
+            ts_request.park_result.park_delay_time = park_delay_time;
+            ts_request.park_result.reverse = reverse;
+            ts_request.park_result.train_id = ;
+
+            push_ts_request(&track_server, ts_request);
+        } else if (track_req.type == TRAIN_WANT_RESULT){
+			// from cli_request_courier
+			TS_request ts_req;
+			if (track_server.cli_req_fifo_head == train_server.cli_req_fifo_tail) {
+				/*cli_req.type = CLI_NULL;*/
+                /*train_server.cli_courier_on_wait = requester_tid;*/
+			}
+			else {
+				pop_ts_req_fifo(&train_server, &ts_req);
+				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
+                Reply(requester_tid, &ts_req, sizeof(ts_req));
+			}
         }
-
-        // retrieve the sensor_to_deaccelate_train
-        int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
-        // calculate the delta = the distance between sensor_to_deaccelate_train
-        // calculate average velocity measured in [tick]
-        int delta = 0;
-        int velocity = track_req.train->velocity_model.velocity[train_server->train.speed];
-
-        int i = 0;
-
-        for ( ; i < num_park_stops; i++) {
-            delta += park_stops[i].distance;
-            track_server.resources[park_stops[i].sensor_id] == 0;
-        }
-
-        int park_delay_time = (delta + offset*1000 - stopping_distance * 1000) / velocity;
-
-        TS_request ts_request;
-        ts_request.type = TS_PARK_SERVER;
-        ts_request.park_result.deaccelarate_stop = deaccelarate_stop;
-        ts_request.park_result.park_delay_time = park_delay_time;
-        ts_request.park_result.reverse = reverse;
-        Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
     }
 }
 
@@ -98,4 +106,24 @@ int convert_sw_track_data(int num, int type){
     return result;
 }
 
+void push_ts_req_fifo(Track_server *track_server, TS_request ts_req)
+{
+    int ts_fifo_put_next = track_server->route_result_fifo_head + 1;
+    if (ts_fifo_put_next != track_server->route_result_fifo_tail) {
+        if (ts_fifo_put_next >= ROUTE_RESULT_FIFO_SIZE) {
+            ts_fifo_put_next = 0;
+        }
+    }
+    track_server->route_result_fifo[track_server->route_req_fifo_head] = ts_req;
+    track_server->route_result_fifo_head = ts_fifo_put_next;  
+}
 
+void pop_ts_req_fifo(Track_server *train_server, TS_request *ts_req)
+{
+    int ts_fifo_get_next = track_server->route_result_fifo_tail + 1;
+    if (ts_fifo_get_next >= ROUTE_RESULT_FIFO_SIZE) {
+        ts_fifo_get_next = 0;
+    }
+    *ts_req = train_server->route_result_fifo[track_server->route_req_fifo_tail];
+    track_server->route_result_fifo_tail = ts_fifo_get_next;  
+}

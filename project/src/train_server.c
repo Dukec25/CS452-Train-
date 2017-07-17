@@ -103,11 +103,10 @@ void train_server()
 			handshake = HANDSHAKE_AKG;
 			Reply(requester_tid, &handshake, sizeof(handshake));
 		}
-        else if (ts_request.type == TS_TRAIN_TO_PARK_REQ){
-            // from park_server_courier
+        else if (ts_request.type == TS_TRAIN_TO_TRACK_REQ){
+            // courier send request to track 
             Park_request park_req;
             if (train_server.park_req_fifo_head == train_server.park_req_fifo_tail) {
-                // no park command issued yet 
                 train_server.park_courier_on_wait = requester_tid; 
             }
             else {
@@ -129,16 +128,17 @@ void train_server()
                 Reply(requester_tid, &cli_req, sizeof(cli_req));
 			}
 		}
-        else if (ts_request.type == TS_PARK_SERVER) {
+        else if (ts_request.type == TS_TRACK_SERVER) {
+            // result from track server
             train_server.park_delay_time = ts_request.park_result.park_delay_time; 
             train_server.deaccelarate_stop = ts_request.park_result.deaccelarate_stop;
             irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train_server.deaccelarate_stop, train_server.park_delay_time);
 			Reply(requester_tid, &handshake, sizeof(handshake));
         }
         else if (ts_request.type == TS_DELAY_TIME_UP){
-            /*Command tr_cmd = get_tr_stop_command(train_server.train.id);*/
-            /*push_cmd_fifo(&train_server, tr_cmd);*/
-            /*train_server.deaccelarate_stop = -1;*/
+            Command tr_cmd = get_tr_stop_command(train_server.train.id);
+            push_cmd_fifo(&train_server, tr_cmd);
+            train_server.deaccelarate_stop = -1;
 			Reply(requester_tid, &handshake, sizeof(handshake));
         }
 		else {

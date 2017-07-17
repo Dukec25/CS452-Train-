@@ -37,8 +37,8 @@ void train_task_admin()
 	int cli_request_courier_tid = Create(PRIOR_MEDIUM, cli_request_courier);
 	Send(cli_request_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
-    int train_to_park_courier_tid = Create(PRIOR_MEDIUM, train_to_park_courier);
-    Send(train_to_park_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+    int train_to_track_courier_tid = Create(PRIOR_MEDIUM, train_to_track_courier);
+    Send(train_to_track_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
     int track_to_train_courier = Create(PRIOR_MEDIUM, track_to_train_courier);
     Send(track_to_train_courier, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
@@ -192,7 +192,7 @@ void cli_request_courier()
 	Exit();
 }
 
-void train_to_park_courier()
+void train_to_track_courier()
 {
     Handshake kill_all_reply = HANDSHAKE_AKG;
     int train_task_admin_tid = INVALID_TID;
@@ -211,10 +211,10 @@ void train_to_park_courier()
     }
 
     Handshake handshake = HANDSHAKE_AKG;
-    bwprintf(COM2, "train_to_park_courier get trigger");
+    bwprintf(COM2, "train_to_track_courier get trigger");
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         TS_request train_server_msg;
-        train_server_msg.type = TS_TRAIN_TO_PARK_REQ;
+        train_server_msg.type = TS_TRAIN_TO_TRACK_REQ;
         Track_req track_req;
         Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &track_req, sizeof(track_req));
         Send(track_server_tid, &track_req, sizeof(track_req), &handshake, sizeof(handshake)); 
@@ -244,10 +244,10 @@ void track_to_train_courier(){
     }
 
     Handshake handshake = HANDSHAKE_AKG;
-    bwprintf(COM2, "train_to_park_courier get trigger");
+    bwprintf(COM2, "track_to_train_courier get trigger");
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         Track_request track_server_msg;
-        train_server_msg.type = TS_TRACK_TO_TRAIN;
+        train_server_msg.type = TRAIN_WANT_RESULT;
         TS_request ts_request;
         Send(track_server_tid, &track_server_msg, sizeof(track_server_msg), &ts_request, sizeof(ts_request));
         Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake)); 

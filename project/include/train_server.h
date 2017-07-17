@@ -13,6 +13,7 @@ typedef struct Park_result{
     int park_delay_time;
     int deaccelarate_stop;
     int reverse;
+    int train_id;
 } Park_result;
 
 // will expand in the future
@@ -36,7 +37,7 @@ typedef enum {
 	TS_NULL,
 	TS_WANT_CLI_REQ,
 	TS_COMMAND,
-    TS_TRAIN_TO_PARK_REQ,
+    TS_TRAIN_TO_TRACK_REQ,
     TS_PARK_SERVER,
     TS_DELAY_TIME_UP
 } TS_request_type;

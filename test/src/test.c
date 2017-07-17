@@ -199,6 +199,8 @@ void heap_test()
 
 void track_test()
 {
+    Train_server train_server;
+    choose_destination(&train_server);
     /*//calculate distance between two sensor*/
     /*track_node tracka[TRACK_MAX];*/
     /*init_tracka(tracka);*/
