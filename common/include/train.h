@@ -73,17 +73,24 @@ typedef struct Calibration_package {
 #define MAX_VELOCITY    8000    // um / tick
 typedef struct Velocity_model {
     int train_id;
-    int speed[MAX_SPEED + 1];               // 0 - 14
     int stopping_distance[MAX_SPEED + 1];   // in mm
     double velocity[MAX_SPEED + 1];         // in um / tick
-    double acceleration;                    // in um / tick^2
-    double deacceleration;                  // in um / tick^2
 } Velocity_model;
 int track_node_name_to_num(char *name);
 void velocity69_initialization(Velocity_model *velocity_model); 
 void velocity71_initialization(Velocity_model *velocity_model); 
 void velocity58_initialization(Velocity_model *velocity_model); 
 void velocity_update(int speed, double real_velocity, Velocity_model *velocity_model);
+
+/* Short walk */
+typedef struct Walk_table {
+	int walk_data[3][3][9];
+} Walk_table;
+int train_id_to_idx(int train_id);
+int speed_to_idx(int speed);
+int distance_to_idx(int distance);
+void walk_table_initialization(Walk_table *walk_table);
+int walk_table_lookup(Walk_table *walk_table, int train_id, int speed, int distance);
 
 /* Command */
 #define COMMAND_SIZE 100
@@ -97,8 +104,9 @@ typedef enum {
     BR,			/* Flip the switches to get the train from one point to another */
 	DC,			/* Stop train to measure stopping distance */
     PARK,		/* Flip the switches to get the train from one point to another, and park train at a sensor */
-    MAP,       /* declare the current using track is A or B */
-    KC      /* used to collect shortwalks data */
+    MAP,		/* declare the current using track is A or B */
+    KC,			/* used to collect shortwalks data */
+	WALK		/* Short walk */
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;
