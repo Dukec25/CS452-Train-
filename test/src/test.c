@@ -195,7 +195,7 @@ void heap_test()
 		test_assert(!strcmp(test, del.data, 5), "heap delete test %d(B) failed", heap_idx); 
 	}
 }
-
+/*
 void track_test()
 {
     //calculate distance between two sensor
@@ -255,10 +255,26 @@ void track_test()
 													  distance, cal_distance(tracka, src, dest));
 	}
 }
+*/
+
+void math_test()
+{
+	int x;
+	double n;
+	n = 100;
+	x = sqrt(n);
+	assert(0, "sqrt(%d) = %d", (int) n, x);
+	n = 121;
+	x = sqrt(n);
+	assert(0, "sqrt(%d) = %d", (int) n, x);
+	n = 82;
+	x = sqrt(n);
+	assert(0, "sqrt(%d) = %d", (int) n, x);
+}
 
 int main()
 {
 	bwsetfifo(COM2, OFF);
-	track_test();
+	math_test();
 	return 0;
 }

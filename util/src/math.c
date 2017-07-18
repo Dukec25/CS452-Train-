@@ -1,5 +1,6 @@
 #include <math.h>
 #include <bwio.h>
+#include <debug.h>
 
 uint8 popcount(uint32 x) {
    x = x - ((x >> 1) & 0x55555555);
@@ -33,4 +34,18 @@ uint32 rand(uint32 state[static 1])
 	x ^= x << 5;
 	state[0] = x;
 	return x >= x ? x : -x;
+}
+
+int sqrt(double n) {
+	double x = n;
+	double y = 1.;
+	double e = 0.001; /* e decides the accuracy level*/
+	double diff = (x > y) ? (x - y) : (y - x);
+	while (diff > e) {
+		x = (x + y)/2;
+		y = n/x;
+		diff = (x > y) ? (x - y) : (y - x);
+	}
+	int retval = (int) x;
+	return retval;
 }
