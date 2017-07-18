@@ -12,8 +12,6 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 
     track_node *temp;
     temp = find_path(track, src, dest);
-    /*irq_debug(SUBMISSION, "nothing wrong with %s\r\n", "find_path");*/
-    bwprintf(COM2, "nothing wrong with %s\r\n", "find_path");
     return switches_need_changes(src, temp, train_server);
 }
 
@@ -119,22 +117,14 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                 default:
                     break;
             }
+            debug(SUBMISSION, "node_id%d", node_id);
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 /*debug(SUBMISSION, "straight %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    /*debug(SUBMISSION, "%s", "need switch straight");*/
-                    int merge_num = convert_sw_track_data(node_id, 1); // opposite of branch
-                    int next_stop = predict_next(train_server->track, merge_num, train_server);
-                    /*debug(SUBMISSION, "next stop %d", next_stop);*/
+                    debug(SUBMISSION, "%s", "need switch straight");
+                    int next_stop = previous_sensor_finder(node->previous);
 
-                    // revert the direction 
-                    if(next_stop %2 == 0){
-                        next_stop += 1;
-                    } else{
-                        next_stop -= 1;
-                    }
-
-                    /*irq_debug(SUBMISSION, "merge_num %d, current stop%d, previous sensor%d", merge_num, node_id, next_stop);   */
+                    debug(SUBMISSION, "next_stop%d", next_stop);
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -149,21 +139,11 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
             } else{
                 /*debug(SUBMISSION, "curve %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
-                    /*debug(SUBMISSION, "%s", "need switch curve");*/
-                    /*debug(SUBMISSION, "current node %d", node_id);*/
-                    int merge_num = convert_sw_track_data(node_id, 1);
-                    /*debug(SUBMISSION, "reverse_num%d", merge_num);*/
-                    int next_stop = predict_next(train_server->track, merge_num, train_server);
-                    /*debug(SUBMISSION, "next stop%d", next_stop);*/
+                    debug(SUBMISSION, "%s", "need switch curve");
 
-                    // revert the direction 
-                    if(next_stop %2 == 0){
-                        next_stop += 1;
-                    } else{
-                        next_stop -= 1;
-                    }
-
+                    int next_stop = previous_sensor_finder(node->previous);
                     /*irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   */
+                    debug(SUBMISSION, "next_stop%d", next_stop);
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -186,16 +166,16 @@ int predict_next(track_node *track, int src, Train_server *train_server){
     fifo_t queue; 
     fifo_init(&queue);
 
-    /*debug(SUBMISSION, "enter predict_next, src=%d, num=%d", src, temp->num);*/
+    debug(SUBMISSION, "enter predict_next, src=%d, num=%d", src, temp->num);
     fifo_put(&queue, temp);
 
     while(1){
         fifo_get(&queue, &temp);
         if(temp->type == NODE_SENSOR){
-            /*debug(SUBMISSION, "sensor node%d", temp->num);*/
+            debug(SUBMISSION, "sensor node%d", temp->num);
             return temp->num;
         } else if(temp->type == NODE_BRANCH){
-            /*debug(SUBMISSION, "branch node %d", temp->num);*/
+            debug(SUBMISSION, "branch node %d", temp->num);
             int cur_dir = train_server->switches_status[temp->num-1];
             if(cur_dir == STRAIGHT){
                 fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
@@ -287,4 +267,13 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
     }
 }
 
+// internal helper function for finding the previous within a process of a
+// back tracking 
 
+int previous_sensor_finder(track_node *node){
+    track_node *temp = node;
+    while(temp->type != NODE_SENSOR){
+        temp = temp->previous;
+    }
+    return temp->num;
+}
