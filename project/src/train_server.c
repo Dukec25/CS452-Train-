@@ -32,6 +32,7 @@ void train_server_init(Train_server *train_server)
 
     train_server->cli_courier_on_wait = 0;
     train_server->park_courier_on_wait = 0;
+    init_tracka(train_server->track);
 
 	int sw;
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
@@ -388,7 +389,7 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             int temp = peek_br_lifo(train_server, &br_switch);
             while( temp == 0 && current_stop == br_switch.sensor_stop ){
                 pop_br_lifo(train_server);
-                bwprintf(COM2, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
+                /*bwprintf(COM2, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);*/
                 Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
                 push_cmd_fifo(train_server, sw_cmd);
                 temp = peek_br_lifo(train_server, &br_switch);
@@ -426,8 +427,8 @@ void br_handle(Train_server *train_server, Command br_cmd)
 	// flip switches such that the train can arrive at the stop
 	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
 	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
-    irq_debug(SUBMISSION, "nothing wrong with computation, num_switch%d\r\n", num_switch);
-    bwprintf(COM2, "nothing wrong with computation, num_switch%d\r\n", num_switch);
+    /*irq_debug(SUBMISSION, "nothing wrong with computation, num_switch%d\r\n", num_switch);*/
+    /*bwprintf(COM2, "nothing wrong with computation, num_switch%d\r\n", num_switch);*/
 }
 
 void mc_handle(Train_server *train_server, Command mc_cmd)

@@ -5,6 +5,7 @@
 #include <define.h>
 #include <lifo.h>
 #include <track_data.h>
+#include <track_node.h>
 #include <train.h>
 #include <calculation.h>
 #include <define.h>
@@ -262,7 +263,16 @@ void park_test(){
     //calculate distance between two sensor
     track_node tracka[TRACK_MAX];
     init_tracka(tracka);
-    /*int choose_destination(&tracka, int src, int dest, ){*/
+    Train_server train_server;
+    train_server_init(&train_server);
+    int sw;
+	for (sw = 1; sw <= 22 ; sw++) {
+		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
+		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
+	}
+    // c10, d2 
+    choose_destination(tracka, 41, 49, &train_server);
+    /*choose_destination(tracka, 41, 65, &train_server);*/
 }
 
 int main()

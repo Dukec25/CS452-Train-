@@ -12,7 +12,7 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
 
     track_node *temp;
     temp = find_path(track, src, dest);
-    irq_debug(SUBMISSION, "nothing wrong with %s\r\n", "find_path");
+    /*irq_debug(SUBMISSION, "nothing wrong with %s\r\n", "find_path");*/
     bwprintf(COM2, "nothing wrong with %s\r\n", "find_path");
     return switches_need_changes(src, temp, train_server);
 }
@@ -86,19 +86,22 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
     /*debug(SUBMISSION, "switches_need_changes=%d\r\n", src);*/
     int idx = 0; // br_update size is 10
 
-	/*track_node *temp = node;*/
-	/*while(temp->num != src) {*/
-		/*debug(SUBMISSION, "%s ", temp->name);*/
-        /*temp = temp->previous;*/
-	/*}*/
+    track_node *temp = node;
+    while(temp->num != src) {
+        /*debug(SUBMISSION, "%s ", temp->name);*/
+        temp = temp->previous;
+    }
     /*debug(SUBMISSION, "%s \r\n", temp->name);*/
 
     while(node->num != src){
-        /*debug(SUBMISSION, "visiting %s\r\n", node->name);*/
+        /*debug(SUBMISSION, "visiting %s", node->name);*/
         if(node->previous->type != NODE_BRANCH){
+            /*debug(SUBMISSION, "%s", "not branch");*/
             node = node->previous;
             continue;
         } else {
+            /*debug(SUBMISSION, "%s", "branch");*/
+            // the actual id of the current node
             int node_id = node->previous->num;
             switch(node_id){
                 case 156:
@@ -117,10 +120,12 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                     break;
             }
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
-                /*debug(SUBMISSION, "straight \r\n");*/
+                /*debug(SUBMISSION, "straight %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    int merge_num = convert_sw_track_data(node->previous->num, 1); // opposite of branch
+                    /*debug(SUBMISSION, "%s", "need switch straight");*/
+                    int merge_num = convert_sw_track_data(node_id, 1); // opposite of branch
                     int next_stop = predict_next(train_server->track, merge_num, train_server);
+                    /*debug(SUBMISSION, "next stop %d", next_stop);*/
 
                     // revert the direction 
                     if(next_stop %2 == 0){
@@ -129,7 +134,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                         next_stop -= 1;
                     }
 
-                    irq_debug(SUBMISSION, "merge_num %d, current stop%d, previous sensor%d", merge_num, node_id, next_stop);   
+                    /*irq_debug(SUBMISSION, "merge_num %d, current stop%d, previous sensor%d", merge_num, node_id, next_stop);   */
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -142,10 +147,14 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                     /*debug(SUBMISSION, "status straight \r\n");*/
                 }
             } else{
-                /*debug(SUBMISSION, "curve \r\n");*/
+                /*debug(SUBMISSION, "curve %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
-                    int reverse_num = convert_sw_track_data(node->previous->num, 1);
-                    int next_stop = predict_next(train_server->track, reverse_num, train_server);
+                    /*debug(SUBMISSION, "%s", "need switch curve");*/
+                    /*debug(SUBMISSION, "current node %d", node_id);*/
+                    int merge_num = convert_sw_track_data(node_id, 1);
+                    /*debug(SUBMISSION, "reverse_num%d", merge_num);*/
+                    int next_stop = predict_next(train_server->track, merge_num, train_server);
+                    /*debug(SUBMISSION, "next stop%d", next_stop);*/
 
                     // revert the direction 
                     if(next_stop %2 == 0){
@@ -154,7 +163,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
                         next_stop -= 1;
                     }
 
-                    irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
+                    /*irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   */
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -177,13 +186,16 @@ int predict_next(track_node *track, int src, Train_server *train_server){
     fifo_t queue; 
     fifo_init(&queue);
 
+    /*debug(SUBMISSION, "enter predict_next, src=%d, num=%d", src, temp->num);*/
     fifo_put(&queue, temp);
 
     while(1){
         fifo_get(&queue, &temp);
         if(temp->type == NODE_SENSOR){
+            /*debug(SUBMISSION, "sensor node%d", temp->num);*/
             return temp->num;
         } else if(temp->type == NODE_BRANCH){
+            /*debug(SUBMISSION, "branch node %d", temp->num);*/
             int cur_dir = train_server->switches_status[temp->num-1];
             if(cur_dir == STRAIGHT){
                 fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
@@ -191,6 +203,7 @@ int predict_next(track_node *track, int src, Train_server *train_server){
                 fifo_put(&queue, temp->edge[DIR_CURVED].dest);
             }
         } else if(temp->type == NODE_MERGE){
+            /*debug(SUBMISSION, "merge node%d", temp->num);*/
            fifo_put(&queue, temp->edge[DIR_AHEAD].dest); 
         } else if(temp->type == NODE_EXIT){
             return -1;
