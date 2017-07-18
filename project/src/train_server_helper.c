@@ -75,39 +75,26 @@ void pop_cli_req_fifo(Train_server *train_server, Cli_request *cli_req)
 	train_server->cli_req_fifo_tail = cli_req_fifo_get_next;
 }
 
-void push_br_lifo(Train_server *train_server, Train_br_switch br_switch)
+void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)
 {
-    if (train_server->br_lifo_top != BR_LIFO_SIZE - 1) {
-        train_server->br_lifo_top += 1;
-        train_server->br_lifo[train_server->br_lifo_top] = br_switch;
+    if (br_lifo_struct->br_lifo_top != BR_LIFO_SIZE - 1) {
+        br_lifo_struct->br_lifo_top += 1;
+        br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top] = br_switch;
     }
 }
 
-void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
+void pop_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch)
 {
-    *br_switch = train_server->br_lifo[train_server->br_lifo_top];
-    train_server->br_lifo_top -= 1;
+    *br_switch = br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top];
+    br_lifo_struct->br_lifo_top -= 1;
 }
 
-int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch)
+int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch)
 {
-    if(train_server->br_lifo_top == -1){
+    if(br_lifo_struct->br_lifo_top == -1){
         return -1;
     }
-    *br_switch = train_server->br_lifo[train_server->br_lifo_top];
+    *br_switch = br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top];
     return 0;
 }
 
-/*void push_sensor_lifo(Train_server *train_server, Sensor sensor)*/
-/*{*/
-    /*if (train_server->sensor_lifo_top != SENSOR_LIFO_SIZE - 1) {*/
-        /*train_server->sensor_lifo_top += 1;*/
-        /*train_server->sensor_lifo[train_server->sensor_lifo_top] = sensor;*/
-    /*}*/
-/*}*/
-
-/*void pop_sensor_lifo(Train_server *train_server, Sensor *sensor)*/
-/*{*/
-    /**sensor = train_server->sensor_lifo[train_server->sensor_lifo_top];*/
-    /*train_server->sensor_lifo_top -= 1;*/
-/*}*/

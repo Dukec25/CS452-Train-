@@ -86,6 +86,7 @@ typedef struct Train {
     int last_sensor_triggered_time;
     int deaccelarate_stop;
     int delay_time;
+    Br_lifo br_lifo_struct;
     Velocity_model velocity_model;
 } Train;
 

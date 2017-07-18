@@ -2,7 +2,7 @@
 #include <log.h>
 #include <debug.h>
 
-int choose_destination(track_node *track, int src, int dest, Train_server *train_server){
+int choose_destination(int src, int dest, Train_server *train_server, Br_lifo br_lifo_struct){
     /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
@@ -11,8 +11,8 @@ int choose_destination(track_node *track, int src, int dest, Train_server *train
     }
 
     track_node *temp;
-    temp = find_path(track, src, dest);
-    return switches_need_changes(src, temp, train_server);
+    temp = find_path(train_server->track, src, dest);
+    return switches_need_changes(src, temp, train_server, br_lifo_struct);
 }
 
 int cal_distance(track_node *track, int src, int dest)
@@ -77,7 +77,7 @@ track_node* find_path(track_node *track, int src, int dest)
     return NULL;
 }
 
-int switches_need_changes(int src, track_node *node, Train_server *train_server){
+int switches_need_changes(int src, track_node *node, Train_server *train_server, Br_lifo *br_lifo_struct){
     /*debug(SUBMISSION, "switches_need_changes=%d\r\n", src);*/
     int idx = 0; // br_update size is 10
 
@@ -114,28 +114,13 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
                 /*debug(SUBMISSION, "straight \r\n");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
-                    int reverse_num = convert_sw_track_data(node->previous->num, 1);
-                    int next_stop = predict_next(train_server->track, reverse_num, train_server);
-
-                    // revert the direction 
-                    if(next_stop %2 == 0){
-                        next_stop += 1;
-                    } else{
-                        next_stop -= 1;
-                    }
-
-                    irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
-
-                    /*train_server->br_sensor_update[idx] = next_stop;*/
-                    /*debug(SUBMISSION, "status curve \r\n");*/
-                    /*train_server->br_switch_update[idx].id = node_id;*/
-                    /*train_server->br_switch_update[idx++].state = 's';*/
+                    int next_stop = previous_sensor_finder(node->previous);
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
                     br_switch.id  = node_id;
                     br_switch.state = 's';
-                    push_br_lifo(train_server, br_switch);
+                    push_br_lifo(br_lifo_struct, br_switch);
 
                 } else{
                     /*debug(SUBMISSION, "status straight \r\n");*/
@@ -143,27 +128,13 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server)
             } else{
                 /*debug(SUBMISSION, "curve \r\n");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
-                    int reverse_num = convert_sw_track_data(node->previous->num, 1);
-                    int next_stop = predict_next(train_server->track, reverse_num, train_server);
-
-                    // revert the direction 
-                    if(next_stop %2 == 0){
-                        next_stop += 1;
-                    } else{
-                        next_stop -= 1;
-                    }
-
-                    irq_debug(SUBMISSION, "reverse_num %d, current stop%d, previous sensor%d", reverse_num, node_id, next_stop);   
-                    /*train_server->br_sensor_update[idx] = next_stop;*/
-                    /*debug(SUBMISSION, "status straight \r\n");*/
-                    /*train_server->br_update[idx].id = node_id;*/
-                    /*train_server->br_update[idx++].state = 'c';*/
+                    int next_stop = previous_sensor_finder(node->previous);
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
                     br_switch.id  = node_id;
                     br_switch.state = 'c';
-                    push_br_lifo(train_server, br_switch);
+                    push_br_lifo(br_lifo_struct, br_switch);
                 } else{
                     /*debug(SUBMISSION, "status curve \r\n");*/
                 }
@@ -400,3 +371,12 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
     return NULL;
 }
 
+// internal helper function for finding the previous within a process of a
+// back tracking 
+int previous_sensor_finder(track_node *node){
+    track_node *temp = node;
+    while(temp->type != NODE_SENSOR){
+        temp = temp->previous;
+    }
+    return temp->num;
+}

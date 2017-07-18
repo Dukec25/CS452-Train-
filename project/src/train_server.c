@@ -18,6 +18,10 @@ void trains_init(Train_server *train_server){
     }
 }
 
+void br_lifo_init(Br_lifo *br_lifo_struct){
+    br_lifo_struct->br_lifo_top = -1;
+}
+
 void train_server_init(Train_server *train_server)
 {
 	train_server->is_shutdown = 0;
@@ -31,7 +35,6 @@ void train_server_init(Train_server *train_server)
     train_server->track_req_fifo_head = 0;
 	train_server->track_req_fifo_tail = 0;
     
-    train_server->br_lifo_top = -1;
     train_server->cli_map.test = 5;
 
     train_server->cli_courier_on_wait = 0;
@@ -125,6 +128,7 @@ void train_server()
             }
             train->park_delay_time = ts_request.track_result.park_delay_time; 
             train->deaccelarate_stop = ts_request.track_result.deaccelarate_stop;
+            train->br_lifo_struct = ts_request.track_result.br_lifo_struct; // be careful with the shallow copy here
             irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train->park_delay_time, train->deaccelarate_stop);
 			Reply(requester_tid, &handshake, sizeof(handshake));
         }
@@ -358,9 +362,9 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 Train *train = &(train_server->trains[1]);
                 train->last_stop = current_stop;
                 train->last_sensor_triggered_time = current_sensor_triggered_time;
-                irq_debug(SUBMISSION, "speed up the train %d", train->id);
-                irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
-                irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train_server->trains[0].id); // start the other train 
+                /*irq_debug(SUBMISSION, "speed up the train %d", train->id);*/
+                /*irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train */
+                /*irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train_server->trains[0].id); // start the other train */
                 train_server->go_cmd_state = 2;
 
                 Track_request track_req; 
@@ -420,12 +424,13 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             // some condition not takes into account here, like lifo
             // contains the same sensor multiple times 
             Train_br_switch br_switch;
-            int temp = peek_br_lifo(train_server, &br_switch);
-            if( current_stop == br_switch.sensor_stop){
-                train_server->br_lifo_top -= 1; // equivalent with pop 
-                irq_debug(SUBMISSION, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
+            int temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
+            while( temp == 0 && current_stop == br_switch.sensor_stop ){
+                pop_br_lifo(&train->br_lifo_struct);
+                /*bwprintf(COM2, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);*/
                 Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
                 push_cmd_fifo(train_server, sw_cmd);
+                temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
             }
 
 		}

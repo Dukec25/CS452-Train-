@@ -14,7 +14,16 @@ typedef struct Track_result{
     int deaccelarate_stop;
     int reverse;
     int train_id;
+    Br_lifo br_lifo_struct;
 } Track_result;
+
+// switches to flip such that train can at a sensor 
+// sensors that locate right before the br switch
+#define BR_LIFO_SIZE    10
+typedef struct Br_lifo{
+    Train_br_switch br_lifo[BR_LIFO_SIZE];
+    int br_lifo_top;
+} Br_lifo;
 
 typedef struct Delay_request{
     vint delay_time;
@@ -62,16 +71,10 @@ typedef struct Train_server {
 	int cli_req_fifo_head;
 	int cli_req_fifo_tail;
 
+    Br_lifo br_lifo_struct;
 #define MAX_NUM_TRAINS 5 
 	Train trains[MAX_NUM_TRAINS];
-
     int switches_status[NUM_SWITCHES];
-
-// switches to flip such that train can at a sensor 
-// sensors that locate right before the br switch
-#define BR_LIFO_SIZE    10
-    Train_br_switch br_lifo[BR_LIFO_SIZE];
-    int br_lifo_top;
 
     track_node track[TRACK_MAX];    // Data for the current using track
 

@@ -29,10 +29,13 @@ void track_server()
         /*Reply(requester_tid, &handshake, sizeof(handshake)); // pay attention to this line */
         
         if(track_req.type == TRAIN_WANT_GUIDANCE){
+            Br_lifo br_lifo_struct;
+            br_lifo_struct->br_lifo_top = -1;
+
             int stop = choose_rand_destination();
 
-            // br complete here 
-            int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
+            // br operation completes here 
+            int num_switch = choose_destination(track_req.train->last_stop, stop, train_server, &br_lifo_struct);
 
             // retrieve stopping distance
             int stopping_distance = track_req.train->velocity_model.stopping_distance[track_req.train->speed];
@@ -67,6 +70,7 @@ void track_server()
             ts_request.track_result.park_delay_time = park_delay_time;
             ts_request.track_result.reverse = reverse;
             ts_request.track_result.train_id = track_req.train->train_id;
+            ts_request.track_result.br_lifo_struct = br_lifo_struct;
 
             push_ts_request(&track_server, ts_request);
         } else if (track_req.type == TRAIN_WANT_RESULT){
