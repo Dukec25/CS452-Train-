@@ -9,26 +9,26 @@ Sensor parse_stop_sensor(Command cmd)
 	return stop_sensor;
 }
 
-void push_park_req_fifo(Train_server *train_server, Park_request park_req)
+void push_track_req_fifo(Train_server *train_server, Track_request track_req)
 {
-    int park_fifo_put_next = train_server->park_req_fifo_head + 1;
-    if (park_fifo_put_next != train_server->park_req_fifo_tail) {
-        if (park_fifo_put_next >= PARK_REQ_FIFO_SIZE) {
-            park_fifo_put_next = 0;
+    int track_fifo_put_next = train_server->track_req_fifo_head + 1;
+    if (track_fifo_put_next != train_server->track_req_fifo_tail) {
+        if (track_fifo_put_next >= TRACK_REQ_FIFO_SIZE) {
+            track_fifo_put_next = 0;
         }
     }
-    train_server->park_req_fifo[train_server->park_req_fifo_head] = park_req;
-    train_server->park_req_fifo_head = park_fifo_put_next;  
+    train_server->track_req_fifo[train_server->track_req_fifo_head] = track_req;
+    train_server->track_req_fifo_head = track_fifo_put_next;  
 }
 
-void pop_park_req_fifo(Train_server *train_server, Park_request *park_req)
+void pop_track_req_fifo(Train_server *train_server, Track_request *track_req)
 {
-    int park_fifo_get_next = train_server->park_req_fifo_tail + 1;
-    if (park_fifo_get_next >= PARK_REQ_FIFO_SIZE) {
-        park_fifo_get_next = 0;
+    int track_fifo_get_next = train_server->track_req_fifo_tail + 1;
+    if (track_fifo_get_next >= track_REQ_FIFO_SIZE) {
+        track_fifo_get_next = 0;
     }
-    *park_req = train_server->park_req_fifo[train_server->park_req_fifo_tail];
-    train_server->park_req_fifo_tail = park_fifo_get_next;  
+    *track_req = train_server->track_req_fifo[train_server->track_req_fifo_tail];
+    train_server->track_req_fifo_tail = track_fifo_get_next;  
 }
 
 void push_cmd_fifo(Train_server *train_server, Command cmd)

@@ -9,22 +9,16 @@
 #define GO_CMD_FINAL_SPEED 10 
 #define GO_CMD_START_SPEED 4
 
-typedef struct Park_result{
+typedef struct Track_result{
     int park_delay_time;
     int deaccelarate_stop;
     int reverse;
     int train_id;
-} Park_result;
-
-// will expand in the future
-typedef struct Park_request{
-    //int train_id;
-    Command park_cmd;
-    int     train_id;
-} Park_request;
+} Track_result;
 
 typedef struct Delay_request{
     vint delay_time;
+    int train_id;
 } Delay_request;
 
 typedef struct Train_br_switch{
@@ -45,17 +39,18 @@ typedef enum {
 typedef struct TS_request {
 	TS_request_type type;
 	Command cmd;
-    Park_result park_result;
+    Track_result track_result;
+    Delay_result delay_result;
 } TS_request;
 
 typedef struct Train_server {
 	int is_shutdown;
     int train_idx; // used mainly by tr command
 
-#define PARK_REQ_FIFO_SIZE  100
-    Park_request park_req_fifo[PARK_REQ_FIFO_SIZE];
-    int park_req_fifo_head;
-    int park_req_fifo_tail;
+#define TRACK_REQ_FIFO_SIZE  100
+    Track_request track_req_fifo[TRACK_REQ_FIFO_SIZE];
+    int track_req_fifo_head;
+    int track_req_fifo_tail;
 
 #define COMMAND_FIFO_SIZE	100
 	Command cmd_fifo[COMMAND_FIFO_SIZE];
@@ -70,9 +65,6 @@ typedef struct Train_server {
 #define MAX_NUM_TRAINS 5 
 	Train trains[MAX_NUM_TRAINS];
 
-	int last_stop;	// last sensor converted to num
-    int last_sensor_triggered_time;
-
     int switches_status[NUM_SWITCHES];
 
 // switches to flip such that train can at a sensor 
@@ -83,12 +75,9 @@ typedef struct Train_server {
 
     track_node track[TRACK_MAX];    // Data for the current using track
 
-    int deaccelarate_stop;
-    int park_delay_time;
-
     Map cli_map;
     int cli_courier_on_wait;
-    int park_courier_on_wait;
+    int track_courier_on_wait;
 
     // -1 for normal state for everything, 0 for init state of go
     //  1 for one train gets initial data, 2 for ready state
@@ -100,8 +89,6 @@ void train_server();
 void sensor_reader_task();
 void sensor_handle(Train_server *train_server, int delay_task_tid);
 void dc_handle(Train_server *train_server, Command dc_cmd);
-void br_handle(Train_server *train_server, Command br_cmd);
-void park_handle(Train_server *train_server, Command park_cmd);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);

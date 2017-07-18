@@ -31,8 +31,11 @@ void track_server()
         if(track_req.type == TRAIN_WANT_GUIDANCE){
             int stop = choose_rand_destination();
 
+            // br complete here 
+            int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
+
             // retrieve stopping distance
-            int stopping_distance = track_req.train->velocity_model.stopping_distance[train->speed];
+            int stopping_distance = track_req.train->velocity_model.stopping_distance[track_req.train->speed];
 
             int reverse = 0;
             Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
@@ -60,10 +63,10 @@ void track_server()
 
             TS_request ts_request;
             ts_request.type = TS_TRACK_SERVER;
-            ts_request.park_result.deaccelarate_stop = deaccelarate_stop;
-            ts_request.park_result.park_delay_time = park_delay_time;
-            ts_request.park_result.reverse = reverse;
-            ts_request.park_result.train_id = ;
+            ts_request.track_result.deaccelarate_stop = deaccelarate_stop;
+            ts_request.track_result.park_delay_time = park_delay_time;
+            ts_request.track_result.reverse = reverse;
+            ts_request.track_result.train_id = track_req.train->train_id;
 
             push_ts_request(&track_server, ts_request);
         } else if (track_req.type == TRAIN_WANT_RESULT){
@@ -84,7 +87,7 @@ void track_server()
 
 // choose a random number from 0 ~ 79, which only choose sensors 
 int choose_rand_destination(){
-    int val = abs(rand(&choice_seed)%100);
+    int val = abs(rand(&choice_seed)%80);
     return val;
 }
 
@@ -127,3 +130,4 @@ void pop_ts_req_fifo(Track_server *train_server, TS_request *ts_req)
     *ts_req = train_server->route_result_fifo[track_server->route_req_fifo_tail];
     track_server->route_result_fifo_tail = ts_fifo_get_next;  
 }
+

@@ -10,7 +10,7 @@ typedef enum {
 } Track_request_type;
 
 typedef struct Track_request{
-    Train train;
+    Train *train;
 	Track_request_type type;
 } Track_request;
 
@@ -34,6 +34,7 @@ int pair(int idx);
 int convert_sw_track_data(int num, int type);
 void push_ts_req_fifo(Track_server *track_server, TS_request ts_req);
 void pop_ts_req_fifo(Track_server *train_server, TS_request *ts_req);
+void br_handle(Train_server *train_server, Command br_cmd);
 
 #endif // __TRACK_SERVER__
 

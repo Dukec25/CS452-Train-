@@ -13,6 +13,8 @@ void trains_init(Train_server *train_server){
         train_server->trains[i].speed = 0;
         train_server->trains[i].last_stop = -1;
         train_server->trains[i].last_sensor_triggered_time = 0;
+        train_server->trains[i].deaccelarate_stop = -1;
+        train_server->trains[i].delay_time = -1;
     }
 }
 
@@ -26,19 +28,14 @@ void train_server_init(Train_server *train_server)
 	train_server->cli_req_fifo_head = 0;
 	train_server->cli_req_fifo_tail = 0;
 
-    train_server->park_req_fifo_head = 0;
-	train_server->park_req_fifo_tail = 0;
+    train_server->track_req_fifo_head = 0;
+	train_server->track_req_fifo_tail = 0;
     
     train_server->br_lifo_top = -1;
-	train_server->last_sensor_triggered_time = 0;
     train_server->cli_map.test = 5;
 
-    // to be removed 
-    train_server->deaccelarate_stop = -1;
-    train_server->park_delay_time = 0;
-
     train_server->cli_courier_on_wait = 0;
-    train_server->park_courier_on_wait = 0;
+    train_server->track_courier_on_wait = 0;
 
     train_server->go_cmd_state = -1;
     train_server->train_idx = 0;
@@ -86,8 +83,9 @@ void train_server()
     /*irq_debug(SUBMISSION, "sensor_reader_tid %d", sensor_reader_tid);*/
 	Send(sensor_reader_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
-    /*int park_server_tid = Create(PRIOR_MEDIUM, park_server);*/
-    /*Send(park_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));*/
+    // need to be move to train_task in the future
+    int track_server_tid = Create(PRIOR_MEDIUM, track_server);
+    Send(track_server_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
   
     int delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
     Send(delay_task_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
@@ -105,15 +103,30 @@ void train_server()
 		}
         else if (ts_request.type == TS_TRAIN_TO_TRACK_REQ){
             // courier send request to track 
-            Park_request park_req;
-            if (train_server.park_req_fifo_head == train_server.park_req_fifo_tail) {
-                train_server.park_courier_on_wait = requester_tid; 
+            Track track_req;
+            if (train_server.track_req_fifo_head == train_server.track_req_fifo_tail) {
+                train_server.track_courier_on_wait = requester_tid; 
             }
             else {
-                pop_park_req_fifo(&train_server, &park_req);
+                pop_track_req_fifo(&train_server, &track_req);
                 //irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
-                Reply(requester_tid, &park_req, sizeof(park_req));
+                Reply(requester_tid, &track_req, sizeof(track_req));
             }
+        }
+        else if (ts_request.type == TS_TRACK_SERVER) {
+            // result from track server
+            int i = 0
+            Train *train;
+            for( ; i < MAX_NUM_TRAINS; i++){
+                if(ts_request.train_id == train_server->trains[i].train_id){
+                    train = &(train_server->trains[i]);
+                    break;
+                }
+            }
+            train->park_delay_time = ts_request.track_result.park_delay_time; 
+            train->deaccelarate_stop = ts_request.track_result.deaccelarate_stop;
+            irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train->park_delay_time, train->deaccelarate_stop);
+			Reply(requester_tid, &handshake, sizeof(handshake));
         }
 		else if (ts_request.type == TS_WANT_CLI_REQ) {
 			// from cli_request_courier
@@ -128,17 +141,18 @@ void train_server()
                 Reply(requester_tid, &cli_req, sizeof(cli_req));
 			}
 		}
-        else if (ts_request.type == TS_TRACK_SERVER) {
-            // result from track server
-            train_server.park_delay_time = ts_request.park_result.park_delay_time; 
-            train_server.deaccelarate_stop = ts_request.park_result.deaccelarate_stop;
-            irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train_server.deaccelarate_stop, train_server.park_delay_time);
-			Reply(requester_tid, &handshake, sizeof(handshake));
-        }
         else if (ts_request.type == TS_DELAY_TIME_UP){
-            Command tr_cmd = get_tr_stop_command(train_server.train.id);
+            Train *train;
+            int i = 0;
+            for( ; i < MAX_NUM_TRAINS; i++){
+                if(ts_request.delay_result.train_id == train_server->trains[i].id){
+                    train = &(train_server->trains[i]);
+                    break;
+                }
+            }
+            Command tr_cmd = get_tr_stop_command(train->id);
             push_cmd_fifo(&train_server, tr_cmd);
-            train_server.deaccelarate_stop = -1;
+            train->deaccelarate_stop = -1;
 			Reply(requester_tid, &handshake, sizeof(handshake));
         }
 		else {
@@ -211,20 +225,6 @@ void train_server()
             go_handle(&train_server, cmd);
             break;
 
-		case BR:
-			br_handle(&train_server, cmd);
-			break;
-
-		case PARK:
-			/*irq_debug(SUBMISSION, "handle park cmd %c%d", cmd.arg0, cmd.arg1);*/
-			br_handle(&train_server, cmd);
-
-            Park_request park_req;
-            park_req.park_cmd = cmd;
-
-            push_park_req_fifo(&train_server, park_req);
-			break;
-				
 		default:
 			break;
 		}
@@ -239,14 +239,14 @@ void train_server()
             train_server.cli_courier_on_wait = 0;
         }
 
-        if (train_server.park_courier_on_wait && 
-                train_server.park_req_fifo_head != train_server.park_req_fifo_tail)
+        if (train_server.track_courier_on_wait && 
+                train_server.track_req_fifo_head != train_server.track_req_fifo_tail)
         {
-            Park_request park_req;
-            pop_park_req_fifo(&train_server, &park_req);
-            int courier_id =  train_server.park_courier_on_wait;
-            Reply(courier_id, &park_req, sizeof(park_req));
-            train_server.park_courier_on_wait = 0;
+            Track_request track_req;
+            pop_track_req_fifo(&train_server, &track_req);
+            int courier_id =  train_server.track_courier_on_wait;
+            Reply(courier_id, &track_req, sizeof(track_req));
+            train_server.track_courier_on_wait = 0;
         }
 	}
 
@@ -339,6 +339,7 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             int current_sensor_triggered_time = Time();
 			int next_stop = predict_next(train_server->track, current_stop, train_server);
 
+            // code for initializing two trains 
             if( train_server->go_cmd_state == 0 ){
                 Train *train = &(train_server->trains[0]);
                 train->last_stop = current_stop;
@@ -346,6 +347,12 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 
                 irq_debug(SUBMISSION, "stop the train %d", train->id);
                 irq_printf(COM1, "%c%c", MIN_SPEED+16, train->id); // stop the train 
+
+                Track_request track_req; 
+                track_req.type = TRAIN_WANT_GUIDANCE; 
+                track_req.train = train;
+                push_track_req_fifo(train_server, track_req);
+                
                 continue;
             } else if (train_server->go_cmd_state == 1){
                 Train *train = &(train_server->trains[1]);
@@ -355,6 +362,11 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
                 irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train_server->trains[0].id); // start the other train 
                 train_server->go_cmd_state = 2;
+
+                Track_request track_req; 
+                track_req.type = TRAIN_WANT_GUIDANCE; 
+                track_req.train = train;
+                push_track_req_fifo(train_server, track_req);
                 continue;
             }
 
@@ -371,7 +383,6 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 			int last_stop = train->last_stop;
             int last_sensor_triggered_time = train->last_sensor_triggered_time;
 	
-			/*if ((current_stop == last_stop) || (last_stop == -1)) { */
             if ((current_stop == last_stop)){
 				return;
 			}
@@ -397,12 +408,12 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 (int) real_velocity, (int) train->velocity_model.velocity[train->speed]); 
             push_cli_req_fifo(train_server, update_calibration_request);
 
-            if (current_stop == train_server->deaccelarate_stop){
+            if (current_stop == train->deaccelarate_stop){
                 irq_debug(SUBMISSION, "%s", "about to delay");
-
                 Delay_request delay_req;
                 Handshake handshake = HANDSHAKE_AKG;
-                delay_req.delay_time = train_server->park_delay_time; 
+                delay_req.delay_time = train->park_delay_time; 
+                delay_req.train_id   = train->id;
                 Send(delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
             }
 
@@ -421,23 +432,10 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 	}
 }
 
-void br_handle(Train_server *train_server, Command br_cmd)
-{
-	// parse destination
-	Sensor stop_sensor = parse_stop_sensor(br_cmd);
-	int stop = sensor_to_num(stop_sensor);
-	/*irq_debug(SUBMISSION, "br_task: stop sensor is %d, %d, stop = %d", stop_sensor.group, stop_sensor.id, stop);*/
-	
-	// flip switches such that the train can arrive at the stop
-	int num_switch = choose_destination(train_server->track, train_server->last_stop, stop, train_server);
-	/*irq_debug(SUBMISSION, "num_switch = %d", num_switch);*/
-}
-
 void go_handle(Train_server *train_server, Command go_cmd)
 {
     // get invoked 
     int train_id = go_cmd.arg0;
-
 
     // can probably change into if in the future 
     switch(train_server->go_cmd_state){

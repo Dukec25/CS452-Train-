@@ -20,6 +20,7 @@ void delay_task()
 
 		TS_request ts_request;
 		ts_request.type = TS_DELAY_TIME_UP;
+        ts_request.delay_result.train_id = delay_req.train_id;
 
 		Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake));
 	}

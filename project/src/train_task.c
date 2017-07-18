@@ -31,6 +31,11 @@ void train_task_admin()
 	irq_debug(SUBMISSION, "created train_server taskId = %d", train_tid);
 	Send(train_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
+    // suppose to be like this, but currently due to inconvenience 
+	/*int track_tid = Create(PRIOR_MEDIUM, track_server);*/
+	/*irq_debug(SUBMISSION, "created track_server taskId = %d", track_tid);*/
+	/*Send(track_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));*/
+
 	int train_command_courier_tid = Create(PRIOR_MEDIUM, train_command_courier);
 	Send(train_command_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
