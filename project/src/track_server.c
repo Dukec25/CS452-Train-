@@ -29,14 +29,14 @@ void track_init(Track_server *track_server){
 
 void track_server()
 {
+    RegisterAs("TRACK_SERVER");
+    debug(SUBMISSION, "%s", "track server");
     Handshake handshake = HANDSHAKE_AKG;
 	int train_task_admin_tid = INVALID_TID;
 	vint kill_all_addr;
 	Receive(&train_task_admin_tid, &kill_all_addr, sizeof(kill_all_addr));
 	Reply(train_task_admin_tid, &handshake, sizeof(handshake));
 	Handshake *kill_all = kill_all_addr;
-
-    RegisterAs("TRACK_SERVER");
 
     int train_server_tid = INVALID_TID;
     vint train_server_address;
@@ -99,8 +99,9 @@ void track_server()
 
             push_ts_req_fifo(&track_server, ts_request);
         } else if (track_req.type == TRAIN_WANT_RESULT){
-			// from cli_request_courier
+			// from track_to_train_courier
 			TS_request ts_req;
+            irq_debug(SUBMISSION, "%s", "track_server receive courier");
 			if (track_server.route_result_fifo_head == track_server.route_result_fifo_tail) {
                 track_server.train_courier_on_wait = requester_tid;
 			}

@@ -35,6 +35,8 @@ uint32 rand(uint32 state[static 1])
 	return x >= x ? x : -x;
 }
 
-int abs(int v){
-    return v * ((v>0) - (v<0));
+int abs(int v)
+{
+    int ret_val = v * ((v>0) - (v<0));
+    return ret_val;
 }

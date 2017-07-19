@@ -12,29 +12,30 @@ void train_task_admin()
 	vint kill_all_addr = &kill_all;
 
 	int idle_tid = Create(PRIOR_LOWEST, idle_task);
-	irq_debug(SUBMISSION, "created idle_task taskId = %d", idle_tid);
+	/*irq_debug(SUBMISSION, "created idle_task taskId = %d", idle_tid);*/
 	Send(idle_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
 	cli_startup();
 	bwputc(COM1, START); // switches won't work without start command
 	irq_io_tasks_cluster();
 
-    reverse_initialize_switch();
-	initialize_switch();
+    /*reverse_initialize_switch();*/
+	/*initialize_switch();*/
 	sensor_initialization();
 
 	int cli_tid = Create(PRIOR_MEDIUM, cli_server);
-	irq_debug(SUBMISSION, "created cli_server taskId = %d", cli_tid);
+	/*irq_debug(SUBMISSION, "created cli_server taskId = %d", cli_tid);*/
 	Send(cli_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
-	int train_tid = Create(PRIOR_MEDIUM, train_server);
-	irq_debug(SUBMISSION, "created train_server taskId = %d", train_tid);
-	Send(train_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
-
-    // suppose to be like this, but currently due to inconvenience 
     int track_tid = Create(PRIOR_MEDIUM, track_server);
     irq_debug(SUBMISSION, "created track_server taskId = %d", track_tid);
+    /*debug(SUBMISSION, "created track_server taskId = %d", track_tid);*/
     Send(track_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+
+	int train_tid = Create(PRIOR_MEDIUM, train_server);
+    irq_debug(SUBMISSION, "created train_server taskId = %d", train_tid);
+	/*debug(SUBMISSION, "created train_server taskId = %d", train_tid);*/
+	Send(train_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
 	int train_command_courier_tid = Create(PRIOR_MEDIUM, train_command_courier);
 	Send(train_command_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
@@ -45,8 +46,8 @@ void train_task_admin()
     int train_to_track_courier_tid = Create(PRIOR_MEDIUM, train_to_track_courier);
     Send(train_to_track_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
-    int track_to_train_courier = Create(PRIOR_MEDIUM, track_to_train_courier);
-    Send(track_to_train_courier, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
+    int track_to_train_courier_tid = Create(PRIOR_MEDIUM, track_to_train_courier);
+    Send(track_to_train_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
   
 	/*int tid = Create(PRIOR_MEDIUM, 	milestone1_test);*/
 
@@ -216,7 +217,6 @@ void train_to_track_courier()
     }
 
     Handshake handshake = HANDSHAKE_AKG;
-    bwprintf(COM2, "train_to_track_courier get trigger");
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         TS_request train_server_msg;
         train_server_msg.type = TS_TRAIN_TO_TRACK_REQ;
@@ -243,13 +243,14 @@ void track_to_train_courier(){
     while(!(train_server_tid > 0 && train_server_tid < MAX_NUM_TASKS)) {
         train_server_tid = WhoIs("TRAIN_SERVER");
     }
+
     int track_server_tid = INVALID_TID;
     while(!(track_server_tid > 0 && track_server_tid < MAX_NUM_TASKS)) {
         track_server_tid = WhoIs("TRACK_SERVER");
     }
 
+    /*debug(SUBMISSION, "%s", "track_to_train_courier before while");*/
     Handshake handshake = HANDSHAKE_AKG;
-    bwprintf(COM2, "track_to_train_courier get trigger");
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         Track_request track_server_msg;
         track_server_msg.type = TRAIN_WANT_RESULT;

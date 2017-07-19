@@ -6,6 +6,6 @@
 uint8 popcount(uint32 x);
 uint8 clz(uint32 x);
 uint32 rand(uint32 state[static 1]);
-int abs(int v){
+int abs(int v);
 
 #endif // __MATH_H__
