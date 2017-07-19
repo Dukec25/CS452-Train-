@@ -271,8 +271,22 @@ void rand_test(){
 void calculation_test(){
     int stop = choose_rand_destination();
     debug(SUBMISSION, "choosed stop %d\r\n", stop);
+    int resource_available[143]; 
+    Train_server train_server;
+    init_tracka(train_server.track);
+    Br_lifo br_lifo_struct;
+    int i = 0;
+    for( ;i < 143; i++){
+        resource_available[i] = 1;
+    }
+    resource_available[19] = 0;
+    int sw;
+	for (sw = 1; sw <= 22 ; sw++) {
+		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
+		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
+	}
     // c10 to e2 
-    /*int num_switch = choose_destination(41, 65, train_server, &br_lifo_struct);*/
+    int num_switch = choose_destination(41, 65, &train_server, &br_lifo_struct, resource_available);
 }
 
 int main()

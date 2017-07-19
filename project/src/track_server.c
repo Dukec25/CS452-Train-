@@ -62,7 +62,7 @@ void track_server()
             debug(SUBMISSION, "choosed stop is %d", stop);
 
             // br operation completes here 
-            int num_switch = choose_destination(track_req.train->last_stop, stop, train_server, &br_lifo_struct);
+            int num_switch = choose_destination(track_req.train->last_stop, stop, train_server, &br_lifo_struct, track_server.resource_available);
 
             // retrieve stopping distance
             int stopping_distance = track_req.train->velocity_model.stopping_distance[track_req.train->speed];
@@ -123,11 +123,11 @@ int choose_rand_destination(){
 }
 
 int pair(int idx){
-    int ret_val = 0;
+    int ret_val = idx;
     if(idx % 2 == 0){
-        ret_val -= 1;
-    } else{
         ret_val += 1;
+    } else{
+        ret_val -= 1;
     }
     return ret_val;
 }

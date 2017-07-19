@@ -3,7 +3,6 @@
 
 #include <train.h>
 
-
 typedef enum {
     BRANCH,
     MERGE

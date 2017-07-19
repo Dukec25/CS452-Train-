@@ -19,7 +19,7 @@ int cal_distance(track_node *track, int src, int dest);
 /*
  * function used to flip switches in order to get the train to dest
  */
-int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *br_lifo_struct);
+int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *br_lifo_struct, int *resource);
 
 /*
  * helper method of choose_destination

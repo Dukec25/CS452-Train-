@@ -3,8 +3,9 @@
 #include <debug.h>
 #include <train_server.h>
 
-int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *br_lifo_struct){
+int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *br_lifo_struct, int *resource){
     /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
+    debug(SUBMISSION, "src = %d, dest = %d", src, dest);
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything
         debug(SUBMISSION, "invalid data src = %d, dest %d, in choose_destination", src, dest);
@@ -12,7 +13,7 @@ int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *b
     }
 
     track_node *temp;
-    temp = find_path(train_server->track, src, dest);
+    temp = find_path_with_blocks(train_server->track, src, dest, resource);
     return switches_need_changes(src, temp, train_server, br_lifo_struct);
 }
 
@@ -81,16 +82,17 @@ track_node* find_path(track_node *track, int src, int dest)
 int switches_need_changes(int src, track_node *node, Train_server *train_server, Br_lifo *br_lifo_struct){
     /*debug(SUBMISSION, "switches_need_changes=%d\r\n", src);*/
     int idx = 0; // br_update size is 10
+    int pair_src = pair(src);
 
-	/*track_node *temp = node;*/
-	/*while(temp->num != src) {*/
-		/*debug(SUBMISSION, "%s ", temp->name);*/
-        /*temp = temp->previous;*/
-	/*}*/
-    /*debug(SUBMISSION, "%s \r\n", temp->name);*/
+    track_node *temp = node;
+    while(temp->num != src && temp->num != pair_src) {
+        debug(SUBMISSION, "%s ", temp->name);
+        temp = temp->previous;
+    }
+    debug(SUBMISSION, "%s \r\n", temp->name);
 
-    while(node->num != src){
-        /*debug(SUBMISSION, "visiting %s\r\n", node->name);*/
+    while(node->num != src && node->num != pair_src){
+        debug(SUBMISSION, "visiting %s\r\n", node->name);
         if(node->previous->type != NODE_BRANCH){
             node = node->previous;
             continue;
@@ -116,6 +118,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
                 /*debug(SUBMISSION, "straight \r\n");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
                     int next_stop = previous_sensor_finder(node->previous);
+                    debug(SUBMISSION, "%s", "switch to stright \r\n");
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -130,6 +133,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
                 /*debug(SUBMISSION, "curve \r\n");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
                     int next_stop = previous_sensor_finder(node->previous);
+                    debug(SUBMISSION, "%s", "switch to curve \r\n");
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -270,6 +274,7 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 // path_finding that doesn't take into consideration of stop_direction
 track_node* find_path_with_blocks(track_node *track, int src, int dest, int *resource)
 {
+    debug(SUBMISSION, "src = %d, dest = %d", src, dest);
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         return NULL;
     }
@@ -277,67 +282,48 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
     int pair_dest = 0;
     int pair_src = 0;
 
-    if(src % 2 == 0){
-        pair_dest = dest - 1;
-        pair_src  = src  - 1;
-    } else{
-        pair_dest = dest + 1;
-        pair_src  = src  + 1;
-    }
+    pair_dest = pair(dest);
+    pair_src  = pair(src)  ;
+    debug(SUBMISSION, "pair_src = %d, pair_dest = %d", pair_src, pair_dest);
 
     fifo_t queue; 
     fifo_init(&queue);
 
     track[src].buf = 0; // initialize the distance 
-    fifo_put(&queue, &(track[src]));
-
-    while (!is_fifo_empty(&queue)) {
-        track_node *temp;
-        fifo_get(&queue, &temp);
-
-        if (resource[track->num] == 0){
-            continue;
-        }
-
-        if (strlen(temp->name) == strlen(track[dest].name) || 
-            strlen(temp->name) == strlen(track[pair_dest].name) )
-        {
-            if (!strcmp(temp->name, track[dest].name, strlen(temp->name)) || 
-                 !strcmp(temp->name, track[pair_dest].name, strlen(temp->name))  ) 
-            {
-                return temp;
-            }
-        }
-
-        if (temp->type == NODE_EXIT) {
-            continue; 
-        }
-        else if (temp->type == NODE_BRANCH) {
-            temp->edge[DIR_STRAIGHT].dest->buf = temp->buf + temp->edge[DIR_STRAIGHT].dist;
-            temp->edge[DIR_STRAIGHT].dest->previous = temp;
-            fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
-
-            temp->edge[DIR_CURVED].dest->buf = temp->buf + temp->edge[DIR_CURVED].dist;
-            temp->edge[DIR_CURVED].dest->previous = temp;
-            fifo_put(&queue, temp->edge[DIR_CURVED].dest);
-        }
-        else{
-            temp->edge[DIR_AHEAD].dest->buf = temp->buf + temp->edge[DIR_AHEAD].dist;
-            temp->edge[DIR_AHEAD].dest->previous = temp;
-            fifo_put(&queue, temp->edge[DIR_AHEAD].dest);
-        }
-    }
-
-    // if can't get to the dest as path is blocked
-    // try the other direction, also indicate train needs reverse
     track[pair_src].buf = 0; // initialize the distance 
+    fifo_put(&queue, &(track[src]));
     fifo_put(&queue, &(track[pair_src]));
 
+    int visited_nodes[143];
+    int i = 0;
+    for(; i < 144; i++){
+        visited_nodes[i] = 0;
+    }
+
     while (!is_fifo_empty(&queue)) {
         track_node *temp;
         fifo_get(&queue, &temp);
 
-        if (resource[track->num] == 0){
+        if (temp->type == NODE_EXIT) {
+            continue; 
+        }
+
+        int node_num = temp->num;
+        if (temp->type == NODE_BRANCH){
+            node_num = convert_sw_track_data(temp->num, BRANCH);
+        } else if (temp->type == NODE_MERGE){
+            node_num = convert_sw_track_data(temp->num, MERGE);
+        }
+
+        if(visited_nodes[node_num]){
+            break;
+        }
+
+        visited_nodes[node_num] = 1;
+
+        debug(SUBMISSION, "%d", node_num);
+        if (resource[node_num] == 0 || resource[pair(node_num)] == 0){
+            debug(SUBMISSION, "%s", "not available");
             continue;
         }
 
@@ -351,10 +337,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
             }
         }
 
-        if (temp->type == NODE_EXIT) {
-            continue; 
-        }
-        else if (temp->type == NODE_BRANCH) {
+        if (temp->type == NODE_BRANCH) {
             temp->edge[DIR_STRAIGHT].dest->buf = temp->buf + temp->edge[DIR_STRAIGHT].dist;
             temp->edge[DIR_STRAIGHT].dest->previous = temp;
             fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
@@ -369,6 +352,8 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
             fifo_put(&queue, temp->edge[DIR_AHEAD].dest);
         }
     }
+
+    debug(SUBMISSION, "%s", "no path available");
     return NULL;
 }
 
@@ -393,7 +378,6 @@ void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)
 
 void pop_br_lifo(Br_lifo *br_lifo_struct)
 {
-    /**br_switch = train_server->br_lifo[train_server->br_lifo_top];*/
     if(br_lifo_struct->br_lifo_top == -1){
         // lifo is empty 
         return;
