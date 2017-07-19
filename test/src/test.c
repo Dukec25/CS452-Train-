@@ -5,6 +5,7 @@
 #include <define.h>
 #include <lifo.h>
 #include <track_data.h>
+#include <track_server.h>
 #include <train.h>
 #include <calculation.h>
 #include <define.h>
@@ -199,8 +200,8 @@ void heap_test()
 
 void track_test()
 {
-    Train_server train_server;
-    choose_destination(&train_server);
+    /*Train_server train_server;*/
+    /*choose_destination(&train_server);*/
     /*//calculate distance between two sensor*/
     /*track_node tracka[TRACK_MAX];*/
     /*init_tracka(tracka);*/
@@ -267,12 +268,17 @@ void rand_test(){
     }
 }
 
+void calculation_test(){
+    int stop = choose_rand_destination();
+    debug(SUBMISSION, "choosed stop %d\r\n", stop);
+    // c10 to e2 
+    /*int num_switch = choose_destination(41, 65, train_server, &br_lifo_struct);*/
+}
+
 int main()
 {
 	bwsetfifo(COM2, OFF);
 	/*track_test();*/
-    rand_test();
-    test_assert( 0, "stop%d", 0);
-    rand_test();
+    calculation_test();
 	return 0;
 }

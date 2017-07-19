@@ -1,6 +1,7 @@
 #include <calculation.h>
 #include <log.h>
 #include <debug.h>
+#include <train_server.h>
 
 int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *br_lifo_struct){
     /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
@@ -380,3 +381,23 @@ int previous_sensor_finder(track_node *node){
     }
     return temp->num;
 }
+
+// to be deleted in the future
+void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)
+{
+    if (br_lifo_struct->br_lifo_top != BR_LIFO_SIZE - 1) {
+        br_lifo_struct->br_lifo_top += 1;
+        br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top] = br_switch;
+    }
+}
+
+void pop_br_lifo(Br_lifo *br_lifo_struct)
+{
+    /**br_switch = train_server->br_lifo[train_server->br_lifo_top];*/
+    if(br_lifo_struct->br_lifo_top == -1){
+        // lifo is empty 
+        return;
+    }
+    br_lifo_struct->br_lifo_top -= 1;
+}
+

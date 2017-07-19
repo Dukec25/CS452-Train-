@@ -355,11 +355,6 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 irq_debug(SUBMISSION, "stop the train %d", train->id);
                 irq_printf(COM1, "%c%c", MIN_SPEED+16, train->id); // stop the train 
 
-                Track_request track_req; 
-                track_req.type = TRAIN_WANT_GUIDANCE; 
-                track_req.train = train;
-                push_track_req_fifo(train_server, track_req);
-                
                 continue;
             } else if (train_server->go_cmd_state == 1){
                 Train *train = &(train_server->trains[1]);

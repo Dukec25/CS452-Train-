@@ -6,3 +6,5 @@ all: build $(TARGET_ELF) copy
 LIBS += -ltrain
 
 include ../../common/common.mk
+
+LDPATHS += -L../../project/lib

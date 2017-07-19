@@ -30,7 +30,7 @@ void track_init(Track_server *track_server){
 void track_server()
 {
     RegisterAs("TRACK_SERVER");
-    debug(SUBMISSION, "%s", "track server");
+    irq_debug(SUBMISSION, "%s", "track server");
     Handshake handshake = HANDSHAKE_AKG;
 	int train_task_admin_tid = INVALID_TID;
 	vint kill_all_addr;
@@ -54,10 +54,12 @@ void track_server()
         /*Reply(requester_tid, &handshake, sizeof(handshake)); // pay attention to this line */
         
         if(track_req.type == TRAIN_WANT_GUIDANCE){
+            debug(SUBMISSION, "%s", "track receive park command");
             Br_lifo br_lifo_struct;
             br_lifo_struct.br_lifo_top = -1;
 
             int stop = choose_rand_destination();
+            debug(SUBMISSION, "choosed stop is %d", stop);
 
             // br operation completes here 
             int num_switch = choose_destination(track_req.train->last_stop, stop, train_server, &br_lifo_struct);
