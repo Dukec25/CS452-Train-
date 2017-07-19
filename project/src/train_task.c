@@ -32,9 +32,9 @@ void train_task_admin()
 	Send(train_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
     // suppose to be like this, but currently due to inconvenience 
-	/*int track_tid = Create(PRIOR_MEDIUM, track_server);*/
-	/*irq_debug(SUBMISSION, "created track_server taskId = %d", track_tid);*/
-	/*Send(track_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));*/
+    int track_tid = Create(PRIOR_MEDIUM, track_server);
+    irq_debug(SUBMISSION, "created track_server taskId = %d", track_tid);
+    Send(track_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
 
 	int train_command_courier_tid = Create(PRIOR_MEDIUM, train_command_courier);
 	Send(train_command_courier_tid, &kill_all_addr, sizeof(kill_all_addr), &kill_all_reply, sizeof(kill_all_reply));
@@ -220,7 +220,7 @@ void train_to_track_courier()
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         TS_request train_server_msg;
         train_server_msg.type = TS_TRAIN_TO_TRACK_REQ;
-        Track_req track_req;
+        Track_request track_req;
         Send(train_server_tid, &train_server_msg, sizeof(train_server_msg), &track_req, sizeof(track_req));
         Send(track_server_tid, &track_req, sizeof(track_req), &handshake, sizeof(handshake)); 
     }
@@ -252,7 +252,7 @@ void track_to_train_courier(){
     bwprintf(COM2, "track_to_train_courier get trigger");
     while (*kill_all != HANDSHAKE_SHUTDOWN) {
         Track_request track_server_msg;
-        train_server_msg.type = TRAIN_WANT_RESULT;
+        track_server_msg.type = TRAIN_WANT_RESULT;
         TS_request ts_request;
         Send(track_server_tid, &track_server_msg, sizeof(track_server_msg), &ts_request, sizeof(ts_request));
         Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake)); 

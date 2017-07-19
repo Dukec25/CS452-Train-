@@ -1,18 +1,41 @@
-#include <track.h>
 #include <calculation.h>
+#include <train_task.h>
 #include <debug.h>
+#include <log.h>
+#include <user_functions.h>
+#include <train.h>
+#include <cli.h>
+
+typedef struct Track_server {
+    // 1 represent resource available, 0 otherwise 
+    int resource_available[143]; 
+
+#define ROUTE_RESULT_FIFO_SIZE	50
+    TS_request route_result_fifo[ROUTE_RESULT_FIFO_SIZE];
+	int route_result_fifo_head;
+	int route_result_fifo_tail;
+} Track_server;
 
 static uint32 choice_seed = 0;
 
-void track_init(Train_server *train_server){
-    train_server->resouce_available = 1;
+void track_init(Track_server *track_server){
+    int i = 0;
+    for( ;i < 143; i++){
+        track_server->resource_available[i] = 1;
+    }
 }
 
 void track_server()
 {
+    Handshake handshake = HANDSHAKE_AKG;
+	int train_task_admin_tid = INVALID_TID;
+	vint kill_all_addr;
+	Receive(&train_task_admin_tid, &kill_all_addr, sizeof(kill_all_addr));
+	Reply(train_task_admin_tid, &handshake, sizeof(handshake));
+	Handshake *kill_all = kill_all_addr;
+
     RegisterAs("TRACK_SERVER");
 
-    Handshake handshake = HANDSHAKE_AKG;
     int train_server_tid = INVALID_TID;
     vint train_server_address;
     Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
@@ -22,15 +45,15 @@ void track_server()
     Track_server track_server;
     track_init(&track_server);
     
-    while (train_server->is_shutdown == 0) {
+	while (*kill_all != HANDSHAKE_SHUTDOWN) {
         int requester_tid;
-        Track_req track_req;
+        Track_request track_req;
         Receive(&requester_tid, &track_req, sizeof(track_req));
         /*Reply(requester_tid, &handshake, sizeof(handshake)); // pay attention to this line */
         
         if(track_req.type == TRAIN_WANT_GUIDANCE){
             Br_lifo br_lifo_struct;
-            br_lifo_struct->br_lifo_top = -1;
+            br_lifo_struct.br_lifo_top = -1;
 
             int stop = choose_rand_destination();
 
@@ -42,7 +65,7 @@ void track_server()
 
             int reverse = 0;
             Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
-            int num_park_stops = find_stops_by_distance(train_server->track, train_server->last_stop, stop, stopping_distance, park_stops, resource, &reverse);
+            int num_park_stops = find_stops_by_distance(train_server->track, track_req.train->last_stop, stop, stopping_distance, park_stops, track_server.resource_available, &reverse);
 
             if(num_park_stops == -1){
                 return; // there is error, ignore this iteration
@@ -53,23 +76,23 @@ void track_server()
             // calculate the delta = the distance between sensor_to_deaccelate_train
             // calculate average velocity measured in [tick]
             int delta = 0;
-            int velocity = track_req.train->velocity_model.velocity[train_server->train.speed];
+            int velocity = track_req.train->velocity_model.velocity[track_req.train->speed];
 
             int i = 0;
 
             for ( ; i < num_park_stops; i++) {
                 delta += park_stops[i].distance;
-                track_server.resources[park_stops[i].sensor_id] == 0;
+                track_server.resource_available[park_stops[i].sensor_id] == 0;
             }
 
-            int park_delay_time = (delta + offset*1000 - stopping_distance * 1000) / velocity;
+            int park_delay_time = (delta - stopping_distance * 1000) / velocity;
 
             TS_request ts_request;
             ts_request.type = TS_TRACK_SERVER;
             ts_request.track_result.deaccelarate_stop = deaccelarate_stop;
             ts_request.track_result.park_delay_time = park_delay_time;
             ts_request.track_result.reverse = reverse;
-            ts_request.track_result.train_id = track_req.train->train_id;
+            ts_request.track_result.train_id = track_req.train->id;
             ts_request.track_result.br_lifo_struct = br_lifo_struct;
 
             push_ts_request(&track_server, ts_request);
@@ -125,13 +148,13 @@ void push_ts_req_fifo(Track_server *track_server, TS_request ts_req)
     track_server->route_result_fifo_head = ts_fifo_put_next;  
 }
 
-void pop_ts_req_fifo(Track_server *train_server, TS_request *ts_req)
+void pop_ts_req_fifo(Track_server *track_server, TS_request *ts_req)
 {
     int ts_fifo_get_next = track_server->route_result_fifo_tail + 1;
     if (ts_fifo_get_next >= ROUTE_RESULT_FIFO_SIZE) {
         ts_fifo_get_next = 0;
     }
-    *ts_req = train_server->route_result_fifo[track_server->route_req_fifo_tail];
+    *ts_req = track_server->route_result_fifo[track_server->route_req_fifo_tail];
     track_server->route_result_fifo_tail = ts_fifo_get_next;  
 }
 

@@ -2,6 +2,7 @@
 #define __TRAIN_TASK__
 #include <train_server.h>
 #include <cli_server.h>
+#include <track_server.h>
 #include <train.h>
 #include <fifo.h>
 
@@ -29,7 +30,8 @@ typedef struct Courier_message {
 /* Courier */
 void train_command_courier();
 void cli_request_courier();
-void train_to_park_courier();
+void train_to_track_courier();
+void track_to_train_courier();
 
 /* Test */
 void milestone1_test();

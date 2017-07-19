@@ -24,7 +24,7 @@ void push_track_req_fifo(Train_server *train_server, Track_request track_req)
 void pop_track_req_fifo(Train_server *train_server, Track_request *track_req)
 {
     int track_fifo_get_next = train_server->track_req_fifo_tail + 1;
-    if (track_fifo_get_next >= track_REQ_FIFO_SIZE) {
+    if (track_fifo_get_next >= TRACK_REQ_FIFO_SIZE) {
         track_fifo_get_next = 0;
     }
     *track_req = train_server->track_req_fifo[train_server->track_req_fifo_tail];
@@ -83,9 +83,13 @@ void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)
     }
 }
 
-void pop_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch)
+void pop_br_lifo(Br_lifo *br_lifo_struct)
 {
-    *br_switch = br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top];
+    /**br_switch = train_server->br_lifo[train_server->br_lifo_top];*/
+    if(br_lifo_struct->br_lifo_top == -1){
+        // lifo is empty 
+        return;
+    }
     br_lifo_struct->br_lifo_top -= 1;
 }
 
@@ -97,4 +101,3 @@ int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch)
     *br_switch = br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top];
     return 0;
 }
-

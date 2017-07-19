@@ -77,6 +77,21 @@ typedef struct Velocity_model {
     double deacceleration;                  // in um / tick^2
 } Velocity_model;
 
+
+typedef struct Train_br_switch{
+    int sensor_stop;
+    char id;
+    char state;
+} Train_br_switch;
+
+// switches to flip such that train can at a sensor 
+// sensors that locate right before the br switch
+#define BR_LIFO_SIZE    10
+typedef struct Br_lifo{
+    Train_br_switch br_lifo[BR_LIFO_SIZE];
+    int br_lifo_top;
+} Br_lifo;
+
 /* Train */
 typedef struct Train {
 	char id;
@@ -85,7 +100,7 @@ typedef struct Train {
     int predict_stop;
     int last_sensor_triggered_time;
     int deaccelarate_stop;
-    int delay_time;
+    int park_delay_time;
     Br_lifo br_lifo_struct;
     Velocity_model velocity_model;
 } Train;

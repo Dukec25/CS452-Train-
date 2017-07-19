@@ -1,13 +1,30 @@
 #ifndef __TRAIN_SERVER__
 #define __TRAIN_SERVER__
-#include <train.h>
 #include <fifo.h>
 #include <cli_server.h>
-#include <track_server.h>
 #include <workers.h>
 
 #define GO_CMD_FINAL_SPEED 10 
 #define GO_CMD_START_SPEED 4
+
+typedef enum {
+    TRAIN_WANT_GUIDANCE, // select random destination and route 
+    TRAIN_WANT_RESULT
+} Track_request_type;
+
+typedef enum {
+	TS_NULL,
+	TS_WANT_CLI_REQ,
+	TS_COMMAND,
+    TS_TRAIN_TO_TRACK_REQ,
+    TS_TRACK_SERVER,
+    TS_DELAY_TIME_UP
+} TS_request_type;
+
+typedef struct Delay_request{
+    vint delay_time;
+    int train_id;
+} Delay_request;
 
 typedef struct Track_result{
     int park_delay_time;
@@ -17,33 +34,10 @@ typedef struct Track_result{
     Br_lifo br_lifo_struct;
 } Track_result;
 
-// switches to flip such that train can at a sensor 
-// sensors that locate right before the br switch
-#define BR_LIFO_SIZE    10
-typedef struct Br_lifo{
-    Train_br_switch br_lifo[BR_LIFO_SIZE];
-    int br_lifo_top;
-} Br_lifo;
-
-typedef struct Delay_request{
-    vint delay_time;
-    int train_id;
-} Delay_request;
-
-typedef struct Train_br_switch{
-    int sensor_stop;
-    char id;
-    char state;
-} Train_br_switch;
-
-typedef enum {
-	TS_NULL,
-	TS_WANT_CLI_REQ,
-	TS_COMMAND,
-    TS_TRAIN_TO_TRACK_REQ,
-    TS_PARK_SERVER,
-    TS_DELAY_TIME_UP
-} TS_request_type;
+typedef struct Track_request{
+    Train *train;
+	Track_request_type type;
+} Track_request;
 
 typedef struct TS_request {
 	TS_request_type type;
@@ -101,9 +95,9 @@ void push_cli_req_fifo(Train_server *train_server, Cli_request cli_req);
 void pop_cli_req_fifo(Train_server *train_server, Cli_request *cli_req);
 void push_sensor_lifo(Train_server *train_server, Sensor sensor);
 void pop_sensor_lifo(Train_server *train_server, Sensor *sensor);
-void push_br_lifo(Train_server *train_server, Train_br_switch br_switch);
-void pop_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
-int peek_br_lifo(Train_server *train_server, Train_br_switch *br_switch);
+void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch);
+void pop_br_lifo(Br_lifo *br_lifo_struct);
+int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch);
 
 
 #endif // __TRAIN_SERVER__
