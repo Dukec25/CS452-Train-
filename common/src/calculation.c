@@ -2,7 +2,7 @@
 #include <log.h>
 #include <debug.h>
 
-int choose_destination(int src, int dest, Train_server *train_server, Br_lifo br_lifo_struct){
+int choose_destination(int src, int dest, Train_server *train_server, Br_lifo *br_lifo_struct){
     /*irq_debug(SUBMISSION, "src = %d, dest = %d", src, dest);*/
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
         // value out of range, don't do anything

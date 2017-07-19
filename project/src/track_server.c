@@ -14,6 +14,7 @@ typedef struct Track_server {
     TS_request route_result_fifo[ROUTE_RESULT_FIFO_SIZE];
 	int route_result_fifo_head;
 	int route_result_fifo_tail;
+    int train_courier_on_wait;
 } Track_server;
 
 static uint32 choice_seed = 0;
@@ -23,6 +24,7 @@ void track_init(Track_server *track_server){
     for( ;i < 143; i++){
         track_server->resource_available[i] = 1;
     }
+    track_server->train_courier_on_wait = 0;
 }
 
 void track_server()
@@ -95,16 +97,15 @@ void track_server()
             ts_request.track_result.train_id = track_req.train->id;
             ts_request.track_result.br_lifo_struct = br_lifo_struct;
 
-            push_ts_request(&track_server, ts_request);
+            push_ts_req_fifo(&track_server, ts_request);
         } else if (track_req.type == TRAIN_WANT_RESULT){
 			// from cli_request_courier
 			TS_request ts_req;
-			if (track_server.cli_req_fifo_head == train_server.cli_req_fifo_tail) {
-				/*cli_req.type = CLI_NULL;*/
-                /*train_server.cli_courier_on_wait = requester_tid;*/
+			if (track_server.route_result_fifo_head == track_server.route_result_fifo_tail) {
+                track_server.train_courier_on_wait = requester_tid;
 			}
 			else {
-				pop_ts_req_fifo(&train_server, &ts_req);
+				pop_ts_req_fifo(&track_server, &ts_req);
 				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
                 Reply(requester_tid, &ts_req, sizeof(ts_req));
 			}
@@ -144,7 +145,7 @@ void push_ts_req_fifo(Track_server *track_server, TS_request ts_req)
             ts_fifo_put_next = 0;
         }
     }
-    track_server->route_result_fifo[track_server->route_req_fifo_head] = ts_req;
+    track_server->route_result_fifo[track_server->route_result_fifo_head] = ts_req;
     track_server->route_result_fifo_head = ts_fifo_put_next;  
 }
 
@@ -154,7 +155,7 @@ void pop_ts_req_fifo(Track_server *track_server, TS_request *ts_req)
     if (ts_fifo_get_next >= ROUTE_RESULT_FIFO_SIZE) {
         ts_fifo_get_next = 0;
     }
-    *ts_req = track_server->route_result_fifo[track_server->route_req_fifo_tail];
+    *ts_req = track_server->route_result_fifo[track_server->route_result_fifo_tail];
     track_server->route_result_fifo_tail = ts_fifo_get_next;  
 }
 

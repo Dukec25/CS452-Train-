@@ -26,6 +26,10 @@ typedef struct Delay_request{
     int train_id;
 } Delay_request;
 
+typedef struct Delay_result {
+    int train_id;
+} Delay_result;
+
 typedef struct Track_result{
     int park_delay_time;
     int deaccelarate_stop;
