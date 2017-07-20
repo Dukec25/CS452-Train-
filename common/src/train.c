@@ -192,6 +192,22 @@ void velocity71_initialization(Velocity_model *velocity_model)
     velocity_model->stopping_distance[14] = 1265;
 }
 
+void velocity58_initialization(Velocity_model *velocity_model) 
+{
+    velocity_model->train_id = 58;
+
+    int i = 0;
+    for ( ; i < MAX_SPEED + 1; i++) {
+        velocity_model->velocity[i] = 0.;   // to be hardcoded
+        velocity_model->stopping_distance[i] = 0;
+    }
+
+    velocity_model->stopping_distance[6] = 95;
+    velocity_model->stopping_distance[8] = 185;
+    velocity_model->stopping_distance[10] = 400;
+    velocity_model->stopping_distance[14] = 1300;
+}
+
 void velocity_update(int speed, double real_velocity, Velocity_model *velocity_model)
 {
     if (real_velocity <= 0 || real_velocity >= MAX_VELOCITY) {
@@ -252,97 +268,95 @@ int distance_to_idx(int distance)
 
 void walk_table_initialization(Walk_table *walk_table)
 {
-/*
-	walk_table->walk_data[0][0][0] = ; // 69, 6, 10
-	walk_table->walk_data[0][0][1] = ; // 69, 6, 20
-	walk_table->walk_data[0][0][2] = ; // 69, 6, 30
-	walk_table->walk_data[0][0][3] = ; // 69, 6, 40
-	walk_table->walk_data[0][0][4] = ; // 69, 6, 50
-	walk_table->walk_data[0][0][5] = ; // 69, 6, 60
-	walk_table->walk_data[0][0][6] = ; // 69, 6, 70
-	walk_table->walk_data[0][0][7] = ; // 69, 6, 80
-	walk_table->walk_data[0][0][8] = ; // 69, 6, 90
+	walk_table->walk_data[0][0][0] = 14; // 69, 6, 10
+	walk_table->walk_data[0][0][1] = 19; // 69, 6, 20
+	walk_table->walk_data[0][0][2] = 23; // 69, 6, 30
+	walk_table->walk_data[0][0][3] = 26; // 69, 6, 40
+	walk_table->walk_data[0][0][4] = 29; // 69, 6, 50
+	walk_table->walk_data[0][0][5] = 31; // 69, 6, 60
+	walk_table->walk_data[0][0][6] = 34; // 69, 6, 70
+	walk_table->walk_data[0][0][7] = 37; // 69, 6, 80
+	walk_table->walk_data[0][0][8] = 41; // 69, 6, 90
 
-	walk_table->walk_data[0][1][0] = ; // 69, 7, 10
-	walk_table->walk_data[0][1][1] = ; // 69, 7, 20
-	walk_table->walk_data[0][1][2] = ; // 69, 7, 30
-	walk_table->walk_data[0][1][3] = ; // 69, 7, 40
-	walk_table->walk_data[0][1][4] = ; // 69, 7, 50
-	walk_table->walk_data[0][1][5] = ; // 69, 7, 60
-	walk_table->walk_data[0][1][6] = ; // 69, 7, 70
-	walk_table->walk_data[0][1][7] = ; // 69, 7, 80
-	walk_table->walk_data[0][1][8] = ; // 69, 7, 90
+	walk_table->walk_data[0][1][0] = 14; // 69, 7, 10
+	walk_table->walk_data[0][1][1] = 19; // 69, 7, 20
+	walk_table->walk_data[0][1][2] = 23; // 69, 7, 30
+	walk_table->walk_data[0][1][3] = 26; // 69, 7, 40
+	walk_table->walk_data[0][1][4] = 29; // 69, 7, 50
+	walk_table->walk_data[0][1][5] = 31; // 69, 7, 60
+	walk_table->walk_data[0][1][6] = 32; // 69, 7, 70
+	walk_table->walk_data[0][1][7] = 34; // 69, 7, 80
+	walk_table->walk_data[0][1][8] = 37; // 69, 7, 90
 
-	walk_table->walk_data[0][2][0] = ; // 69, 8, 10
-	walk_table->walk_data[0][2][1] = ; // 69, 8, 20
-	walk_table->walk_data[0][2][2] = ; // 69, 8, 30
-	walk_table->walk_data[0][2][3] = ; // 69, 8, 40
-	walk_table->walk_data[0][2][4] = ; // 69, 8, 50
-	walk_table->walk_data[0][2][5] = ; // 69, 8, 60
-	walk_table->walk_data[0][2][6] = ; // 69, 8, 70
-	walk_table->walk_data[0][2][7] = ; // 69, 8, 80
-	walk_table->walk_data[0][2][8] = ; // 69, 8, 90
+	walk_table->walk_data[0][2][0] = 14; // 69, 8, 10
+	walk_table->walk_data[0][2][1] = 19; // 69, 8, 20
+	walk_table->walk_data[0][2][2] = 23; // 69, 8, 30
+	walk_table->walk_data[0][2][3] = 26; // 69, 8, 40
+	walk_table->walk_data[0][2][4] = 28; // 69, 8, 50
+	walk_table->walk_data[0][2][5] = 31; // 69, 8, 60
+	walk_table->walk_data[0][2][6] = 32; // 69, 8, 70
+	walk_table->walk_data[0][2][7] = 33; // 69, 8, 80
+	walk_table->walk_data[0][2][8] = 35; // 69, 8, 90
 
-	walk_table->walk_data[1][0][0] = ; // 71, 6, 10
-	walk_table->walk_data[1][0][1] = ; // 71, 6, 20
-	walk_table->walk_data[1][0][2] = ; // 71, 6, 30
-	walk_table->walk_data[1][0][3] = ; // 71, 6, 40
-	walk_table->walk_data[1][0][4] = ; // 71, 6, 50
-	walk_table->walk_data[1][0][5] = ; // 71, 6, 60
-	walk_table->walk_data[1][0][6] = ; // 71, 6, 70
-	walk_table->walk_data[1][0][7] = ; // 71, 6, 80
-	walk_table->walk_data[1][0][8] = ; // 71, 6, 90
+	walk_table->walk_data[1][0][0] = 13; // 71, 6, 10
+	walk_table->walk_data[1][0][1] = 23; // 71, 6, 20
+	walk_table->walk_data[1][0][2] = 33; // 71, 6, 30
+	walk_table->walk_data[1][0][3] = 43; // 71, 6, 40
+	walk_table->walk_data[1][0][4] = 53; // 71, 6, 50
+	walk_table->walk_data[1][0][5] = 63; // 71, 6, 60
+	walk_table->walk_data[1][0][6] = 73; // 71, 6, 70
+	walk_table->walk_data[1][0][7] = 84; // 71, 6, 80
+	walk_table->walk_data[1][0][8] = 94; // 71, 6, 90
 
-	walk_table->walk_data[1][1][0] = ; // 71, 7, 10
-	walk_table->walk_data[1][1][1] = ; // 71, 7, 20
-	walk_table->walk_data[1][1][2] = ; // 71, 7, 30
-	walk_table->walk_data[1][1][3] = ; // 71, 7, 40
-	walk_table->walk_data[1][1][4] = ; // 71, 7, 50
-	walk_table->walk_data[1][1][5] = ; // 71, 7, 60
-	walk_table->walk_data[1][1][6] = ; // 71, 7, 70
-	walk_table->walk_data[1][1][7] = ; // 71, 7, 80
-	walk_table->walk_data[1][1][8] = ; // 71, 7, 90
+	walk_table->walk_data[1][1][0] = 10; // 71, 7, 10
+	walk_table->walk_data[1][1][1] = 17; // 71, 7, 20
+	walk_table->walk_data[1][1][2] = 24; // 71, 7, 30
+	walk_table->walk_data[1][1][3] = 31; // 71, 7, 40
+	walk_table->walk_data[1][1][4] = 38; // 71, 7, 50
+	walk_table->walk_data[1][1][5] = 45; // 71, 7, 60
+	walk_table->walk_data[1][1][6] = 53; // 71, 7, 70
+	walk_table->walk_data[1][1][7] = 61; // 71, 7, 80
+	walk_table->walk_data[1][1][8] = 67; // 71, 7, 90
 
-	walk_table->walk_data[1][2][0] = ; // 71, 8, 10
-	walk_table->walk_data[1][2][1] = ; // 71, 8, 20
-	walk_table->walk_data[1][2][2] = ; // 71, 8, 30
-	walk_table->walk_data[1][2][3] = ; // 71, 8, 40
-	walk_table->walk_data[1][2][4] = ; // 71, 8, 50
-	walk_table->walk_data[1][2][5] = ; // 71, 8, 60
-	walk_table->walk_data[1][2][6] = ; // 71, 8, 70
-	walk_table->walk_data[1][2][7] = ; // 71, 8, 80
-	walk_table->walk_data[1][2][8] = ; // 71, 8, 90
+	walk_table->walk_data[1][2][0] = 10; // 71, 8, 10
+	walk_table->walk_data[1][2][1] = 14; // 71, 8, 20
+	walk_table->walk_data[1][2][2] = 20; // 71, 8, 30
+	walk_table->walk_data[1][2][3] = 25; // 71, 8, 40
+	walk_table->walk_data[1][2][4] = 31; // 71, 8, 50
+	walk_table->walk_data[1][2][5] = 36; // 71, 8, 60
+	walk_table->walk_data[1][2][6] = 42; // 71, 8, 70
+	walk_table->walk_data[1][2][7] = 47; // 71, 8, 80
+	walk_table->walk_data[1][2][8] = 53; // 71, 8, 90
 
-	walk_table->walk_data[2][0][0] = ; // 58, 6, 10
-	walk_table->walk_data[2][0][1] = ; // 58, 6, 20
-	walk_table->walk_data[2][0][2] = ; // 58, 6, 30
-	walk_table->walk_data[2][0][3] = ; // 58, 6, 40
-	walk_table->walk_data[2][0][4] = ; // 58, 6, 50
-	walk_table->walk_data[2][0][5] = ; // 58, 6, 60
-	walk_table->walk_data[2][0][6] = ; // 58, 6, 70
-	walk_table->walk_data[2][0][7] = ; // 58, 6, 80
-	walk_table->walk_data[2][0][8] = ; // 58, 6, 90
+	walk_table->walk_data[2][0][0] = 12; // 58, 6, 10
+	walk_table->walk_data[2][0][1] = 21; // 58, 6, 20
+	walk_table->walk_data[2][0][2] = 31; // 58, 6, 30
+	walk_table->walk_data[2][0][3] = 41; // 58, 6, 40
+	walk_table->walk_data[2][0][4] = 50; // 58, 6, 50
+	walk_table->walk_data[2][0][5] = 60; // 58, 6, 60
+	walk_table->walk_data[2][0][6] = 70; // 58, 6, 70
+	walk_table->walk_data[2][0][7] = 80; // 58, 6, 80
+	walk_table->walk_data[2][0][8] = 90; // 58, 6, 90
 
-	walk_table->walk_data[2][1][0] = ; // 58, 7, 10
-	walk_table->walk_data[2][1][1] = ; // 58, 7, 20
-	walk_table->walk_data[2][1][2] = ; // 58, 7, 30
-	walk_table->walk_data[2][1][3] = ; // 58, 7, 40
-	walk_table->walk_data[2][1][4] = ; // 58, 7, 50
-	walk_table->walk_data[2][1][5] = ; // 58, 7, 60
-	walk_table->walk_data[2][1][6] = ; // 58, 7, 70
-	walk_table->walk_data[2][1][7] = ; // 58, 7, 80
-	walk_table->walk_data[2][1][8] = ; // 58, 7, 90
+	walk_table->walk_data[2][1][0] = 10; // 58, 7, 10
+	walk_table->walk_data[2][1][1] = 18; // 58, 7, 20
+	walk_table->walk_data[2][1][2] = 23; // 58, 7, 30
+	walk_table->walk_data[2][1][3] = 30; // 58, 7, 40
+	walk_table->walk_data[2][1][4] = 37; // 58, 7, 50
+	walk_table->walk_data[2][1][5] = 43; // 58, 7, 60
+	walk_table->walk_data[2][1][6] = 49; // 58, 7, 70
+	walk_table->walk_data[2][1][7] = 56; // 58, 7, 80
+	walk_table->walk_data[2][1][8] = 63; // 58, 7, 90
 
-	walk_table->walk_data[2][2][0] = ; // 58, 8, 10
-	walk_table->walk_data[2][2][1] = ; // 58, 8, 20
-	walk_table->walk_data[2][2][2] = ; // 58, 8, 30
-	walk_table->walk_data[2][2][3] = ; // 58, 8, 40
-	walk_table->walk_data[2][2][4] = ; // 58, 8, 50
-	walk_table->walk_data[2][2][5] = ; // 58, 8, 60
-	walk_table->walk_data[2][2][6] = ; // 58, 8, 70
-	walk_table->walk_data[2][2][7] = ; // 58, 8, 80
-	walk_table->walk_data[2][2][8] = ; // 58, 8, 90
-*/
+	walk_table->walk_data[2][2][0] = 10; // 58, 8, 10
+	walk_table->walk_data[2][2][1] = 14; // 58, 8, 20
+	walk_table->walk_data[2][2][2] = 19; // 58, 8, 30
+	walk_table->walk_data[2][2][3] = 24; // 58, 8, 40
+	walk_table->walk_data[2][2][4] = 29; // 58, 8, 50
+	walk_table->walk_data[2][2][5] = 35; // 58, 8, 60
+	walk_table->walk_data[2][2][6] = 40; // 58, 8, 70
+	walk_table->walk_data[2][2][7] = 45; // 58, 8, 80
+	walk_table->walk_data[2][2][8] = 50; // 58, 8, 90
 }
 
 int walk_table_lookup(Walk_table *walk_table, int train_id, int speed, int distance)

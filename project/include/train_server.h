@@ -99,6 +99,7 @@ void sensor_handle(Train_server *train_server, int delay_task_tid);
 void dc_handle(Train_server *train_server, Command dc_cmd);
 void br_handle(Train_server *train_server, Command br_cmd);
 void park_handle(Train_server *train_server, Command park_cmd);
+void kc_handle(Train_server *train_server, Command kc_cmd);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);

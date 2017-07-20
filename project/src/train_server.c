@@ -207,7 +207,7 @@ void train_server()
 			break;
 
         case KC:
-            mc_handle(&train_server, cmd);
+            kc_handle(&train_server, cmd);
             break;
 
 		case PARK:
@@ -431,14 +431,14 @@ void br_handle(Train_server *train_server, Command br_cmd)
     /*bwprintf(COM2, "nothing wrong with computation, num_switch%d\r\n", num_switch);*/
 }
 
-void mc_handle(Train_server *train_server, Command mc_cmd)
+void kc_handle(Train_server *train_server, Command kc_cmd)
 {
     int start_time = Time();
     /*irq_debug(SUBMISSION, "start_time is %d", start_time);*/
 
-    int speed = mc_cmd.arg0;
-    int delay_time = mc_cmd.arg1;
-    irq_debug(SUBMISSION, "mc: speed = %d, delay_time = %d 100ms", speed, delay_time);
+    int speed = kc_cmd.arg0;
+    int delay_time = kc_cmd.arg1;
+    irq_debug(SUBMISSION, "kc: speed = %d, delay_time = %d 100ms", speed, delay_time);
 
     Command tr_cmd = get_tr_command(train_server->train.id, speed);
     command_handle(&tr_cmd);
