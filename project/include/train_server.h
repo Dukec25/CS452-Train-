@@ -46,9 +46,6 @@ typedef struct TS_request {
 typedef struct Train_server {
 	int is_shutdown;
 
-	int is_special_cmd;
-	Command special_cmd;
-
 #define PARK_REQ_FIFO_SIZE  100
     Park_request park_req_fifo[PARK_REQ_FIFO_SIZE];
     int park_req_fifo_head;
@@ -88,8 +85,12 @@ typedef struct Train_server {
     Map cli_map;
     int cli_courier_on_wait;
     int park_courier_on_wait;
+
     Velocity_model velocity69_model;
     Velocity_model velocity71_model;
+    Velocity_model velocity58_model;
+
+	Walk_table walk_table;
 } Train_server;
 
 void train_server_init(Train_server *train_server);
@@ -100,6 +101,7 @@ void dc_handle(Train_server *train_server, Command dc_cmd);
 void br_handle(Train_server *train_server, Command br_cmd);
 void park_handle(Train_server *train_server, Command park_cmd);
 void kc_handle(Train_server *train_server, Command kc_cmd);
+void walk_handle(Train_server *train_server, Command walk_cmd);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);

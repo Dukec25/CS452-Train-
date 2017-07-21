@@ -415,6 +415,15 @@ Command get_br_command(char group, char id)
 	return br_cmd;
 }
 
+Command get_kc_command(char speed, char delay_time)
+{
+	Command kc_cmd;
+	kc_cmd.type = KC;
+	kc_cmd.arg0 = speed;
+	kc_cmd.arg1 = delay_time;
+	return kc_cmd;
+}
+
 void command_clear(Command_buffer *command_buffer)
 {
 	int i = 0;
@@ -443,13 +452,29 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
 			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
-             !strcmp(command_buffer->data, "map", 3) || !strcmp(command_buffer->data, "kc", 2)) {
+             !strcmp(command_buffer->data, "map", 3) || !strcmp(command_buffer->data, "kc", 2) ||
+			 !strcmp(command_buffer->data, "walk", 4)) {
 		// parse arguments
-		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
-
-        if ( !strcmp(command_buffer->data, "map", 3) ){
-            pos = 3; 
-        } 
+		int pos = -1;
+		switch (command_buffer->data[0]) {
+		case 't':
+		case 'r':
+		case 's':
+		case 'b':
+		case 'd':
+		case 'k':
+			pos = 2;
+			break;
+    	case 'm':
+			pos = 3;
+			break;
+		case 'p':
+        case 'w':
+			pos = 4;
+			break;
+		default:
+			return -1;
+		}
 
 		char num_buffer[10];
 		int i = 0;
@@ -580,6 +605,15 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         }
         pcmd->type = KC;
         break;
+	case 'w':
+		if (argc != 2) {
+			return -1;
+		}
+		if (train_id_to_idx(ptrain->id) == -1 || speed_to_idx(args[0]) == -1 || distance_to_idx(args[1]) == -1) {
+			return -1;
+		}
+		pcmd->type = WALK;
+		break;
 	}
 	pcmd->arg0 = args[0];
 	pcmd->arg1 = (pcmd->type == RV) ? ptrain->speed : args[1];

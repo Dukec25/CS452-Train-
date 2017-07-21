@@ -106,7 +106,7 @@ typedef enum {
     PARK,		/* Flip the switches to get the train from one point to another, and park train at a sensor */
     MAP,		/* declare the current using track is A or B */
     KC,			/* used to collect shortwalks data */
-	WALK		/* Short walk */
+	WALK		/* Short walks for 10 - 90cm */
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;
@@ -125,6 +125,7 @@ Command get_sw_command(char id, char state);
 Command get_sensor_command();
 Command get_tr_stop_command(char id);
 Command get_br_command(char group, char id);
+Command get_kc_command(char speed, char delay_time);
 /*
  * Clear the command_buffer by fill it with space
  */

@@ -9,7 +9,6 @@
 void train_server_init(Train_server *train_server)
 {
 	train_server->is_shutdown = 0;
-	train_server->is_special_cmd = 0;
 
 	train_server->cmd_fifo_head = 0;
 	train_server->cmd_fifo_tail = 0;
@@ -42,6 +41,9 @@ void train_server_init(Train_server *train_server)
 
     velocity69_initialization(&train_server->velocity69_model);
     velocity71_initialization(&train_server->velocity71_model);
+    velocity58_initialization(&train_server->velocity58_model);
+
+	walk_table_initialization(&train_server->walk_table);
 }
 
 void train_server()
@@ -198,8 +200,7 @@ void train_server()
 			break;
 
 		case DC:
-			train_server.is_special_cmd = 1;
-			train_server.special_cmd = cmd;
+			dc_handle(&train_server, cmd);
 			break;
 
 		case BR:
@@ -219,20 +220,13 @@ void train_server()
 
             push_park_req_fifo(&train_server, park_req);
 			break;
-				
+		
+		case WALK:
+			walk_handle(&train_server, cmd);
+			break;
+	
 		default:
 			break;
-		}
-
-		if (train_server.is_special_cmd) {
-			switch (train_server.special_cmd.type) {
-			case DC:
-				dc_handle(&train_server, train_server.special_cmd);
-				break;
-
-			default:
-				break;
-			}
 		}
 
         if (train_server.cli_courier_on_wait && 
@@ -412,8 +406,6 @@ void dc_handle(Train_server *train_server, Command dc_cmd)
 		//irq_debug(SUBMISSION, "stopping_distance current stop = %d", last_stop);
 		Command tr_cmd = get_tr_stop_command(train_server->train.id);
 		push_cmd_fifo(train_server, tr_cmd);
-
-		train_server->is_special_cmd = 0;
 	}
 }
 
@@ -433,12 +425,9 @@ void br_handle(Train_server *train_server, Command br_cmd)
 
 void kc_handle(Train_server *train_server, Command kc_cmd)
 {
-    int start_time = Time();
-    /*irq_debug(SUBMISSION, "start_time is %d", start_time);*/
-
     int speed = kc_cmd.arg0;
     int delay_time = kc_cmd.arg1;
-    irq_debug(SUBMISSION, "kc: speed = %d, delay_time = %d 100ms", speed, delay_time);
+    /*irq_debug(SUBMISSION, "kc: speed = %d, delay_time = %d 100ms", speed, delay_time);*/
 
     Command tr_cmd = get_tr_command(train_server->train.id, speed);
     command_handle(&tr_cmd);
@@ -447,4 +436,14 @@ void kc_handle(Train_server *train_server, Command kc_cmd)
 
     Command tr_stop_cmd = get_tr_stop_command(train_server->train.id);
     command_handle(&tr_stop_cmd);
+}
+
+void walk_handle(Train_server *train_server, Command walk_cmd)
+{
+	int speed = walk_cmd.arg0;
+	int distance = walk_cmd.arg1;
+	int delay_time = walk_table_lookup(&train_server->walk_table, train_server->train.id, speed, distance);
+    /*irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);*/
+	Command kc_cmd = get_kc_command(speed, delay_time);
+	kc_handle(train_server, kc_cmd);
 }
