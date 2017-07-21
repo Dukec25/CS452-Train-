@@ -94,9 +94,12 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
     while(node->num != src && node->num != pair_src){
         debug(SUBMISSION, "visiting %s\r\n", node->name);
         if(node->previous->type != NODE_BRANCH){
+            /*debug(SUBMISSION, "%s", "not branch");*/
             node = node->previous;
             continue;
         } else {
+            /*debug(SUBMISSION, "%s", "branch");*/
+            // the actual id of the current node
             int node_id = node->previous->num;
             switch(node_id){
                 case 156:
@@ -114,8 +117,9 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
                 default:
                     break;
             }
+            /*debug(SUBMISSION, "node_id%d", node_id);*/
             if(node->previous->edge[DIR_STRAIGHT].dest == node){
-                /*debug(SUBMISSION, "straight \r\n");*/
+                /*debug(SUBMISSION, "straight %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
                     int next_stop = previous_sensor_finder(node->previous);
                     debug(SUBMISSION, "%s", "switch to stright \r\n");
@@ -130,7 +134,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
                     /*debug(SUBMISSION, "status straight \r\n");*/
                 }
             } else{
-                /*debug(SUBMISSION, "curve \r\n");*/
+                /*debug(SUBMISSION, "curve %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != CURVE){
                     int next_stop = previous_sensor_finder(node->previous);
                     debug(SUBMISSION, "%s", "switch to curve \r\n");
@@ -155,13 +159,16 @@ int predict_next(track_node *track, int src, Train_server *train_server){
     fifo_t queue; 
     fifo_init(&queue);
 
+    /*debug(SUBMISSION, "enter predict_next, src=%d, num=%d", src, temp->num);*/
     fifo_put(&queue, temp);
 
     while(1){
         fifo_get(&queue, &temp);
         if(temp->type == NODE_SENSOR){
+            /*debug(SUBMISSION, "sensor node%d", temp->num);*/
             return temp->num;
         } else if(temp->type == NODE_BRANCH){
+            /*debug(SUBMISSION, "branch node %d", temp->num);*/
             int cur_dir = train_server->switches_status[temp->num-1];
             if(cur_dir == STRAIGHT){
                 fifo_put(&queue, temp->edge[DIR_STRAIGHT].dest);
@@ -169,6 +176,7 @@ int predict_next(track_node *track, int src, Train_server *train_server){
                 fifo_put(&queue, temp->edge[DIR_CURVED].dest);
             }
         } else if(temp->type == NODE_MERGE){
+            /*debug(SUBMISSION, "merge node%d", temp->num);*/
            fifo_put(&queue, temp->edge[DIR_AHEAD].dest); 
         } else if(temp->type == NODE_EXIT){
             return -1;
@@ -384,4 +392,3 @@ void pop_br_lifo(Br_lifo *br_lifo_struct)
     }
     br_lifo_struct->br_lifo_top -= 1;
 }
-

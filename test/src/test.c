@@ -11,6 +11,8 @@
 #include <define.h>
 static uint32 choice_seed = 0;
 
+#include <train_server.h>
+
 #define test_assert_str(cond, msg)		 										 			\
 		do {																			\
 			if (!cond)																	\
@@ -258,6 +260,7 @@ void track_test()
 													  /*num_to_sensor(dest).group + 'A', num_to_sensor(dest).id,*/
 													  /*distance, cal_distance(tracka, src, dest));*/
 	/*}*/
+<<<<<<< HEAD
 }
 
 void rand_test(){

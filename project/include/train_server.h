@@ -83,13 +83,15 @@ typedef struct Train_server {
     // -1 for normal state for everything, 0 for init state of go
     //  1 for one train gets initial data, 2 for ready state
     int go_cmd_state; 
+	Walk_table walk_table;
 } Train_server;
 
 void train_server_init(Train_server *train_server);
 void train_server();
 void sensor_reader_task();
 void sensor_handle(Train_server *train_server, int delay_task_tid);
-void dc_handle(Train_server *train_server, Command dc_cmd);
+void kc_handle(int train_id, Command kc_cmd);
+void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);
@@ -102,6 +104,5 @@ void pop_sensor_lifo(Train_server *train_server, Sensor *sensor);
 void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch);
 void pop_br_lifo(Br_lifo *br_lifo_struct);
 int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch);
-
 
 #endif // __TRAIN_SERVER__

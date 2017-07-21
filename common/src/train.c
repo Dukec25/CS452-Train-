@@ -166,7 +166,6 @@ void velocity69_initialization(Velocity_model *velocity_model)
 
     int i = 0;
     for ( ; i < MAX_SPEED + 1; i++) {
-        velocity_model->speed[i] = 0;
         velocity_model->velocity[i] = 0.;   // to be hardcoded
         velocity_model->stopping_distance[i] = 0;
     }
@@ -175,8 +174,6 @@ void velocity69_initialization(Velocity_model *velocity_model)
     velocity_model->stopping_distance[8] = 550;
     velocity_model->stopping_distance[10] = 685;
     velocity_model->stopping_distance[14] = 935;
-    velocity_model->acceleration = 0.;  // to be hardcoded
-    velocity_model->deacceleration = 0.;    // to be hardcoded
 }
 
 void velocity71_initialization(Velocity_model *velocity_model) 
@@ -185,7 +182,6 @@ void velocity71_initialization(Velocity_model *velocity_model)
 
     int i = 0;
     for ( ; i < MAX_SPEED + 1; i++) {
-        velocity_model->speed[i] = 0;
         velocity_model->velocity[i] = 0.;   // to be hardcoded
         velocity_model->stopping_distance[i] = 0;
     }
@@ -194,8 +190,22 @@ void velocity71_initialization(Velocity_model *velocity_model)
     velocity_model->stopping_distance[8] = 210;
     velocity_model->stopping_distance[10] = 399;
     velocity_model->stopping_distance[14] = 1265;
-    velocity_model->acceleration = 0.;  // to be hardcoded
-    velocity_model->deacceleration = 0.;    // to be hardcoded
+}
+
+void velocity58_initialization(Velocity_model *velocity_model) 
+{
+    velocity_model->train_id = 58;
+
+    int i = 0;
+    for ( ; i < MAX_SPEED + 1; i++) {
+        velocity_model->velocity[i] = 0.;   // to be hardcoded
+        velocity_model->stopping_distance[i] = 0;
+    }
+
+    velocity_model->stopping_distance[6] = 95;
+    velocity_model->stopping_distance[8] = 185;
+    velocity_model->stopping_distance[10] = 400;
+    velocity_model->stopping_distance[14] = 1300;
 }
 
 void velocity_update(int speed, double real_velocity, Velocity_model *velocity_model)
@@ -210,6 +220,156 @@ void velocity_update(int speed, double real_velocity, Velocity_model *velocity_m
         double alpha = ALPHA;
         velocity_model->velocity[speed] = alpha * real_velocity + velocity_model->velocity[speed] * (1 - alpha);
     }
+}
+
+int train_id_to_idx(int train_id)
+{
+	switch(train_id) {
+	case 69:
+		return 0;
+	case 71:
+		return 1;
+	case 58:
+		return 2;
+	default:
+		return -1;
+	}
+}
+
+int speed_to_idx(int speed)
+{
+	switch(speed) {
+	case 6:
+		return 0;
+	case 7:
+		return 1;
+	case 8:
+		return 2;
+	default:
+		return -1;
+	}
+}
+
+int distance_to_idx(int distance)
+{
+	if (distance <= 10 || distance >= 95) {
+		return -1;
+	}
+	else if (distance % 10 == 0) {
+		return distance / 10 - 1;
+	}
+	else if (distance % 10 < 5) {
+		return distance / 10;
+	}
+	else if (distance % 10 >= 5) {
+		return distance / 10 + 1;
+	}
+}
+
+void walk_table_initialization(Walk_table *walk_table)
+{
+	walk_table->walk_data[0][0][0] = 14; // 69, 6, 10
+	walk_table->walk_data[0][0][1] = 19; // 69, 6, 20
+	walk_table->walk_data[0][0][2] = 23; // 69, 6, 30
+	walk_table->walk_data[0][0][3] = 26; // 69, 6, 40
+	walk_table->walk_data[0][0][4] = 29; // 69, 6, 50
+	walk_table->walk_data[0][0][5] = 31; // 69, 6, 60
+	walk_table->walk_data[0][0][6] = 34; // 69, 6, 70
+	walk_table->walk_data[0][0][7] = 37; // 69, 6, 80
+	walk_table->walk_data[0][0][8] = 41; // 69, 6, 90
+
+	walk_table->walk_data[0][1][0] = 14; // 69, 7, 10
+	walk_table->walk_data[0][1][1] = 19; // 69, 7, 20
+	walk_table->walk_data[0][1][2] = 23; // 69, 7, 30
+	walk_table->walk_data[0][1][3] = 26; // 69, 7, 40
+	walk_table->walk_data[0][1][4] = 29; // 69, 7, 50
+	walk_table->walk_data[0][1][5] = 31; // 69, 7, 60
+	walk_table->walk_data[0][1][6] = 32; // 69, 7, 70
+	walk_table->walk_data[0][1][7] = 34; // 69, 7, 80
+	walk_table->walk_data[0][1][8] = 37; // 69, 7, 90
+
+	walk_table->walk_data[0][2][0] = 14; // 69, 8, 10
+	walk_table->walk_data[0][2][1] = 19; // 69, 8, 20
+	walk_table->walk_data[0][2][2] = 23; // 69, 8, 30
+	walk_table->walk_data[0][2][3] = 26; // 69, 8, 40
+	walk_table->walk_data[0][2][4] = 28; // 69, 8, 50
+	walk_table->walk_data[0][2][5] = 31; // 69, 8, 60
+	walk_table->walk_data[0][2][6] = 32; // 69, 8, 70
+	walk_table->walk_data[0][2][7] = 33; // 69, 8, 80
+	walk_table->walk_data[0][2][8] = 35; // 69, 8, 90
+
+	walk_table->walk_data[1][0][0] = 13; // 71, 6, 10
+	walk_table->walk_data[1][0][1] = 23; // 71, 6, 20
+	walk_table->walk_data[1][0][2] = 33; // 71, 6, 30
+	walk_table->walk_data[1][0][3] = 43; // 71, 6, 40
+	walk_table->walk_data[1][0][4] = 53; // 71, 6, 50
+	walk_table->walk_data[1][0][5] = 63; // 71, 6, 60
+	walk_table->walk_data[1][0][6] = 73; // 71, 6, 70
+	walk_table->walk_data[1][0][7] = 84; // 71, 6, 80
+	walk_table->walk_data[1][0][8] = 94; // 71, 6, 90
+
+	walk_table->walk_data[1][1][0] = 10; // 71, 7, 10
+	walk_table->walk_data[1][1][1] = 17; // 71, 7, 20
+	walk_table->walk_data[1][1][2] = 24; // 71, 7, 30
+	walk_table->walk_data[1][1][3] = 31; // 71, 7, 40
+	walk_table->walk_data[1][1][4] = 38; // 71, 7, 50
+	walk_table->walk_data[1][1][5] = 45; // 71, 7, 60
+	walk_table->walk_data[1][1][6] = 53; // 71, 7, 70
+	walk_table->walk_data[1][1][7] = 61; // 71, 7, 80
+	walk_table->walk_data[1][1][8] = 67; // 71, 7, 90
+
+	walk_table->walk_data[1][2][0] = 10; // 71, 8, 10
+	walk_table->walk_data[1][2][1] = 14; // 71, 8, 20
+	walk_table->walk_data[1][2][2] = 20; // 71, 8, 30
+	walk_table->walk_data[1][2][3] = 25; // 71, 8, 40
+	walk_table->walk_data[1][2][4] = 31; // 71, 8, 50
+	walk_table->walk_data[1][2][5] = 36; // 71, 8, 60
+	walk_table->walk_data[1][2][6] = 42; // 71, 8, 70
+	walk_table->walk_data[1][2][7] = 47; // 71, 8, 80
+	walk_table->walk_data[1][2][8] = 53; // 71, 8, 90
+
+	walk_table->walk_data[2][0][0] = 12; // 58, 6, 10
+	walk_table->walk_data[2][0][1] = 21; // 58, 6, 20
+	walk_table->walk_data[2][0][2] = 31; // 58, 6, 30
+	walk_table->walk_data[2][0][3] = 41; // 58, 6, 40
+	walk_table->walk_data[2][0][4] = 50; // 58, 6, 50
+	walk_table->walk_data[2][0][5] = 60; // 58, 6, 60
+	walk_table->walk_data[2][0][6] = 70; // 58, 6, 70
+	walk_table->walk_data[2][0][7] = 80; // 58, 6, 80
+	walk_table->walk_data[2][0][8] = 90; // 58, 6, 90
+
+	walk_table->walk_data[2][1][0] = 10; // 58, 7, 10
+	walk_table->walk_data[2][1][1] = 18; // 58, 7, 20
+	walk_table->walk_data[2][1][2] = 23; // 58, 7, 30
+	walk_table->walk_data[2][1][3] = 30; // 58, 7, 40
+	walk_table->walk_data[2][1][4] = 37; // 58, 7, 50
+	walk_table->walk_data[2][1][5] = 43; // 58, 7, 60
+	walk_table->walk_data[2][1][6] = 49; // 58, 7, 70
+	walk_table->walk_data[2][1][7] = 56; // 58, 7, 80
+	walk_table->walk_data[2][1][8] = 63; // 58, 7, 90
+
+	walk_table->walk_data[2][2][0] = 10; // 58, 8, 10
+	walk_table->walk_data[2][2][1] = 14; // 58, 8, 20
+	walk_table->walk_data[2][2][2] = 19; // 58, 8, 30
+	walk_table->walk_data[2][2][3] = 24; // 58, 8, 40
+	walk_table->walk_data[2][2][4] = 29; // 58, 8, 50
+	walk_table->walk_data[2][2][5] = 35; // 58, 8, 60
+	walk_table->walk_data[2][2][6] = 40; // 58, 8, 70
+	walk_table->walk_data[2][2][7] = 45; // 58, 8, 80
+	walk_table->walk_data[2][2][8] = 50; // 58, 8, 90
+}
+
+int walk_table_lookup(Walk_table *walk_table, int train_id, int speed, int distance)
+{
+	int idx1 = train_id_to_idx(train_id);
+	int idx2 = speed_to_idx(speed);
+	int idx3 = distance_to_idx(distance);
+
+	if (idx1 == -1 || idx2 == -1 || idx3 == -1) {
+		return -1;
+	}
+	
+	return walk_table->walk_data[idx1][idx2][idx3];
 }
 
 Command get_tr_command(char id, char speed)
@@ -255,6 +415,15 @@ Command get_br_command(char group, char id)
 	return br_cmd;
 }
 
+Command get_kc_command(char speed, char delay_time)
+{
+	Command kc_cmd;
+	kc_cmd.type = KC;
+	kc_cmd.arg0 = speed;
+	kc_cmd.arg1 = delay_time;
+	return kc_cmd;
+}
+
 void command_clear(Command_buffer *command_buffer)
 {
 	int i = 0;
@@ -279,13 +448,29 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 	else if (!strcmp(command_buffer->data, "tr", 2) || !strcmp(command_buffer->data, "rv", 2) ||
 			 !strcmp(command_buffer->data, "sw", 2 ) || !strcmp(command_buffer->data, "dc", 2) ||
 			 !strcmp(command_buffer->data, "br", 2) || !strcmp(command_buffer->data, "park", 4) ||
-             !strcmp(command_buffer->data, "map", 3) || !strcmp(command_buffer->data, "go", 2)) {
+             !strcmp(command_buffer->data, "map", 3) || !strcmp(command_buffer->data, "go", 2) ||
+             !strcmp(command_buffer->data, "kc", 2) || !strcmp(command_buffer->data, "walk", 4)) {
 		// parse arguments
-		int pos = !strcmp(command_buffer->data, "park", 4) ? 4 : 2;
-
-        if ( !strcmp(command_buffer->data, "map", 3) ){
-            pos = 3; 
-        } 
+		int pos = -1;
+		switch (command_buffer->data[0]) {
+		case 't':
+		case 'r':
+		case 's':
+		case 'b':
+		case 'd':
+		case 'k':
+			pos = 2;
+			break;
+    	case 'm':
+			pos = 3;
+			break;
+		case 'p':
+        case 'w':
+			pos = 4;
+			break;
+		default:
+			return -1;
+		}
 
 		char num_buffer[10];
 		int i = 0;
@@ -412,6 +597,23 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
             return -1;
         }
 		pcmd->type = GO;
+    case 'k':
+        if (argc != 2) {
+            return -1;
+        }
+        if (args[0] > MAX_SPEED) {
+            return -1;
+        }
+        pcmd->type = KC;
+        break;
+	case 'w':
+		if (argc != 2) {
+			return -1;
+		}
+		if (train_id_to_idx(ptrain->id) == -1 || speed_to_idx(args[0]) == -1 || distance_to_idx(args[1]) == -1) {
+			return -1;
+		}
+		pcmd->type = WALK;
 		break;
 	}
 	pcmd->arg0 = args[0];

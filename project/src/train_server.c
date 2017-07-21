@@ -50,6 +50,7 @@ void train_server_init(Train_server *train_server)
 		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
 
+	walk_table_initialization(&train_server->walk_table);
     trains_init(train_server);
 }
 
@@ -214,7 +215,7 @@ void train_server()
 
 			cli_update_request = get_update_switch_request(cmd.arg0, cmd.arg1);
 			push_cli_req_fifo(&train_server, cli_update_request);
-	
+
 			break;
 		case RV:
 		case STOP:
@@ -432,7 +433,6 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 push_cmd_fifo(train_server, sw_cmd);
                 temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
             }
-
 		}
 	}
 }
@@ -481,4 +481,29 @@ void go_handle(Train_server *train_server, Command go_cmd)
     irq_debug(SUBMISSION, "go car %d", go_cmd.arg0);
     // set the train speed 
     irq_printf(COM1, "%c%c", GO_CMD_START_SPEED+16, go_cmd.arg0);
+}
+
+void kc_handle(int train_id, Command kc_cmd)
+{
+    int speed = kc_cmd.arg0;
+    int delay_time = kc_cmd.arg1;
+    /*irq_debug(SUBMISSION, "kc: speed = %d, delay_time = %d 100ms", speed, delay_time);*/
+
+    Command tr_cmd = get_tr_command(train_id, speed);
+    command_handle(&tr_cmd);
+
+    Delay(delay_time * 10);
+
+    Command tr_stop_cmd = get_tr_stop_command(train_id);
+    command_handle(&tr_stop_cmd);
+}
+
+void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd)
+{
+	int speed = walk_cmd.arg0;
+	int distance = walk_cmd.arg1;
+	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance);
+    /*irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);*/
+	Command kc_cmd = get_kc_command(speed, delay_time);
+	kc_handle(train_id, kc_cmd);
 }
