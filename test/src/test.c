@@ -213,6 +213,7 @@ void calculation_test(){
     Train_server train_server;
     init_tracka(train_server.track);
     Br_lifo br_lifo_struct;
+    br_lifo_struct.br_lifo_top = -1;
     int i = 0;
     for( ;i < 144; i++){
         resource_available[i] = 1;
@@ -227,13 +228,15 @@ void calculation_test(){
     track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);
     // c9 and a6
     /*track_node *node = find_path_with_blocks(train_server.track, 40, 5, resource_available);*/
+    track_node *temp_node = node;
     /*for(i = 0; i < 10; i++){*/
-    while(node->num != 40 && node->num != 41) {
-        debug(SUBMISSION, "%s", node->name);
-        node = node->previous;
+    while(temp_node->num != 40 && temp_node->num != 41) {
+        debug(SUBMISSION, "%s", temp_node->name);
+        temp_node = temp_node->previous;
     }
-    debug(SUBMISSION, "%s \r\n", node->name);
+    debug(SUBMISSION, "%s", temp_node->name);
     int num_switch = switches_need_changes(41, node, &train_server, &br_lifo_struct);
+    debug(SUBMISSION, "num_switch %d", num_switch);
 
     /*Train train;*/
     /*train.last_stop = 41;*/
@@ -241,7 +244,7 @@ void calculation_test(){
     /*put_cmd_fifo(train_server.track, 65, resource_available, &train, &ts_request);*/
 
     Train_br_switch temp;
-    while(br_lifo_struct.br_lifo_top != 1){
+    while(br_lifo_struct.br_lifo_top != -1){
         peek_br_lifo(&br_lifo_struct, &temp);
         pop_br_lifo(&br_lifo_struct);
         debug(SUBMISSION, "sensor_stop%d, id%d, state%c", temp.sensor_stop, temp.id, temp.state);

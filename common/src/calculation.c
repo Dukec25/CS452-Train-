@@ -21,16 +21,17 @@ int cal_distance(track_node *track, int src, int dest)
 }
 
 int switches_need_changes(int src, track_node *node, Train_server *train_server, Br_lifo *br_lifo_struct){
-    /*debug(SUBMISSION, "switches_need_changes=%d\r\n", src);*/
+    debug(SUBMISSION, "switches_need_changes=%d\r\n", src);
     int idx = 0; // br_update size is 10
     int pair_src = pair(src);
 
     track_node *temp = node;
+    debug(SUBMISSION, "%d", node->num);
     while(temp->num != src && temp->num != pair_src) {
         debug(SUBMISSION, "%s ", temp->name);
         temp = temp->previous;
     }
-    debug(SUBMISSION, "%s \r\n", temp->name);
+    debug(SUBMISSION, "%s", temp->name);
 
     while(node->num != src && node->num != pair_src){
         debug(SUBMISSION, "visiting %s\r\n", node->name);
