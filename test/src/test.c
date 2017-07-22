@@ -198,68 +198,6 @@ void heap_test()
 	}
 }
 
-void track_test()
-{
-    /*Train_server train_server;*/
-    /*choose_destination(&train_server);*/
-    /*//calculate distance between two sensor*/
-    /*track_node tracka[TRACK_MAX];*/
-    /*init_tracka(tracka);*/
-    /*int b = cal_distance(tracka, 0, 44);*/
-    /*test_assert((100 == b), "cal_distance test failed, int = %d", b);*/
-
-	/*// track_node_name_to_num*/
-	/*int sensor = 0;*/
-	/*for (sensor = 0; sensor < 80; sensor++) {*/
-		/*char name[4];*/
-		/*name[0] = sensor / 16 + 'A';*/
-		/*int id = sensor % 16 + 1;*/
-		/*if (id > 9) {*/
-			/*name[1] = '1';*/
-			/*name[2] = id % 10 + '0';*/
-			/*name[3] = '\0';*/
-		/*}*/
-		/*else {*/
-			/*name[1] = id + '0';*/
-			/*name[2] = '\0';*/
-		/*}*/
-		/*test_assert(0, "%d: %s is %d", sensor, name, track_node_name_to_num(name));*/
-	/*}*/
-	/*// velocity initialization*/
-	/*Velocity_data velocity_data;*/
-	/*velocity14_initialization(&velocity_data); */
-	/*int i;*/
-	/*for (sensor = 0; sensor < 80; sensor++) {*/
-		/*for (i = 0; i < velocity_data.node[sensor].num_velocity; i++) {*/
-			/*test_assert(0, "%d->%d: %d", velocity_data.node[sensor].src, velocity_data.node[sensor].dest[i],*/
-										 /*velocity_data.node[sensor].velocity[i]);*/
-		/*}*/
-	/*}*/
-
-	/*// find_stops_by_distance*/
-	/*Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];*/
-	/*Sensor sensor_src;*/
-	/*sensor_src.group = 'B' - 'A';*/
-	/*sensor_src.id = 4;*/
-	/*Sensor sensor_dest;*/
-	/*sensor_dest.group = 'E' - 'A';*/
-	/*sensor_dest.id = 4;*/
-	/*test_assert(0, "%c%d->%c%d", sensor_src.group + 'A', sensor_src.id, sensor_dest.group + 'A', sensor_dest.id);*/
-	/*int num_park_stops = find_stops_by_distance(tracka, sensor_to_num(sensor_src), sensor_to_num(sensor_dest),*/
-													/*940, park_stops);*/
-    /*bwprintf(COM2, "num_stops=%d\r\n", num_park_stops);*/
-    /*bwprintf(COM2, "first_distance=%d\r\n", park_stops[0].distance);*/
-
-	/*for (i = 0; i < num_park_stops-1; i++) {*/
-		/*int distance = park_stops[i+1].distance;*/
-		/*int src = park_stops[i + 1].sensor_id;*/
-		/*int dest = park_stops[i].sensor_id;*/
-		/*test_assert(0, "%c%d->%c%d: %d, expected %d", num_to_sensor(src).group + 'A', num_to_sensor(src).id,*/
-													  /*num_to_sensor(dest).group + 'A', num_to_sensor(dest).id,*/
-													  /*distance, cal_distance(tracka, src, dest));*/
-	/*}*/
-}
-
 void rand_test(){
     int n = 0;
     for( ; n < 10; n++){
@@ -271,22 +209,64 @@ void rand_test(){
 void calculation_test(){
     int stop = choose_rand_destination();
     debug(SUBMISSION, "choosed stop %d\r\n", stop);
-    int resource_available[143]; 
+    int resource_available[144]; 
     Train_server train_server;
     init_tracka(train_server.track);
     Br_lifo br_lifo_struct;
     int i = 0;
-    for( ;i < 143; i++){
+    for( ;i < 144; i++){
         resource_available[i] = 1;
     }
-    resource_available[19] = 0;
+    /*resource_available[19] = 0;*/
     int sw;
 	for (sw = 1; sw <= 22 ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
-    // c10 to e2 
-    int num_switch = choose_destination(41, 65, &train_server, &br_lifo_struct, resource_available);
+    // c10 and e2
+    track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);
+    // c9 and a6
+    /*track_node *node = find_path_with_blocks(train_server.track, 40, 5, resource_available);*/
+    /*for(i = 0; i < 10; i++){*/
+    while(node->num != 40 && node->num != 41) {
+        debug(SUBMISSION, "%s", node->name);
+        node = node->previous;
+    }
+    debug(SUBMISSION, "%s \r\n", node->name);
+    int num_switch = switches_need_changes(41, node, &train_server, &br_lifo_struct);
+
+    /*Train train;*/
+    /*train.last_stop = 41;*/
+    /*TS_request ts_request;*/
+    /*put_cmd_fifo(train_server.track, 65, resource_available, &train, &ts_request);*/
+
+    Train_br_switch temp;
+    while(br_lifo_struct.br_lifo_top != 1){
+        peek_br_lifo(&br_lifo_struct, &temp);
+        pop_br_lifo(&br_lifo_struct);
+        debug(SUBMISSION, "sensor_stop%d, id%d, state%c", temp.sensor_stop, temp.id, temp.state);
+    }  
+
+    /*Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];*/
+    /*int num_park_stops = find_stops_by_distance(train_server.track, 41, 65, 935, park_stops, resource_available);*/
+
+    /*if(num_park_stops == -1){*/
+        /*return; // there is error, ignore this iteration*/
+    /*}*/
+
+    /*// retrieve the sensor_to_deaccelate_train*/
+    /*int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; */
+    /*// calculate the delta = the distance between sensor_to_deaccelate_train*/
+    /*// calculate average velocity measured in [tick]*/
+    /*int delta = 0;*/
+
+    /*int i = 0;*/
+
+    /*for ( ; i < num_park_stops; i++) {*/
+        /*delta += park_stops[i].distance;*/
+    /*}*/
+
+    /*int park_delay_time = (delta - stopping_distance * 1000) / 1000;*/
 }
 
 int main()

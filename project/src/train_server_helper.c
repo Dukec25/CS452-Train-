@@ -101,3 +101,25 @@ int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch)
     *br_switch = br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top];
     return 0;
 }
+
+void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd)
+{
+    int track_cmd_fifo_put_next = track_cmd_fifo_struct->track_cmd_fifo_head + 1;
+    if (track_cmd_fifo_put_next != track_cmd_fifo_struct->track_cmd_fifo_tail){
+        if (track_cmd_fifo_put_next >= TRACK_CMD_FIFO_SIZE){
+            track_cmd_fifo_put_next = 0;
+        }
+    }
+    track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_head] = track_cmd;
+    track_cmd_fifo_struct->track_cmd_fifo_head = track_cmd_fifo_put_next;
+}
+
+void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd)
+{
+    int track_cmd_fifo_get_next = track_cmd_fifo_struct->track_cmd_fifo_tail + 1;
+    if (track_cmd_fifo_get_next >= TRACK_CMD_FIFO_SIZE){
+        track_cmd_fifo_get_next = 0;
+    }
+    *track_cmd = track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_tail];
+    track_cmd_fifo_struct->track_cmd_fifo_tail = track_cmd_fifo_get_next;
+}

@@ -61,45 +61,24 @@ void track_server()
             int stop = choose_rand_destination();
             debug(SUBMISSION, "choosed stop is %d", stop);
 
-            // br operation completes here 
-            int num_switch = choose_destination(track_req.train->last_stop, stop, train_server, &br_lifo_struct, track_server.resource_available);
+            int src = track_req.train->last_stop;
+            track_node *node;
+            node = find_path_with_blocks(train_server->track, src, stop, track_server.resource_available);
 
-            // retrieve stopping distance
-            int stopping_distance = track_req.train->velocity_model.stopping_distance[track_req.train->speed];
+            if(node == NULL){
+                // TODO 
+            } else{
+                // br operation completes here 
+                int num_switch = switches_need_changes(src, node, train_server, &br_lifo_struct);
 
-            int reverse = 0;
-            Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
-            int num_park_stops = find_stops_by_distance(train_server->track, track_req.train->last_stop, stop, stopping_distance, park_stops, track_server.resource_available, &reverse);
-
-            if(num_park_stops == -1){
-                return; // there is error, ignore this iteration
+                TS_request ts_request;
+                ts_request.type = TS_TRACK_SERVER;
+                ts_request.track_result.train_id = track_req.train->id;
+                ts_request.track_result.br_lifo_struct = br_lifo_struct;
+                put_cmd_fifo(train_server->track, stop, track_server.resource_available, node, track_req.train, &ts_request);
+                /*ts_request.track_result.num_br_switch  = num_switch;*/
+                push_ts_req_fifo(&track_server, ts_request);
             }
-
-            // retrieve the sensor_to_deaccelate_train
-            int deaccelarate_stop = park_stops[num_park_stops - 1].sensor_id; // need to fill in
-            // calculate the delta = the distance between sensor_to_deaccelate_train
-            // calculate average velocity measured in [tick]
-            int delta = 0;
-            int velocity = track_req.train->velocity_model.velocity[track_req.train->speed];
-
-            int i = 0;
-
-            for ( ; i < num_park_stops; i++) {
-                delta += park_stops[i].distance;
-                track_server.resource_available[park_stops[i].sensor_id] == 0;
-            }
-
-            int park_delay_time = (delta - stopping_distance * 1000) / velocity;
-
-            TS_request ts_request;
-            ts_request.type = TS_TRACK_SERVER;
-            ts_request.track_result.deaccelarate_stop = deaccelarate_stop;
-            ts_request.track_result.park_delay_time = park_delay_time;
-            ts_request.track_result.reverse = reverse;
-            ts_request.track_result.train_id = track_req.train->id;
-            ts_request.track_result.br_lifo_struct = br_lifo_struct;
-
-            push_ts_req_fifo(&track_server, ts_request);
         } else if (track_req.type == TRAIN_WANT_RESULT){
 			// from track_to_train_courier
 			TS_request ts_req;
@@ -162,3 +141,10 @@ void pop_ts_req_fifo(Track_server *track_server, TS_request *ts_req)
     track_server->route_result_fifo_tail = ts_fifo_get_next;  
 }
 
+void clear_track_var(track_node *track){
+    int i = 0;
+    for(i = 0; i < 144; i++){
+        track[i].buf = 0;
+        track[i].previous = NULL;
+    }
+} 

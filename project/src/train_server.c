@@ -128,9 +128,9 @@ void train_server()
                     break;
                 }
             }
-            train->park_delay_time = ts_request.track_result.park_delay_time; 
-            train->deaccelarate_stop = ts_request.track_result.deaccelarate_stop;
-            train->br_lifo_struct = ts_request.track_result.br_lifo_struct; // be careful with the shallow copy here
+            /*train->park_delay_time = ts_request.track_result.park_delay_time; */
+            /*train->deaccelarate_stop = ts_request.track_result.deaccelarate_stop;*/
+            /*train->br_lifo_struct = ts_request.track_result.br_lifo_struct; // be careful with the shallow copy here*/
             irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train->park_delay_time, train->deaccelarate_stop);
 			Reply(requester_tid, &handshake, sizeof(handshake));
             irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
