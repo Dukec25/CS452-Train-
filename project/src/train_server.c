@@ -13,6 +13,8 @@ void trains_init(Train_server *train_server){
         train_server->trains[i].speed = 0;
         train_server->trains[i].last_stop = -1;
         train_server->trains[i].last_sensor_triggered_time = 0;
+        train_server->trains[i].deaccel_stop = -1;
+        train_server->trains[i].park_delay_distance = -1;
         br_lifo_init(&train_server->trains[i].br_lifo_struct);
     }
 }
@@ -118,6 +120,7 @@ void train_server()
             }
         }
         else if (ts_request.type == TS_TRACK_SERVER) {
+            irq_debug(SUBMISSION, "%s", "receive from track_server");
             // result from track server
             int i = 0;
             Train *train;
@@ -232,6 +235,7 @@ void train_server()
 			break;
 
 		case GO:
+            debug(SUBMISSION, "%s", "go_handle get triggered");
             go_handle(&train_server, cmd);
             break;
 
@@ -362,24 +366,31 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 irq_debug(SUBMISSION, "stop the train %d", train->id);
                 irq_printf(COM1, "%c%c", MIN_SPEED+16, train->id); // stop the train 
 
-                continue;
-            } else if (train_server->go_cmd_state == 1){
-                Train *train = &(train_server->trains[1]);
-                train->last_stop = current_stop;
-                train->last_sensor_triggered_time = current_sensor_triggered_time;
-                train_server->go_cmd_state = 2;
-
+                // for testing purpose, one train only
+                train_server->go_cmd_state = 1;
                 Track_request track_req_first_train; 
                 track_req_first_train.type = TRAIN_WANT_GUIDANCE; 
                 track_req_first_train.train = &(train_server->trains[0]);
                 push_track_req_fifo(train_server, track_req_first_train);
 
-                Track_request track_req_second_train; 
-                track_req_second_train.type = TRAIN_WANT_GUIDANCE; 
-                track_req_second_train.train = train;
-                push_track_req_fifo(train_server, track_req_second_train);
                 continue;
-            }
+            } /*else if (train_server->go_cmd_state == 1){*/
+                /*Train *train = &(train_server->trains[1]);*/
+                /*train->last_stop = current_stop;*/
+                /*train->last_sensor_triggered_time = current_sensor_triggered_time;*/
+                /*train_server->go_cmd_state = 2;*/
+
+                /*Track_request track_req_first_train; */
+                /*track_req_first_train.type = TRAIN_WANT_GUIDANCE; */
+                /*track_req_first_train.train = &(train_server->trains[0]);*/
+                /*push_track_req_fifo(train_server, track_req_first_train);*/
+
+                /*Track_request track_req_second_train; */
+                /*track_req_second_train.type = TRAIN_WANT_GUIDANCE; */
+                /*track_req_second_train.train = train;*/
+                /*push_track_req_fifo(train_server, track_req_second_train);*/
+                /*continue;*/
+            /*}*/
 
             // sensor attribution, detect which train hits the sensor
             Train *train;
@@ -469,19 +480,19 @@ void go_handle(Train_server *train_server, Command go_cmd)
                 irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
             }
             break;
-        case 0:
-            train_server->trains[1].id = go_cmd.arg0;
-            train_server->trains[1].speed = GO_CMD_START_SPEED;
+        /*case 0:*/
+            /*train_server->trains[1].id = go_cmd.arg0;*/
+            /*train_server->trains[1].speed = GO_CMD_START_SPEED;*/
 
-            if(go_cmd.arg0 == 69){
-                velocity69_initialization(&train_server->trains[1].velocity_model);
-            } else if(go_cmd.arg0 == 71) {
-                velocity71_initialization(&train_server->trains[1].velocity_model);
-            } else{
-                irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
-            }
-            train_server->go_cmd_state = 1;
-            break;
+            /*if(go_cmd.arg0 == 69){*/
+                /*velocity69_initialization(&train_server->trains[1].velocity_model);*/
+            /*} else if(go_cmd.arg0 == 71) {*/
+                /*velocity71_initialization(&train_server->trains[1].velocity_model);*/
+            /*} else{*/
+                /*irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);*/
+            /*}*/
+            /*train_server->go_cmd_state = 1;*/
+            /*break;*/
         default:
             break;
     }

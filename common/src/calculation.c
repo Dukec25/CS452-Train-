@@ -26,7 +26,6 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
     int pair_src = pair(src);
 
     track_node *temp = node;
-    debug(SUBMISSION, "%d", node->num);
     while(temp->num != src && temp->num != pair_src) {
         debug(SUBMISSION, "%s ", temp->name);
         temp = temp->previous;
@@ -492,6 +491,7 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
                 push_track_cmd_fifo(&result, track_cmd_slow);
             }
             debug(SUBMISSION, "final destination %s", "reached");
+            break;
         } else {
             debug(SUBMISSION, "sth is wrong, type is %d", cur_node->type);
         }

@@ -58,15 +58,16 @@ void track_server()
             Br_lifo br_lifo_struct;
             br_lifo_struct.br_lifo_top = -1;
 
-            int stop = choose_rand_destination();
-            debug(SUBMISSION, "choosed stop is %d", stop);
+            /*int stop = choose_rand_destination();*/
+            /*debug(SUBMISSION, "choosed stop is %d", stop);*/
+            int stop = 5; // hardcode for testing purpose
 
             int src = track_req.train->last_stop;
             track_node *node;
             node = find_path_with_blocks(train_server->track, src, stop, track_server.resource_available);
 
             if(node == NULL){
-                // TODO 
+                // TODO, no path available  
             } else{
                 // br operation completes here 
                 int num_switch = switches_need_changes(src, node, train_server, &br_lifo_struct);

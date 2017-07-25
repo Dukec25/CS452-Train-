@@ -454,6 +454,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
 		int pos = -1;
 		switch (command_buffer->data[0]) {
 		case 't':
+        case 'g':
 		case 'r':
 		case 's':
 		case 'b':
@@ -527,6 +528,7 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         return -1;
     }
 
+    debug(SUBMISSION, "%s", "store parsing");
 	// Store parsing result in pcmd, update ptrain_id and ptrain_speed
 	switch (command_buffer->data[0]) {
 	case 't':
@@ -593,10 +595,12 @@ int command_parse(Command_buffer *command_buffer, Train *ptrain, Command *pcmd)
         pcmd->type = MAP;
         break;
     case 'g':
+        debug(SUBMISSION, "get triggered with command, argc is %d", argc);
         if (argc != 1){
             return -1;
         }
 		pcmd->type = GO;
+        break;
     case 'k':
         if (argc != 2) {
             return -1;
