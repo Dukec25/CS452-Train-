@@ -77,6 +77,7 @@ void track_server()
                 ts_request.track_result.train_id = track_req.train->id;
                 ts_request.track_result.br_lifo_struct = br_lifo_struct;
                 put_cmd_fifo(train_server->track, stop, track_server.resource_available, node, track_req.train, &ts_request);
+                debug(SUBMISSION, "%s", "all the calculation performed");
                 /*ts_request.track_result.num_br_switch  = num_switch;*/
                 push_ts_req_fifo(&track_server, ts_request);
             }
@@ -92,6 +93,16 @@ void track_server()
 				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
                 Reply(requester_tid, &ts_req, sizeof(ts_req));
 			}
+        }
+
+        if (track_server.train_courier_on_wait && 
+                track_server.route_result_fifo_head != track_server.route_result_fifo_tail)
+        {
+			TS_request ts_req;
+            pop_ts_req_fifo(&track_server, &ts_req);
+            int courier_id = track_server.train_courier_on_wait;
+            Reply(courier_id, &ts_req, sizeof(ts_req));
+            track_server.train_courier_on_wait = 0;
         }
     }
 }

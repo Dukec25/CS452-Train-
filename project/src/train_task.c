@@ -256,6 +256,7 @@ void track_to_train_courier(){
         track_server_msg.type = TRAIN_WANT_RESULT;
         TS_request ts_request;
         Send(track_server_tid, &track_server_msg, sizeof(track_server_msg), &ts_request, sizeof(ts_request));
+        debug(SUBMISSION, "%s", "courier get result from track");
         Send(train_server_tid, &ts_request, sizeof(ts_request), &handshake, sizeof(handshake)); 
     }
 

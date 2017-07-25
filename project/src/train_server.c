@@ -120,7 +120,7 @@ void train_server()
             }
         }
         else if (ts_request.type == TS_TRACK_SERVER) {
-            irq_debug(SUBMISSION, "%s", "receive from track_server");
+            debug(SUBMISSION, "%s", "receive from track_server");
             // result from track server
             int i = 0;
             Train *train;
@@ -541,6 +541,7 @@ void slow_walk(Walk_table *walk_table, int train_id, int speed, int distance)
 }
 
 int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train){
+    irq_debug(SUBMISSION, "%s", "enter track_cmd_handle_routine");
     Track_cmd track_cmd;
     if(is_track_cmd_fifo_empty(&ts_request->track_result.cmd_fifo_struct)){
         return -1;

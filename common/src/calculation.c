@@ -371,8 +371,10 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     }
 
     int reverse_at_start = 0;
-    if(temp->num != dest){
+    if(node->num != dest){
         // indicate direction reversed
+        // actual dest is 5, the real dest is 40 
+        debug(SUBMISSION, "actual dest is %d, the real dest is %d", dest, node->num);
         reverse_at_start = 1; 
     }
 
