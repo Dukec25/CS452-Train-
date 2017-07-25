@@ -554,7 +554,9 @@ int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *
 
             pop_track_cmd_fifo(&ts_request->track_result.cmd_fifo_struct, &track_cmd);
             if(track_cmd.type == TRACK_SLOW_WALK){
-                slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance);
+                // need to reduce train length due to train reverse
+                int stop_dist = track_cmd.distance - TRAIN_LENGTH;
+                slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, stop_dist);
                 irq_debug(SUBMISSION, "slow walk finished, train_id %d, speed %d, distance %d", 
                         train->id, SLOW_WALK_SPEED, track_cmd.distance);
             } else if(track_cmd.type == TRACK_PARK){

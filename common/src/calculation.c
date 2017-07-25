@@ -468,7 +468,8 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
             Track_cmd track_cmd_slow;
             track_cmd_slow.type = TRACK_SLOW_WALK;
             // distance between switches and previous node 
-            track_cmd_slow.distance = cal_distance(track, node_before_switch_num, current_num); 
+            track_cmd_slow.distance = cal_distance(track, node_before_switch_num, current_num) +
+                TRAIN_LENGTH; 
             debug(SUBMISSION, "merge distance is %d", track_cmd_slow.distance);
             push_track_cmd_fifo(&result, track_cmd_slow);
 

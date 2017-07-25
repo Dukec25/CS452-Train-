@@ -7,6 +7,7 @@
 #define GO_CMD_FINAL_SPEED 10 
 #define GO_CMD_START_SPEED 4
 #define SLOW_WALK_SPEED 6
+#define TRAIN_LENGTH 210000 // 21cm, tested on 69, 71
 
 typedef enum {
     TRAIN_WANT_GUIDANCE, // select random destination and route 
