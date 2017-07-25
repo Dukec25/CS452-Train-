@@ -242,6 +242,14 @@ void calculation_test(){
     TS_request ts_request;
     put_cmd_fifo(train_server.track, 5, resource_available, node, &train, &ts_request);
 
+    Track_cmd_fifo_struct *cmd_struct = &ts_request.track_result.cmd_fifo_struct;
+    while(cmd_struct->track_cmd_fifo_head != cmd_struct->track_cmd_fifo_tail){
+        Track_cmd track_cmd;
+        pop_track_cmd_fifo(cmd_struct, &track_cmd);
+        debug(SUBMISSION, "cmd_type is %d", track_cmd.type);
+    }
+    
+
     /*Train_br_switch temp;*/
     /*while(br_lifo_struct.br_lifo_top != -1){*/
         /*peek_br_lifo(&br_lifo_struct, &temp);*/

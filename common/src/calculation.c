@@ -278,45 +278,45 @@ int previous_sensor_finder(track_node *node){
     return temp->num;
 }
 
-// to be deleted in the future
-void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)
-{
-    if (br_lifo_struct->br_lifo_top != BR_LIFO_SIZE - 1) {
-        br_lifo_struct->br_lifo_top += 1;
-        br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top] = br_switch;
-    }
-}
+/*// to be deleted in the future*/
+/*void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)*/
+/*{*/
+    /*if (br_lifo_struct->br_lifo_top != BR_LIFO_SIZE - 1) {*/
+        /*br_lifo_struct->br_lifo_top += 1;*/
+        /*br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top] = br_switch;*/
+    /*}*/
+/*}*/
 
-void pop_br_lifo(Br_lifo *br_lifo_struct)
-{
-    if(br_lifo_struct->br_lifo_top == -1){
-        // lifo is empty 
-        return;
-    }
-    br_lifo_struct->br_lifo_top -= 1;
-}
+/*void pop_br_lifo(Br_lifo *br_lifo_struct)*/
+/*{*/
+    /*if(br_lifo_struct->br_lifo_top == -1){*/
+        /*// lifo is empty */
+        /*return;*/
+    /*}*/
+    /*br_lifo_struct->br_lifo_top -= 1;*/
+/*}*/
 
-void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd)
-{
-    int track_cmd_fifo_put_next = track_cmd_fifo_struct->track_cmd_fifo_head + 1;
-    if (track_cmd_fifo_put_next != track_cmd_fifo_struct->track_cmd_fifo_tail){
-        if (track_cmd_fifo_put_next >= TRACK_CMD_FIFO_SIZE){
-            track_cmd_fifo_put_next = 0;
-        }
-    }
-    track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_head] = track_cmd;
-    track_cmd_fifo_struct->track_cmd_fifo_head = track_cmd_fifo_put_next;
-}
+/*void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd)*/
+/*{*/
+    /*int track_cmd_fifo_put_next = track_cmd_fifo_struct->track_cmd_fifo_head + 1;*/
+    /*if (track_cmd_fifo_put_next != track_cmd_fifo_struct->track_cmd_fifo_tail){*/
+        /*if (track_cmd_fifo_put_next >= TRACK_CMD_FIFO_SIZE){*/
+            /*track_cmd_fifo_put_next = 0;*/
+        /*}*/
+    /*}*/
+    /*track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_head] = track_cmd;*/
+    /*track_cmd_fifo_struct->track_cmd_fifo_head = track_cmd_fifo_put_next;*/
+/*}*/
 
-void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd)
-{
-    int track_cmd_fifo_get_next = track_cmd_fifo_struct->track_cmd_fifo_tail + 1;
-    if (track_cmd_fifo_get_next >= TRACK_CMD_FIFO_SIZE){
-        track_cmd_fifo_get_next = 0;
-    }
-    *track_cmd = track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_tail];
-    track_cmd_fifo_struct->track_cmd_fifo_tail = track_cmd_fifo_get_next;
-}
+/*void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd)*/
+/*{*/
+    /*int track_cmd_fifo_get_next = track_cmd_fifo_struct->track_cmd_fifo_tail + 1;*/
+    /*if (track_cmd_fifo_get_next >= TRACK_CMD_FIFO_SIZE){*/
+        /*track_cmd_fifo_get_next = 0;*/
+    /*}*/
+    /**track_cmd = track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_tail];*/
+    /*track_cmd_fifo_struct->track_cmd_fifo_tail = track_cmd_fifo_get_next;*/
+/*}*/
 
 int get_track_idx(track_node *temp){
     if(temp->type == NODE_ENTER || temp->type == NODE_EXIT){
@@ -389,8 +389,8 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
             int previous_num = get_track_idx(cur_node->previous);
             debug(SUBMISSION, "current_num %d, previous_num %d", current_num, previous_num);
             if(current_num == pair(previous_num)){
-                debug(SUBMISSION, "name is %s", cur_node->name);
-                lifo_push(&parsing_table , cur_node);
+                debug(SUBMISSION, "name is %s", cur_node->previous->name);
+                lifo_push(&parsing_table , cur_node->previous);
             }
         }
 
@@ -429,30 +429,37 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
     
     track_node *previous_node; // first node 
     lifo_pop(parsing_table, &previous_node);
-    debug(SUBMISSION, "first node name is %s", previous_node->name);
+    debug(SUBMISSION, "first name is %s", previous_node->name);
     while(!is_lifo_empty(parsing_table)){
-        debug(SUBMISSION, "%s", "first pop successful");
         track_node *cur_node;
         lifo_pop(parsing_table, &cur_node);
         debug(SUBMISSION, "name is %s", cur_node->name);
+        int previous_num = get_track_idx(previous_node);
+        int current_num = get_track_idx(cur_node);
         if(cur_node->type == NODE_MERGE){
             // distance to the node that before the switches
-            int distance = cal_distance(track, previous_node->num, cur_node->previous->num);
-            if(distance > 90){ //TODO, 90 should be modified in the future
-                Track_cmd track_cmd_park;
-                track_cmd_park.type = TRACK_PARK;
-                calculate_park(cur_node, train, &track_cmd_park.park_info);
-            } else{
-                Track_cmd track_cmd_slow;
-                track_cmd_slow.type = TRACK_SLOW_WALK;
-                track_cmd_slow.distance = distance; 
-                push_track_cmd_fifo(&result, track_cmd_slow);
+            int node_before_switch_num = get_track_idx(cur_node->previous);
+            if(previous_num != node_before_switch_num){
+                int distance = cal_distance(track, previous_num, node_before_switch_num);
+                debug(SUBMISSION, "merge distance is %d", distance);
+                if(distance > 90*10000){ //TODO, 90cm should be modified in the future
+                    debug(SUBMISSION, "%s", "park operation");
+                    Track_cmd track_cmd_park;
+                    track_cmd_park.type = TRACK_PARK;
+                    calculate_park(cur_node, train, &track_cmd_park.park_info);
+                } else{
+                    Track_cmd track_cmd_slow;
+                    track_cmd_slow.type = TRACK_SLOW_WALK;
+                    track_cmd_slow.distance = distance; 
+                    push_track_cmd_fifo(&result, track_cmd_slow);
+                }
             }
             //currently perform slow walks from previous node to merge node
             Track_cmd track_cmd_slow;
             track_cmd_slow.type = TRACK_SLOW_WALK;
             // distance between switches and previous node 
-            track_cmd_slow.distance = cal_distance(track, cur_node->previous->num, cur_node->num); 
+            track_cmd_slow.distance = cal_distance(track, node_before_switch_num, current_num); 
+            debug(SUBMISSION, "merge distance is %d", track_cmd_slow.distance);
             push_track_cmd_fifo(&result, track_cmd_slow);
 
             Track_cmd track_cmd_reverse;
@@ -462,8 +469,9 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
             previous_node = cur_node->reverse; 
         } else if(cur_node->type == NODE_SENSOR){
             // the dest node 
-            int distance = cal_distance(track, previous_node->num, cur_node->num);
-            if(distance > 90){
+            int distance = cal_distance(track, previous_num, current_num);
+            if(distance > 90*10000){ // 90 cm should be modified in future
+                debug(SUBMISSION, "%s", "park operation");
                 Track_cmd track_cmd_park;
                 track_cmd_park.type = TRACK_PARK;
                 calculate_park(cur_node, train, &track_cmd_park.park_info);
