@@ -534,7 +534,8 @@ void static_reverse(int train_id){
 
 void slow_walk(Walk_table *walk_table, int train_id, int speed, int distance)
 {
-	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance);
+    // walk_table_loopup used distance is in cm, need to convert 
+	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance/10000);
     irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);
 	Command kc_cmd = get_kc_command(speed, delay_time);
 	kc_handle(train_id, kc_cmd);
