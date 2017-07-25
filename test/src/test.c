@@ -225,30 +225,29 @@ void calculation_test(){
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
     // c10 and e2
-    track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);
-    // c9 and a6
-    /*track_node *node = find_path_with_blocks(train_server.track, 40, 5, resource_available);*/
+    /*track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);*/
+    // c10 and a6
+    track_node *node = find_path_with_blocks(train_server.track, 41, 5, resource_available);
     track_node *temp_node = node;
-    /*for(i = 0; i < 10; i++){*/
     while(temp_node->num != 40 && temp_node->num != 41) {
         debug(SUBMISSION, "%s", temp_node->name);
         temp_node = temp_node->previous;
     }
-    debug(SUBMISSION, "%s", temp_node->name);
-    int num_switch = switches_need_changes(41, node, &train_server, &br_lifo_struct);
-    debug(SUBMISSION, "num_switch %d", num_switch);
+    /*debug(SUBMISSION, "%s", temp_node->name);*/
+    /*int num_switch = switches_need_changes(41, node, &train_server, &br_lifo_struct);*/
+    /*debug(SUBMISSION, "num_switch %d", num_switch);*/
 
-    /*Train train;*/
-    /*train.last_stop = 41;*/
-    /*TS_request ts_request;*/
-    /*put_cmd_fifo(train_server.track, 65, resource_available, &train, &ts_request);*/
+    Train train;
+    train.last_stop = 41;
+    TS_request ts_request;
+    put_cmd_fifo(train_server.track, 5, resource_available, node, &train, &ts_request);
 
-    Train_br_switch temp;
-    while(br_lifo_struct.br_lifo_top != -1){
-        peek_br_lifo(&br_lifo_struct, &temp);
-        pop_br_lifo(&br_lifo_struct);
-        debug(SUBMISSION, "sensor_stop%d, id%d, state%c", temp.sensor_stop, temp.id, temp.state);
-    }  
+    /*Train_br_switch temp;*/
+    /*while(br_lifo_struct.br_lifo_top != -1){*/
+        /*peek_br_lifo(&br_lifo_struct, &temp);*/
+        /*pop_br_lifo(&br_lifo_struct);*/
+        /*debug(SUBMISSION, "sensor_stop %d, id %d, state %c", temp.sensor_stop, temp.id, temp.state);*/
+    /*}  */
 
     /*Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];*/
     /*int num_park_stops = find_stops_by_distance(train_server.track, 41, 65, 935, park_stops, resource_available);*/

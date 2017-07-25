@@ -27,7 +27,6 @@ typedef enum {
     TRACK_PARK
 } Track_cmd_type;
 
-
 typedef struct Park_info{
     int delay_time;
     int deacceleration_stop;
@@ -50,6 +49,12 @@ typedef struct Track_cmd_fifo_struct{
     int track_cmd_fifo_head;
     int track_cmd_fifo_tail;
 } Track_cmd_fifo_struct;
+
+#define TRACK_NODE_LIFO_SIZE 50
+typedef struct Track_node_lifo_struct{
+    track_node *track_node_lifo[TRACK_NODE_LIFO_SIZE];
+    int lifo_top;
+} Track_node_lifo_struct;
 
 typedef struct Delay_request{
     vint delay_time;

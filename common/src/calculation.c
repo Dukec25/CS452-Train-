@@ -3,6 +3,25 @@
 #include <debug.h>
 #include <train_server.h>
 
+void push_track_node_lifo(Track_node_lifo_struct *track_node_lifo_struct, track_node *node)
+{
+    if (track_node_lifo_struct->lifo_top != TRACK_NODE_LIFO_SIZE - 1) {
+        track_node_lifo_struct->lifo_top += 1;
+        track_node_lifo_struct->track_node_lifo[track_node_lifo_struct->lifo_top] = node;
+    }
+}
+
+void pop_track_node_lifo(Track_node_lifo_struct *track_node_lifo_struct, track_node *node)
+{
+    if(track_node_lifo_struct->lifo_top == -1){
+        // lifo is empty 
+        return;
+    }
+    node = track_node_lifo_struct->track_node_lifo[track_node_lifo_struct->lifo_top];
+    track_node_lifo_struct->lifo_top -= 1;
+}
+
+
 int cal_distance(track_node *track, int src, int dest)
 {
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
@@ -156,18 +175,23 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
         fifo_get(&queue, &temp);
 
         int node_num = get_track_idx(temp);
-        debug(SUBMISSION, "current node %s, node_num %d", temp->name, node_num);
+        /*debug(SUBMISSION, "current node %s, node_num %d", temp->name, node_num);*/
         if(node_num == -1){
+            debug(SUBMISSION, "%s end", temp->name);
             continue; // this node is either type enter or exit 
         }
 
         if(visited_nodes[node_num]){
-            debug(SUBMISSION, "%d already visited", node_num);
+            debug(SUBMISSION, "%s already visited, node_num %d", temp->name, node_num);
+            debug(SUBMISSION, "visited_node %d", visited_nodes[node_num]);
             continue;
         }
 
         visited_nodes[node_num] = 1;
-        visited_nodes[pair(node_num)] = 1;
+        // edge case for beginning leave the reverse route 
+        if(node_num != src){
+            visited_nodes[pair(node_num)] = 1;
+        }
 
         if (resource[node_num] == 0 || resource[pair(node_num)] == 0){
             debug(SUBMISSION, "%d not available", node_num);
@@ -273,45 +297,45 @@ int previous_sensor_finder(track_node *node){
     return temp->num;
 }
 
-/*// to be deleted in the future*/
-/*void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)*/
-/*{*/
-    /*if (br_lifo_struct->br_lifo_top != BR_LIFO_SIZE - 1) {*/
-        /*br_lifo_struct->br_lifo_top += 1;*/
-        /*br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top] = br_switch;*/
-    /*}*/
-/*}*/
+// to be deleted in the future
+void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch)
+{
+    if (br_lifo_struct->br_lifo_top != BR_LIFO_SIZE - 1) {
+        br_lifo_struct->br_lifo_top += 1;
+        br_lifo_struct->br_lifo[br_lifo_struct->br_lifo_top] = br_switch;
+    }
+}
 
-/*void pop_br_lifo(Br_lifo *br_lifo_struct)*/
-/*{*/
-    /*if(br_lifo_struct->br_lifo_top == -1){*/
-        /*// lifo is empty */
-        /*return;*/
-    /*}*/
-    /*br_lifo_struct->br_lifo_top -= 1;*/
-/*}*/
+void pop_br_lifo(Br_lifo *br_lifo_struct)
+{
+    if(br_lifo_struct->br_lifo_top == -1){
+        // lifo is empty 
+        return;
+    }
+    br_lifo_struct->br_lifo_top -= 1;
+}
 
-/*void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd)*/
-/*{*/
-    /*int track_cmd_fifo_put_next = track_cmd_fifo_struct->track_cmd_fifo_head + 1;*/
-    /*if (track_cmd_fifo_put_next != track_cmd_fifo_struct->track_cmd_fifo_tail){*/
-        /*if (track_cmd_fifo_put_next >= TRACK_CMD_FIFO_SIZE){*/
-            /*track_cmd_fifo_put_next = 0;*/
-        /*}*/
-    /*}*/
-    /*track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_head] = track_cmd;*/
-    /*track_cmd_fifo_struct->track_cmd_fifo_head = track_cmd_fifo_put_next;*/
-/*}*/
+void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd)
+{
+    int track_cmd_fifo_put_next = track_cmd_fifo_struct->track_cmd_fifo_head + 1;
+    if (track_cmd_fifo_put_next != track_cmd_fifo_struct->track_cmd_fifo_tail){
+        if (track_cmd_fifo_put_next >= TRACK_CMD_FIFO_SIZE){
+            track_cmd_fifo_put_next = 0;
+        }
+    }
+    track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_head] = track_cmd;
+    track_cmd_fifo_struct->track_cmd_fifo_head = track_cmd_fifo_put_next;
+}
 
-/*void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd)*/
-/*{*/
-    /*int track_cmd_fifo_get_next = track_cmd_fifo_struct->track_cmd_fifo_tail + 1;*/
-    /*if (track_cmd_fifo_get_next >= TRACK_CMD_FIFO_SIZE){*/
-        /*track_cmd_fifo_get_next = 0;*/
-    /*}*/
-    /**track_cmd = track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_tail];*/
-    /*track_cmd_fifo_struct->track_cmd_fifo_tail = track_cmd_fifo_get_next;*/
-/*}*/
+void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd)
+{
+    int track_cmd_fifo_get_next = track_cmd_fifo_struct->track_cmd_fifo_tail + 1;
+    if (track_cmd_fifo_get_next >= TRACK_CMD_FIFO_SIZE){
+        track_cmd_fifo_get_next = 0;
+    }
+    *track_cmd = track_cmd_fifo_struct->track_cmd_fifo[track_cmd_fifo_struct->track_cmd_fifo_tail];
+    track_cmd_fifo_struct->track_cmd_fifo_tail = track_cmd_fifo_get_next;
+}
 
 int get_track_idx(track_node *temp){
     if(temp->type == NODE_ENTER || temp->type == NODE_EXIT){
@@ -364,9 +388,9 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
         reverse_at_start = 1; 
     }
 
-    Lifo_t parsing_table;
-    lifo_init(&parsing_table);
-    lifo_push(&parsing_table, node); // push in the dest
+    Track_node_lifo_struct parsing_table;
+    /*parsing_table.lifo_top = -1;*/
+    /*push_track_node_lifo(&parsing_table, node); // push in the dest*/
     
     fifo_t queue; 
     fifo_init(&queue);
@@ -376,14 +400,14 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     while(1){
         track_node *cur_node;
         fifo_get(&queue, &cur_node);
-		/*irq_debug(SUBMISSION, "visiting %s", cur_node->name);*/
+        debug(SUBMISSION, "visiting %s", cur_node->name);
 
         // make sure previous is the reverse of the branch
         if(cur_node->type == NODE_BRANCH){
-            int current_num = get_track_idx(cur_node->num);
-            int previous_num = get_track_idx(cur_node->previous->num);
-            if(current_num == pair(previous_num)){
-                lifo_push(&parsing_table , cur_node);
+            int current_num = get_track_idx(cur_node);
+            int previous_num = get_track_idx(cur_node->previous);
+                debug(SUBMISSION, "name is %s", cur_node->name);
+                push_track_node_lifo(&parsing_table , cur_node);
             }
         }
 
@@ -391,13 +415,15 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
 
         if (strlen(cur_node->name) == strlen(track[src].name)){
             if (!strcmp(cur_node->name, track[src].name, strlen(cur_node->name))) {
-                lifo_push(&parsing_table, cur_node);
+                debug(SUBMISSION, "name is %s", cur_node->name);
+                push_track_node_lifo(&parsing_table, cur_node);
                 break;
             }
         }
         if (strlen(cur_node->name) == strlen(track[pair_src].name)){
             if (!strcmp(cur_node->name, track[pair_src].name, strlen(cur_node->name))) {
-                lifo_push(&parsing_table, cur_node);
+                debug(SUBMISSION, "name is %s", cur_node->name);
+                push_track_node_lifo(&parsing_table, cur_node);
                 break;
             }
         }
@@ -405,20 +431,24 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     generate_cmds_table(track, &parsing_table, reverse_at_start, train, ts_request);
 }
 
-void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, Train *train, 
+void generate_cmds_table(track_node *track, Track_cmd_lifo_struct *parsing_table, int reverse, Train *train, 
         TS_request *ts_request){
     Track_cmd_fifo_struct result; 
     result.track_cmd_fifo_head = 0;
     result.track_cmd_fifo_tail = 0;
+
     if(reverse){
+        debug(SUBMISSION, "%s", "reverse at beginning");
         Track_cmd track_cmd;
         track_cmd.type = TRACK_REVERSE;
         push_track_cmd_fifo(&result, track_cmd);
     }
     
     track_node *previous_node; // first node 
-    lifo_pop(&parsing_table, &previous_node);
+    pop_track_node_lifo(&parsing_table, previous_node);
+    debug(SUBMISSION, "first node name is %s", previous_node->name);
     while(!is_lifo_empty(&parsing_table)){
+        debug(SUBMISSION, "%s", "first pop successful");
         track_node *cur_node;
         lifo_pop(&parsing_table, &cur_node);
         debug(SUBMISSION, "name is %s", cur_node->name);
@@ -530,3 +560,4 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
     park_info->delay_time = park_delay_time;
     park_info->deacceleration_stop = deaccelarate_stop;
 }
+
