@@ -225,9 +225,9 @@ void calculation_test(){
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
     // c10 and e2
-    /*track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);*/
+    track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);
     // c10 and a6
-    track_node *node = find_path_with_blocks(train_server.track, 41, 5, resource_available);
+    /*track_node *node = find_path_with_blocks(train_server.track, 41, 5, resource_available);*/
     track_node *temp_node = node;
     while(temp_node->num != 40 && temp_node->num != 41) {
         debug(SUBMISSION, "%s", temp_node->name);
@@ -247,6 +247,12 @@ void calculation_test(){
         Track_cmd track_cmd;
         pop_track_cmd_fifo(cmd_struct, &track_cmd);
         debug(SUBMISSION, "cmd_type is %d", track_cmd.type);
+        if(track_cmd.type == TRACK_SLOW_WALK){
+            debug(SUBMISSION, "distance is %d", track_cmd.distance);
+        } else if(track_cmd.type == TRACK_PARK){
+            debug(SUBMISSION, "deaccel stop is %d", track_cmd.park_info.deaccel_stop);
+            debug(SUBMISSION, "delay distance is %d", track_cmd.park_info.delay_distance);
+        } 
     }
     
 

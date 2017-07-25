@@ -27,10 +27,9 @@ typedef enum {
     TRACK_PARK
 } Track_cmd_type;
 
-
 typedef struct Park_info{
-    int delay_time;
-    int deacceleration_stop;
+    int delay_distance;
+    int deaccel_stop;
 } Park_info;
 
 typedef struct Track_cmd{

@@ -447,6 +447,7 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
                     Track_cmd track_cmd_park;
                     track_cmd_park.type = TRACK_PARK;
                     calculate_park(cur_node, train, &track_cmd_park.park_info);
+                    push_track_cmd_fifo(&result, track_cmd_park);
                 } else{
                     Track_cmd track_cmd_slow;
                     track_cmd_slow.type = TRACK_SLOW_WALK;
@@ -475,6 +476,7 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
                 Track_cmd track_cmd_park;
                 track_cmd_park.type = TRACK_PARK;
                 calculate_park(cur_node, train, &track_cmd_park.park_info);
+                push_track_cmd_fifo(&result, track_cmd_park);
             } else{
                 Track_cmd track_cmd_slow;
                 track_cmd_slow.type = TRACK_SLOW_WALK;
@@ -495,8 +497,10 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
     fifo_put(&queue, node);
     int arr_len = 0;
     int accumulated_distance = 0;
-    int stop_distance = train->velocity_model.stopping_distance[train->speed];
+    int stop_distance = train->velocity_model.stopping_distance[GO_CMD_FINAL_SPEED];
     Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
+
+    debug(SUBMISSION, "before %s", "while");
     
     while(1){
         track_node *cur_node;
@@ -539,7 +543,7 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
     // calculate the delta = the distance between sensor_to_deaccelate_train
     // calculate average velocity measured in [tick]
     int delta = 0;
-    int velocity = train->velocity_model.velocity[train->speed];
+    /*int velocity = train->velocity_model.velocity[train->speed];*/
 
     int i = 0;
 
@@ -547,7 +551,7 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
         delta += park_stops[i].distance;
     }
     int stopping_distance = train->velocity_model.stopping_distance[train->speed];
-    int park_delay_time = (delta - stopping_distance * 1000) / velocity;
-    park_info->delay_time = park_delay_time;
-    park_info->deacceleration_stop = deaccelarate_stop;
+    /*int park_delay_time = (delta - stopping_distance * 1000) / velocity;*/
+    park_info->delay_distance = delta - stopping_distance * 1000;
+    park_info->deaccel_stop = deaccelarate_stop;
 }
