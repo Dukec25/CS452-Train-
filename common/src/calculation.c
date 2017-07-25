@@ -3,25 +3,6 @@
 #include <debug.h>
 #include <train_server.h>
 
-void push_track_node_lifo(Track_node_lifo_struct *track_node_lifo_struct, track_node *node)
-{
-    if (track_node_lifo_struct->lifo_top != TRACK_NODE_LIFO_SIZE - 1) {
-        track_node_lifo_struct->lifo_top += 1;
-        track_node_lifo_struct->track_node_lifo[track_node_lifo_struct->lifo_top] = node;
-    }
-}
-
-void pop_track_node_lifo(Track_node_lifo_struct *track_node_lifo_struct, track_node *node)
-{
-    if(track_node_lifo_struct->lifo_top == -1){
-        // lifo is empty 
-        return;
-    }
-    node = track_node_lifo_struct->track_node_lifo[track_node_lifo_struct->lifo_top];
-    track_node_lifo_struct->lifo_top -= 1;
-}
-
-
 int cal_distance(track_node *track, int src, int dest)
 {
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
@@ -388,9 +369,9 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
         reverse_at_start = 1; 
     }
 
-    Track_node_lifo_struct parsing_table;
-    /*parsing_table.lifo_top = -1;*/
-    /*push_track_node_lifo(&parsing_table, node); // push in the dest*/
+    Lifo_t parsing_table;
+    lifo_init(&parsing_table);
+    lifo_push(&parsing_table, node); // push in the dest
     
     fifo_t queue; 
     fifo_init(&queue);
@@ -406,8 +387,10 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
         if(cur_node->type == NODE_BRANCH){
             int current_num = get_track_idx(cur_node);
             int previous_num = get_track_idx(cur_node->previous);
+            debug(SUBMISSION, "current_num %d, previous_num %d", current_num, previous_num);
+            if(current_num == pair(previous_num)){
                 debug(SUBMISSION, "name is %s", cur_node->name);
-                push_track_node_lifo(&parsing_table , cur_node);
+                lifo_push(&parsing_table , cur_node);
             }
         }
 
@@ -416,14 +399,14 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
         if (strlen(cur_node->name) == strlen(track[src].name)){
             if (!strcmp(cur_node->name, track[src].name, strlen(cur_node->name))) {
                 debug(SUBMISSION, "name is %s", cur_node->name);
-                push_track_node_lifo(&parsing_table, cur_node);
+                lifo_push(&parsing_table, cur_node);
                 break;
             }
         }
         if (strlen(cur_node->name) == strlen(track[pair_src].name)){
             if (!strcmp(cur_node->name, track[pair_src].name, strlen(cur_node->name))) {
                 debug(SUBMISSION, "name is %s", cur_node->name);
-                push_track_node_lifo(&parsing_table, cur_node);
+                lifo_push(&parsing_table, cur_node);
                 break;
             }
         }
@@ -431,7 +414,7 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     generate_cmds_table(track, &parsing_table, reverse_at_start, train, ts_request);
 }
 
-void generate_cmds_table(track_node *track, Track_cmd_lifo_struct *parsing_table, int reverse, Train *train, 
+void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, Train *train, 
         TS_request *ts_request){
     Track_cmd_fifo_struct result; 
     result.track_cmd_fifo_head = 0;
@@ -445,12 +428,12 @@ void generate_cmds_table(track_node *track, Track_cmd_lifo_struct *parsing_table
     }
     
     track_node *previous_node; // first node 
-    pop_track_node_lifo(&parsing_table, previous_node);
+    lifo_pop(parsing_table, &previous_node);
     debug(SUBMISSION, "first node name is %s", previous_node->name);
-    while(!is_lifo_empty(&parsing_table)){
+    while(!is_lifo_empty(parsing_table)){
         debug(SUBMISSION, "%s", "first pop successful");
         track_node *cur_node;
-        lifo_pop(&parsing_table, &cur_node);
+        lifo_pop(parsing_table, &cur_node);
         debug(SUBMISSION, "name is %s", cur_node->name);
         if(cur_node->type == NODE_MERGE){
             // distance to the node that before the switches
@@ -560,4 +543,3 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
     park_info->delay_time = park_delay_time;
     park_info->deacceleration_stop = deaccelarate_stop;
 }
-
