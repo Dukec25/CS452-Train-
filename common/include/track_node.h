@@ -31,7 +31,7 @@ struct track_node {
   int num;              /* sensor or switch number */
   track_node *reverse;  /* same location, but opposite direction */
   track_edge edge[2];
-  int buf;  // added by c25du for temp value storage
+  int buf;  // added by c25du for temp value storage(distance so far)
   track_node *previous; // added by c25du for track the path for the path search
 };
 

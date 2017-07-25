@@ -96,8 +96,8 @@ typedef struct Train {
     int last_stop;
     int predict_stop;
     int last_sensor_triggered_time;
-    int deaccelarate_stop;
-    int park_delay_time;
+    int deaccel_stop;
+    int park_delay_distance;
     Br_lifo br_lifo_struct;
     Velocity_model velocity_model;
 } Train;
@@ -132,7 +132,7 @@ typedef enum {
     PARK,		/* Flip the switches to get the train from one point to another, and park train at a sensor */
     MAP,		/* declare the current using track is A or B */
     KC,			/* used to collect shortwalks data */
-	WALK		/* Short walks for 10 - 90cm */
+	WALK		/* Short walks for 10 - 90cm, arugment takes in speed(1-14), and distance(cm)*/
 } Train_cmd_type;
 typedef struct {
 	Train_cmd_type type;

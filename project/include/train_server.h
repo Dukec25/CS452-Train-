@@ -6,6 +6,7 @@
 
 #define GO_CMD_FINAL_SPEED 10 
 #define GO_CMD_START_SPEED 4
+#define SLOW_WALK_SPEED 6
 
 typedef enum {
     TRAIN_WANT_GUIDANCE, // select random destination and route 
@@ -21,6 +22,35 @@ typedef enum {
     TS_DELAY_TIME_UP
 } TS_request_type;
 
+typedef enum {
+    TRACK_SLOW_WALK,
+    TRACK_REVERSE,
+    TRACK_PARK
+} Track_cmd_type;
+
+typedef struct Park_info{
+    int delay_distance;
+    int deaccel_stop;
+} Park_info;
+
+typedef struct Track_cmd{
+    int type;
+    Park_info park_info;
+    int distance; // slow_walk distance 
+} Track_cmd;
+
+typedef struct Track_request{
+    Train *train;
+	Track_request_type type;
+} Track_request;
+
+#define TRACK_CMD_FIFO_SIZE 50
+typedef struct Track_cmd_fifo_struct{
+    Track_cmd track_cmd_fifo[TRACK_CMD_FIFO_SIZE];
+    int track_cmd_fifo_head;
+    int track_cmd_fifo_tail;
+} Track_cmd_fifo_struct;
+
 typedef struct Delay_request{
     vint delay_time;
     int train_id;
@@ -31,17 +61,11 @@ typedef struct Delay_result {
 } Delay_result;
 
 typedef struct Track_result{
-    int park_delay_time;
-    int deaccelarate_stop;
-    int reverse;
     int train_id;
     Br_lifo br_lifo_struct;
+    Track_cmd_fifo_struct cmd_fifo_struct; 
 } Track_result;
 
-typedef struct Track_request{
-    Train *train;
-	Track_request_type type;
-} Track_request;
 
 typedef struct TS_request {
 	TS_request_type type;
@@ -104,5 +128,10 @@ void pop_sensor_lifo(Train_server *train_server, Sensor *sensor);
 void push_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch br_switch);
 void pop_br_lifo(Br_lifo *br_lifo_struct);
 int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch);
+
+void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd);
+void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd);
+int is_track_cmd_fifo_empty(Track_cmd_fifo_struct *track_cmd_fifo_struct);
+int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train);
 
 #endif // __TRAIN_SERVER__

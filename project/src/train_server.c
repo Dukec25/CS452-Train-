@@ -13,8 +13,6 @@ void trains_init(Train_server *train_server){
         train_server->trains[i].speed = 0;
         train_server->trains[i].last_stop = -1;
         train_server->trains[i].last_sensor_triggered_time = 0;
-        train_server->trains[i].deaccelarate_stop = -1;
-        train_server->trains[i].park_delay_time = -1;
         br_lifo_init(&train_server->trains[i].br_lifo_struct);
     }
 }
@@ -129,12 +127,12 @@ void train_server()
                     break;
                 }
             }
-            train->park_delay_time = ts_request.track_result.park_delay_time; 
-            train->deaccelarate_stop = ts_request.track_result.deaccelarate_stop;
-            train->br_lifo_struct = ts_request.track_result.br_lifo_struct; // be careful with the shallow copy here
-            irq_debug(SUBMISSION, "train deaccelarate_stop = %d, park_delay_time = %d \r\n", train->park_delay_time, train->deaccelarate_stop);
-			Reply(requester_tid, &handshake, sizeof(handshake));
-            irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
+            int no_more_command = track_cmd_handle(&train_server, &ts_request, train);
+            if(no_more_command == -1){
+                //TODO no_more_command, ask track_server_for_more
+            }
+			/*Reply(requester_tid, &handshake, sizeof(handshake));*/
+            /*irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train */
         }
 		else if (ts_request.type == TS_WANT_CLI_REQ) {
 			// from cli_request_courier
@@ -160,7 +158,11 @@ void train_server()
             }
             Command tr_cmd = get_tr_stop_command(train->id);
             push_cmd_fifo(&train_server, tr_cmd);
-            train->deaccelarate_stop = -1;
+            /*train->deaccel_stop = -1;*/ // TODO, case slow walk and park
+            int no_more_command = track_cmd_handle(&train_server, &ts_request, train);
+            if(no_more_command == -1){
+                //TODO no_more_command, ask track_server_for_more
+            }
 			Reply(requester_tid, &handshake, sizeof(handshake));
         }
 		else {
@@ -233,6 +235,10 @@ void train_server()
             go_handle(&train_server, cmd);
             break;
 
+        case WALK:
+            irq_debug(SUBMISSION, "%s", "WALK GET TRIGGERED");
+            walk_handle(&train_server.walk_table, 71, cmd);
+            break;
 		default:
 			break;
 		}
@@ -413,11 +419,13 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 (int) real_velocity, (int) train->velocity_model.velocity[train->speed]); 
             push_cli_req_fifo(train_server, update_calibration_request);
 
-            if (current_stop == train->deaccelarate_stop){
+            if (current_stop == train->deaccel_stop){
                 irq_debug(SUBMISSION, "%s", "about to delay");
                 Delay_request delay_req;
                 Handshake handshake = HANDSHAKE_AKG;
-                delay_req.delay_time = train->park_delay_time; 
+                int velocity = train->velocity_model.velocity[train->speed];
+                int park_delay_time = train->park_delay_distance/velocity;
+                delay_req.delay_time = park_delay_time; 
                 delay_req.train_id   = train->id;
                 Send(delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
             }
@@ -503,7 +511,60 @@ void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd)
 	int speed = walk_cmd.arg0;
 	int distance = walk_cmd.arg1;
 	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance);
-    /*irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);*/
+    irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);
 	Command kc_cmd = get_kc_command(speed, delay_time);
 	kc_handle(train_id, kc_cmd);
 }
+
+void static_reverse(int train_id){
+    irq_debug(DEBUG_K4, "%s", "begin reverse");
+    irq_printf(COM1, "%c%c", REVERSE, train_id);
+}                                     
+
+void slow_walk(Walk_table *walk_table, int train_id, int speed, int distance)
+{
+	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance);
+    irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);
+	Command kc_cmd = get_kc_command(speed, delay_time);
+	kc_handle(train_id, kc_cmd);
+}
+
+int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train){
+    Track_cmd track_cmd;
+    if(is_track_cmd_fifo_empty(&ts_request->track_result.cmd_fifo_struct)){
+        return -1;
+    } else{
+        pop_track_cmd_fifo(&ts_request->track_result.cmd_fifo_struct, &track_cmd);
+        if(track_cmd.type == TRACK_REVERSE){
+            static_reverse(train->id);
+            irq_debug(SUBMISSION, "%s", "reverse operation finished");
+
+            pop_track_cmd_fifo(&ts_request->track_result.cmd_fifo_struct, &track_cmd);
+            if(track_cmd.type == TRACK_SLOW_WALK){
+                slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance);
+                irq_debug(SUBMISSION, "slow walk finished, train_id %d, speed %d, distance %d", 
+                        train->id, SLOW_WALK_SPEED, track_cmd.distance);
+            } else if(track_cmd.type == TRACK_PARK){
+                train->park_delay_distance = track_cmd.park_info.delay_distance;
+                train->deaccel_stop = track_cmd.park_info.deaccel_stop; 
+                irq_debug(SUBMISSION, "park operation, delay distance %d, deaccel_stop %d", 
+                        track_cmd.park_info.delay_distance, track_cmd.park_info.deaccel_stop);
+                irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
+            } else{
+                irq_debug(SUBMISSION, "sth is wrong, enter unknown state %d", track_cmd.type);
+            }
+        } else if(track_cmd.type == TRACK_PARK){
+            train->park_delay_distance = track_cmd.park_info.delay_distance;
+            train->deaccel_stop = track_cmd.park_info.deaccel_stop; 
+            irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
+        } else if(track_cmd.type == TRACK_SLOW_WALK){
+            slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance);
+            irq_debug(SUBMISSION, "slow walk finished, train_id %d, speed %d, distance %d", 
+                    train->id, SLOW_WALK_SPEED, track_cmd.distance);
+        } else{
+            irq_debug(SUBMISSION, "sth is wrong, enter unknown state %d", track_cmd.type);
+        }
+    }
+    return 0;
+}
+
