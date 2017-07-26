@@ -264,7 +264,7 @@ void track_test()
 
 void rand_test(){
     int n = 0;
-    for( ; n < 10; n++){
+    for( n = 0; n < 10; n++){
         int choice = abs(rand(&choice_seed)%100);
         test_assert( 0, "rand value = %d", choice);
     }

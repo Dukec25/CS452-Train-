@@ -23,7 +23,7 @@ static uint32 choice_seed = 0;
 
 void track_init(Track_server *track_server){
     int i = 0;
-    for( ;i < 143; i++){
+    for(i = 0;i < 144; i++){
         track_server->resource_available[i] = 1;
     }
     track_server->route_result_fifo_head = 0;
@@ -65,7 +65,7 @@ void track_server()
         } else if (track_req.type == TRAIN_WANT_RESULT){
 			// from track_to_train_courier
 			TS_request ts_req;
-            irq_debug(SUBMISSION, "%s", "track_server receive courier");
+            /*irq_debug(SUBMISSION, "%s", "track_server receive courier");*/
 			if (track_server.route_result_fifo_head == track_server.route_result_fifo_tail) {
                 ts_req.type = TS_NULL;
                 // do not use on_wait method as need server constantly operate 
@@ -90,12 +90,12 @@ void track_server()
 
             Br_lifo br_lifo_struct;
             br_lifo_struct.br_lifo_top = -1;
+            int src = train->last_stop;
 
-            /*int stop = choose_rand_destination();*/
+            /*int stop = choose_rand_destination(src);*/
             /*debug(SUBMISSION, "choosed stop is %d", stop);*/
             int stop = 5; // hardcode for testing purpose
 
-            int src = train->last_stop;
             track_node *node;
             node = find_path_with_blocks(train_server->track, src, stop, track_server.resource_available);
 
@@ -131,8 +131,13 @@ void track_server()
 }
 
 // choose a random number from 0 ~ 79, which only choose sensors 
-int choose_rand_destination(){
+int choose_rand_destination(int src){
     int val = abs(rand(&choice_seed)%80);
+    int pair_src = pair(src);
+    // val can't be equal with src
+    while(val == src || val == pair_src){
+        val = abs(rand(&choice_seed)%80);
+    }
     return val;
 }
 

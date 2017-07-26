@@ -153,6 +153,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
     int visited_nodes[144];
 
     // used for internal counting visited nodes
+    // 0 for unvisited, 1 for visited 
     int i = 0;
     for(i = 0; i < 144; i++){
         visited_nodes[i] = 0;
@@ -576,13 +577,13 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
 void manage_resource(int sensor_num, int *resource, Train_server *train_server){
     //TODO pay attention for bugs here 
     int pair_num = pair(sensor_num);
-    resource[sensor_num] = 1;
-    resource[pair_num] = 1;
+    resource[sensor_num] = 0;
+    resource[pair_num] = 0;
 
     track_node *node = &train_server->track[sensor_num];
     // free the previous node 
     int previous_num = previous_sensor_finder(node);
     int previous_pair_num = pair(pair_num);
-    resource[previous_num] = 0;
-    resource[previous_pair_num] = 0;
+    resource[previous_num] = 1;
+    resource[previous_pair_num] = 1;
 }

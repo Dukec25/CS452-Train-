@@ -96,6 +96,10 @@ void train_server()
     int delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
     Send(delay_task_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
+    // TODO, branch_delay_task, detail see final_idea_generation
+    int br_delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
+    Send(br_delay_task_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
+
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
 		// receive command request
 		int requester_tid;
@@ -159,6 +163,7 @@ void train_server()
                     break;
                 }
             }
+            irq_debug(SUBMISSION, "%s", "delay is over");
             Command tr_cmd = get_tr_stop_command(train->id);
             push_cmd_fifo(&train_server, tr_cmd);
             /*train->deaccel_stop = -1;*/ // TODO, case slow walk and park

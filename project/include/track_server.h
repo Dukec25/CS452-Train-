@@ -13,7 +13,7 @@ int pair(int idx);
 // type = 0 branch, 1 merge
 void track_server();
 int convert_sw_track_data(int num, int type);
-int choose_rand_destination();
+int choose_rand_destination(int src);
 
 #endif // __TRACK_SERVER__
 
