@@ -11,7 +11,8 @@
 
 typedef enum {
     TRAIN_WANT_GUIDANCE, // select random destination and route 
-    TRAIN_WANT_RESULT
+    TRAIN_WANT_RESULT,
+    TRACK_SENSOR_HIT
 } Track_request_type;
 
 typedef enum {
@@ -43,6 +44,7 @@ typedef struct Track_cmd{
 typedef struct Track_request{
     Train *train;
 	Track_request_type type;
+    int sensor_num;
 } Track_request;
 
 #define TRACK_CMD_FIFO_SIZE 50

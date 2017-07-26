@@ -176,14 +176,17 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
         }
 
         visited_nodes[node_num] = 1;
-        // edge case for beginning leave the reverse route 
+        // edge case for beginning of the reverse route 
         if(node_num != src){
             visited_nodes[pair(node_num)] = 1;
         }
 
         if (resource[node_num] == 0 || resource[pair(node_num)] == 0){
-            debug(SUBMISSION, "%d not available", node_num);
-            continue;
+            // the train not owns the sensor as a start location
+            if(node_num != src && node_num != pair_src){
+                debug(SUBMISSION, "Resource %s not available", temp->name);
+                continue;
+            }
         }
 
         // if destination is reached 
@@ -369,6 +372,9 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
         resource[pair(node_id)] = 0;
         temp = temp->previous;
     }
+    // include start loc
+    resource[src] = 0;
+    resource[pair_src] = 0;
 
     int reverse_at_start = 0;
     if(node->num != dest){
@@ -390,15 +396,15 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     while(1){
         track_node *cur_node;
         fifo_get(&queue, &cur_node);
-        debug(SUBMISSION, "visiting %s", cur_node->name);
+        irq_debug(SUBMISSION, "visiting %s", cur_node->name);
 
         // make sure previous is the reverse of the branch
         if(cur_node->type == NODE_BRANCH){
             int current_num = get_track_idx(cur_node);
             int previous_num = get_track_idx(cur_node->previous);
-            debug(SUBMISSION, "current_num %d, previous_num %d", current_num, previous_num);
+            /*irq_debug(SUBMISSION, "current_num %d, previous_num %d", current_num, previous_num);*/
             if(current_num == pair(previous_num)){
-                debug(SUBMISSION, "name is %s", cur_node->previous->name);
+                irq_debug(SUBMISSION, "name is %s", cur_node->previous->name);
                 lifo_push(&parsing_table , cur_node->previous);
             }
         }
@@ -511,7 +517,7 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
     int stop_distance = train->velocity_model.stopping_distance[GO_CMD_FINAL_SPEED];
     Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];
 
-    debug(SUBMISSION, "before %s", "while");
+    /*debug(SUBMISSION, "before %s", "while");*/
     
     while(1){
         track_node *cur_node;
@@ -565,4 +571,18 @@ void calculate_park(track_node *node, Train *train, Park_info *park_info){
     /*int park_delay_time = (delta - stopping_distance * 1000) / velocity;*/
     park_info->delay_distance = delta - stopping_distance * 1000;
     park_info->deaccel_stop = deaccelarate_stop;
+}
+
+void manage_resource(int sensor_num, int *resource, Train_server *train_server){
+    //TODO pay attention for bugs here 
+    int pair_num = pair(sensor_num);
+    resource[sensor_num] = 1;
+    resource[pair_num] = 1;
+
+    track_node *node = &train_server->track[sensor_num];
+    // free the previous node 
+    int previous_num = previous_sensor_finder(node);
+    int previous_pair_num = pair(pair_num);
+    resource[previous_num] = 0;
+    resource[previous_pair_num] = 0;
 }

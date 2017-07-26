@@ -357,6 +357,12 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             int current_sensor_triggered_time = Time();
 			int next_stop = predict_next(train_server->track, current_stop, train_server);
 
+            // send sensor info to track for resource management
+            Track_request track_req; 
+            track_req.type = TRACK_SENSOR_HIT; 
+            track_req.sensor_num = current_stop;
+            push_track_req_fifo(train_server, track_req);
+
             // code for initializing two trains 
             if( train_server->go_cmd_state == 0 ){
                 Train *train = &(train_server->trains[0]);

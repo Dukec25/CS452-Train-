@@ -8,13 +8,15 @@
 
 typedef struct Track_server {
     // 1 represent resource available, 0 otherwise 
-    int resource_available[143]; 
+    int resource_available[144]; 
 
 #define ROUTE_RESULT_FIFO_SIZE	50
     TS_request route_result_fifo[ROUTE_RESULT_FIFO_SIZE];
 	int route_result_fifo_head;
 	int route_result_fifo_tail;
-    int train_courier_on_wait;
+    /*int train_courier_on_wait;*/
+
+    fifo_t train_list; 
 } Track_server;
 
 static uint32 choice_seed = 0;
@@ -24,7 +26,10 @@ void track_init(Track_server *track_server){
     for( ;i < 143; i++){
         track_server->resource_available[i] = 1;
     }
-    track_server->train_courier_on_wait = 0;
+    track_server->route_result_fifo_head = 0;
+    track_server->route_result_fifo_tail = 0;
+    fifo_init(&track_server->train_list);
+    /*track_server->train_courier_on_wait = 0;*/
 }
 
 void track_server()
@@ -54,7 +59,35 @@ void track_server()
         /*Reply(requester_tid, &handshake, sizeof(handshake)); // pay attention to this line */
         
         if(track_req.type == TRAIN_WANT_GUIDANCE){
-            debug(SUBMISSION, "%s", "track receive park command");
+            fifo_put(&track_server.train_list, track_req.train); 
+            irq_debug(SUBMISSION, "%s", "track receive park command");
+			Reply(requester_tid, &handshake, sizeof(handshake));
+        } else if (track_req.type == TRAIN_WANT_RESULT){
+			// from track_to_train_courier
+			TS_request ts_req;
+            irq_debug(SUBMISSION, "%s", "track_server receive courier");
+			if (track_server.route_result_fifo_head == track_server.route_result_fifo_tail) {
+                ts_req.type = TS_NULL;
+                // do not use on_wait method as need server constantly operate 
+                /*track_server.train_courier_on_wait = requester_tid;*/
+			}
+			else {
+				pop_ts_req_fifo(&track_server, &ts_req);
+				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
+                Reply(requester_tid, &ts_req, sizeof(ts_req));
+			}
+            Reply(requester_tid, &ts_req, sizeof(ts_req));
+        } else if (track_req.type == TRACK_SENSOR_HIT){
+			Reply(requester_tid, &handshake, sizeof(handshake));
+            // manage track resource on the fly
+            manage_resource(track_req.sensor_num, track_server.resource_available, train_server);
+        }
+
+        // operate every cycle 
+        if(!is_fifo_empty(&track_server.train_list)){
+            Train *train;
+            fifo_get(&track_server.train_list, &train);
+
             Br_lifo br_lifo_struct;
             br_lifo_struct.br_lifo_top = -1;
 
@@ -62,48 +95,38 @@ void track_server()
             /*debug(SUBMISSION, "choosed stop is %d", stop);*/
             int stop = 5; // hardcode for testing purpose
 
-            int src = track_req.train->last_stop;
+            int src = train->last_stop;
             track_node *node;
             node = find_path_with_blocks(train_server->track, src, stop, track_server.resource_available);
 
             if(node == NULL){
-                // TODO, no path available  
+                // no path available 
+                irq_debug(SUBMISSION, "no path available for train %d", track_req.train->id);
+                fifo_put(&track_server.train_list, track_req.train); 
             } else{
                 // br operation completes here 
                 int num_switch = switches_need_changes(src, node, train_server, &br_lifo_struct);
 
                 TS_request ts_request;
                 ts_request.type = TS_TRACK_SERVER;
-                ts_request.track_result.train_id = track_req.train->id;
+                ts_request.track_result.train_id = train->id;
                 ts_request.track_result.br_lifo_struct = br_lifo_struct;
-                put_cmd_fifo(train_server->track, stop, track_server.resource_available, node, track_req.train, &ts_request);
-                debug(SUBMISSION, "%s", "all the calculation performed");
+                put_cmd_fifo(train_server->track, stop, track_server.resource_available, node, train, &ts_request);
+                irq_debug(SUBMISSION, "%s", "all the calculation performed");
                 /*ts_request.track_result.num_br_switch  = num_switch;*/
                 push_ts_req_fifo(&track_server, ts_request);
             }
-        } else if (track_req.type == TRAIN_WANT_RESULT){
-			// from track_to_train_courier
-			TS_request ts_req;
-            irq_debug(SUBMISSION, "%s", "track_server receive courier");
-			if (track_server.route_result_fifo_head == track_server.route_result_fifo_tail) {
-                track_server.train_courier_on_wait = requester_tid;
-			}
-			else {
-				pop_ts_req_fifo(&track_server, &ts_req);
-				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
-                Reply(requester_tid, &ts_req, sizeof(ts_req));
-			}
-        }
 
-        if (track_server.train_courier_on_wait && 
-                track_server.route_result_fifo_head != track_server.route_result_fifo_tail)
-        {
-			TS_request ts_req;
-            pop_ts_req_fifo(&track_server, &ts_req);
-            int courier_id = track_server.train_courier_on_wait;
-            Reply(courier_id, &ts_req, sizeof(ts_req));
-            track_server.train_courier_on_wait = 0;
         }
+        /*if (track_server.train_courier_on_wait && */
+                /*track_server.route_result_fifo_head != track_server.route_result_fifo_tail)*/
+        /*{*/
+			/*TS_request ts_req;*/
+            /*pop_ts_req_fifo(&track_server, &ts_req);*/
+            /*int courier_id = track_server.train_courier_on_wait;*/
+            /*Reply(courier_id, &ts_req, sizeof(ts_req));*/
+            /*track_server.train_courier_on_wait = 0;*/
+        /*}*/
     }
 }
 

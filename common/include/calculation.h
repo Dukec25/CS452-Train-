@@ -50,4 +50,5 @@ int find_stops_by_distance(track_node *track, int src, int dest, int stop_distan
 void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, Train *train, 
         TS_request *ts_request);
 void calculate_park(track_node *node, Train *train, Park_info *park_info);
+void manage_resource(int sensor_num, int *resource, Train_server *train_server);
 #endif //__CALCULATION_H__
