@@ -488,17 +488,6 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 				}
 				// else ACCELERATE->ACCELERATE
 			}
-			else if (train->velocity_state == CONSTANT) {
-				// CONSTANT->ACCELERATE
-				if (train->last_speed > train->speed) {
-					train->velocity_state = ACCELERATE;
-				}
-				// CONSTANT->DEACCELERATE
-				else if (train->last_speed < train->speed) {
-					train->velocity_state = DEACCELERATE;
-				}
-				// else CONSTANT->CONSTANT
-			}
 			else if (train->velocity_state == DEACCELERATE) {
 				// DEACCELERATE->IDLE 
 				if ((train->speed == 0) && (current_stop == last_stop) && (train->current_speed_num_query >= 4)) {
