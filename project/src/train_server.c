@@ -124,6 +124,7 @@ void train_server()
             }
         }
         else if (ts_request.type == TS_TRACK_SERVER) {
+            Reply(requester_tid, &handshake, sizeof(handshake));
             irq_debug(SUBMISSION, "%s", "receive from track_server");
             // result from track server
             int i = 0;
@@ -139,9 +140,13 @@ void train_server()
             int no_more_command = track_cmd_handle(&train_server, train);
             if(no_more_command == -1){
                 //TODO no_more_command, ask track_server_for_more
+                Track_request track_req_first_train; 
+                track_req_first_train.type = TRAIN_WANT_GUIDANCE; 
+                track_req_first_train.train = &(train_server.trains[0]);
+                debug(SUBMISSION, "%s", "sending request to track");
+                push_track_req_fifo(train_server, track_req_first_train);
             }
-			/*Reply(requester_tid, &handshake, sizeof(handshake));*/
-            /*irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train */
+            /*irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id);  speed up the current train */
         }
 		else if (ts_request.type == TS_WANT_CLI_REQ) {
 			// from cli_request_courier
@@ -167,12 +172,17 @@ void train_server()
                 }
             }
             debug(SUBMISSION, "%s", "delay is over");
-            Command tr_cmd = get_tr_stop_command(train->id);
-            push_cmd_fifo(&train_server, tr_cmd);
+            irq_printf(COM1, "%c%c", MIN_SPEED+16, train->id); // stop the train 
+            Delay(100);
             /*train->deaccel_stop = -1;*/ // TODO, case slow walk and park
             int no_more_command = track_cmd_handle(&train_server, train);
             if(no_more_command == -1){
                 //TODO no_more_command, ask track_server_for_more
+                Track_request track_req_first_train; 
+                track_req_first_train.type = TRAIN_WANT_GUIDANCE; 
+                track_req_first_train.train = &(train_server.trains[0]);
+                debug(SUBMISSION, "%s", "sending request to track");
+                push_track_req_fifo(train_server, track_req_first_train);
             }
         }
 		else {
@@ -200,25 +210,25 @@ void train_server()
                 cli_draw_trackB(&(train_server.cli_map));
             }
             break;
-		/*case TR:*/
-            /*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
-			/*command_handle(&cmd);*/
+        case TR:
+            irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);
+            command_handle(&cmd);
 
-			/*train_server.trains[train_server.train_idx].id = cmd.arg0;*/
-			/*train_server.trains[train_server.train_idx].speed = cmd.arg1;*/
+            train_server.trains[train_server.train_idx].id = cmd.arg0;
+            train_server.trains[train_server.train_idx].speed = cmd.arg1;
 
-            /*if(cmd.arg0 == 69){*/
-                /*velocity69_initialization(&train_server.trains[train_server.train_idx].velocity_model);*/
-            /*} else if(cmd.arg0 == 71){*/
-                /*velocity71_initialization(&train_server.trains[train_server.train_idx].velocity_model);*/
-            /*} else{*/
-                /*irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);*/
-            /*}*/
+            if(cmd.arg0 == 69){
+                velocity69_initialization(&train_server.trains[train_server.train_idx].velocity_model);
+            } else if(cmd.arg0 == 71){
+                velocity71_initialization(&train_server.trains[train_server.train_idx].velocity_model);
+            } else{
+                irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
+            }
 
-			/*cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);*/
-			/*push_cli_req_fifo(&train_server, cli_update_request);*/
-	
-			/*break;*/
+            cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
+            push_cli_req_fifo(&train_server, cli_update_request);
+    
+            break;
 		case SW:
 			irq_debug(SUBMISSION, "%s", "handle sw cmd");
 			command_handle(&cmd);
@@ -462,15 +472,15 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 
             // some condition not takes into account here, like lifo
             // contains the same sensor multiple times 
-            /*Train_br_switch br_switch;*/
-            /*int temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);*/
-            /*while( temp == 0 && current_stop == br_switch.sensor_stop ){*/
-                /*pop_br_lifo(&train->br_lifo_struct);*/
-                /*[>bwprintf(COM2, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);<]*/
-                /*Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);*/
-                /*push_cmd_fifo(train_server, sw_cmd);*/
-                /*temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);*/
-            /*}*/
+            Train_br_switch br_switch;
+            int temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
+            while( temp == 0 && current_stop == br_switch.sensor_stop ){
+                pop_br_lifo(&train->br_lifo_struct);
+                debug(SUBMISSION, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
+                Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
+                push_cmd_fifo(train_server, sw_cmd);
+                temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
+            }
 		}
 	}
 }
@@ -575,6 +585,16 @@ int track_cmd_handle(Train_server *train_server, Train *train){
     } else{
         pop_track_cmd_fifo(&train->cmd_fifo_struct, &track_cmd);
         if(track_cmd.type == TRACK_REVERSE){
+            Train_br_switch br_switch;
+            int temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
+            while( temp == 0 ){
+                pop_br_lifo(&train->br_lifo_struct);
+                irq_debug(SUBMISSION, "about to sensor %d, switch %d, status %d", br_switch.sensor_stop, br_switch.id, br_switch.state);
+                Command sw_cmd = get_sw_command(br_switch.id, br_switch.state);
+                push_cmd_fifo(train_server, sw_cmd);
+                temp = peek_br_lifo(&train->br_lifo_struct, &br_switch);
+            }
+
             irq_debug(SUBMISSION, "%s", "before enter static_reverse");
             static_reverse(train->id);
             irq_debug(SUBMISSION, "%s", "reverse operation finished");

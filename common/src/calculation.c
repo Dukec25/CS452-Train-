@@ -63,7 +63,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
                 /*debug(SUBMISSION, "straight %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
                     int next_stop = previous_sensor_finder(node->previous);
-                    /*debug(SUBMISSION, "%s", "switch to stright \r\n");*/
+                    debug(SUBMISSION, "%s", "switch to stright \r\n");
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -217,7 +217,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
             temp->edge[DIR_AHEAD].dest->previous = temp;
             fifo_put(&queue, temp->edge[DIR_AHEAD].dest);
 
-            if(temp->reverse->edge[DIR_STRAIGHT].dest != temp->previous){
+            if(temp->reverse->edge[DIR_STRAIGHT].dest != temp->previous->reverse){
                 temp->reverse->edge[DIR_STRAIGHT].dest->buf = temp->buf +
                     temp->reverse->edge[DIR_STRAIGHT].dist;
                 temp->reverse->edge[DIR_STRAIGHT].dest->previous =  temp->reverse;
@@ -236,7 +236,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
         }
     }
 
-    /*debug(SUBMISSION, "%s", "no path available");*/
+    debug(SUBMISSION, "%s", "no path available");
     return NULL;
 }
 

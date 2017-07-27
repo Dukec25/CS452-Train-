@@ -14,7 +14,7 @@ typedef struct Track_server {
     TS_request route_result_fifo[ROUTE_RESULT_FIFO_SIZE];
 	int route_result_fifo_head;
 	int route_result_fifo_tail;
-    /*int train_courier_on_wait;*/
+    int train_courier_on_wait;
 
     fifo_t train_list; 
 } Track_server;
@@ -29,7 +29,7 @@ void track_init(Track_server *track_server){
     track_server->route_result_fifo_head = 0;
     track_server->route_result_fifo_tail = 0;
     fifo_init(&track_server->train_list);
-    /*track_server->train_courier_on_wait = 0;*/
+    track_server->train_courier_on_wait = 0;
 }
 
 void track_server()
@@ -67,16 +67,14 @@ void track_server()
 			TS_request ts_req;
             /*irq_debug(SUBMISSION, "%s", "track_server receive courier");*/
 			if (track_server.route_result_fifo_head == track_server.route_result_fifo_tail) {
-                ts_req.type = TS_NULL;
                 // do not use on_wait method as need server constantly operate 
-                /*track_server.train_courier_on_wait = requester_tid;*/
+                track_server.train_courier_on_wait = requester_tid;
 			}
 			else {
 				pop_ts_req_fifo(&track_server, &ts_req);
 				//irq_debug(SUBMISSION, "train_server reply tp %d pop cli_req %d", requester_tid, cli_req.type);
                 Reply(requester_tid, &ts_req, sizeof(ts_req));
 			}
-            Reply(requester_tid, &ts_req, sizeof(ts_req));
         } else if (track_req.type == TRACK_SENSOR_HIT){
 			Reply(requester_tid, &handshake, sizeof(handshake));
             // manage track resource on the fly
@@ -118,15 +116,15 @@ void track_server()
             }
 
         }
-        /*if (track_server.train_courier_on_wait && */
-                /*track_server.route_result_fifo_head != track_server.route_result_fifo_tail)*/
-        /*{*/
-			/*TS_request ts_req;*/
-            /*pop_ts_req_fifo(&track_server, &ts_req);*/
-            /*int courier_id = track_server.train_courier_on_wait;*/
-            /*Reply(courier_id, &ts_req, sizeof(ts_req));*/
-            /*track_server.train_courier_on_wait = 0;*/
-        /*}*/
+        if (track_server.train_courier_on_wait && 
+                track_server.route_result_fifo_head != track_server.route_result_fifo_tail)
+        {
+            TS_request ts_req;
+            pop_ts_req_fifo(&track_server, &ts_req);
+            int courier_id = track_server.train_courier_on_wait;
+            Reply(courier_id, &ts_req, sizeof(ts_req));
+            track_server.train_courier_on_wait = 0;
+        }
     }
 }
 

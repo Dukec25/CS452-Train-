@@ -297,9 +297,9 @@ void calculation_test(){
         debug(SUBMISSION, "%s", temp_node->name);
         temp_node = temp_node->previous;
     }
-    /*debug(SUBMISSION, "%s", temp_node->name);*/
-    /*int num_switch = switches_need_changes(41, node, &train_server, &br_lifo_struct);*/
-    /*debug(SUBMISSION, "num_switch %d", num_switch);*/
+    debug(SUBMISSION, "%s", temp_node->name);
+    int num_switch = switches_need_changes(41, node, &train_server, &br_lifo_struct);
+    debug(SUBMISSION, "num_switch %d", num_switch);
 
     Train train;
     train.last_stop = 41;
@@ -321,12 +321,12 @@ void calculation_test(){
     }
     
 
-    /*Train_br_switch temp;*/
-    /*while(br_lifo_struct.br_lifo_top != -1){*/
-        /*peek_br_lifo(&br_lifo_struct, &temp);*/
-        /*pop_br_lifo(&br_lifo_struct);*/
-        /*debug(SUBMISSION, "sensor_stop %d, id %d, state %c", temp.sensor_stop, temp.id, temp.state);*/
-    /*}  */
+    Train_br_switch temp;
+    while(br_lifo_struct.br_lifo_top != -1){
+        peek_br_lifo(&br_lifo_struct, &temp);
+        pop_br_lifo(&br_lifo_struct);
+        debug(SUBMISSION, "sensor_stop %d, id %d, state %c", temp.sensor_stop, temp.id, temp.state);
+    }  
 
     /*Sensor_dist park_stops[SENSOR_GROUPS * SENSORS_PER_GROUP];*/
     /*int num_park_stops = find_stops_by_distance(train_server.track, 41, 65, 935, park_stops, resource_available);*/
@@ -355,7 +355,7 @@ int main()
 	bwsetfifo(COM2, OFF);
 	/*track_test();*/
     int i = 0;
-    for(i = 0; i< 10; i++){
+    for(i = 0; i< 1; i++){
         calculation_test();
     }
 	return 0;

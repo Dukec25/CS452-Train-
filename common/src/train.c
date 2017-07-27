@@ -259,10 +259,10 @@ int distance_to_idx(int distance)
 		return distance / 10 - 1;
 	}
 	else if (distance % 10 < 5) {
-		return distance / 10;
+		return distance / 10 - 1;
 	}
 	else if (distance % 10 >= 5) {
-		return distance / 10 + 1;
+		return distance / 10; 
 	}
 }
 
@@ -363,7 +363,7 @@ int walk_table_lookup(Walk_table *walk_table, int train_id, int speed, int dista
 {
 	int idx1 = train_id_to_idx(train_id);
 	int idx2 = speed_to_idx(speed);
-	int idx3 = distance_to_idx(distance);
+	int idx3 = distance_to_idx(distance)-1;
 
 	if (idx1 == -1 || idx2 == -1 || idx3 == -1) {
 		return -1;
