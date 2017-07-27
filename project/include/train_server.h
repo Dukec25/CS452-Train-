@@ -100,6 +100,7 @@ typedef struct Train_server {
 #define MAX_NUM_TRAINS 5 
 	Train trains[MAX_NUM_TRAINS];
     int switches_status[NUM_SWITCHES];
+    int switches_defects[NUM_SWITCHES];
 
     track_node track[TRACK_MAX];    // Data for the current using track
 

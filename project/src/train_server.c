@@ -52,6 +52,7 @@ void train_server_init(Train_server *train_server)
 	for (sw = 1; sw <= NUM_SWITCHES ; sw++) {
 		// be careful that if switch initialize sequence changes within initialize_switch(), here need to change 
 		train_server->switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
+		train_server->switches_status[sw-1] = -1;
 	}
 
 	walk_table_initialization(&train_server->walk_table);
@@ -210,7 +211,7 @@ void train_server()
 			train_server.trains[train_server.train_idx].id = cmd.arg0;
 			if (train_server.trains[train_server.train_idx].speed != cmd.arg1) {
 				train_server.trains[train_server.train_idx].last_speed = train_server.trains[train_server.train_idx].speed;
-				train_server.trains[train_server.train_idx].current_speed_num_query += 1;
+				train_server.trains[train_server.train_idx].current_speed_num_query = 0;
 			}
 			train_server.trains[train_server.train_idx].speed = cmd.arg1;
 
@@ -436,16 +437,25 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 					if (train_server->track[train_server->trains[i].last_stop].edge[DIR_AHEAD].dest->type == NODE_BRANCH) {
 						track_node *prev_sw = train_server->track[train_server->trains[i].last_stop].edge[DIR_AHEAD].dest;
 						int sw_id = prev_sw->num;
+						if (train_server->switches_defects[sw_id] != -1) {
+							recoverable = 1;
+							switch_error = sw_id;
+							break;
+						}
 						int sw_state = train_server->switches_status[sw_id];
 						if ((sw_state == STRAIGHT) && (prev_sw->edge[DIR_CURVED].dest->num == current_stop)) {
 							train_server->switches_status[sw_id] = CURVE;
 							recoverable = 1;
 							switch_error = sw_id;
+							train_server->switches_defects[sw_id] = CURVE;
+							break;
 						}
 						else if ((sw_state == CURVE) && (prev_sw->edge[DIR_STRAIGHT].dest->num == current_stop)) {
 							train_server->switches_status[sw_id] = STRAIGHT;
 							recoverable = 1;
 							switch_error = sw_id;
+							train_server->switches_defects[sw_id] = STRAIGHT;
+							break;
 						}
 					}
                 }
