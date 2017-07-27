@@ -73,7 +73,13 @@ typedef struct Velocity_model {
     int stopping_distance[MAX_SPEED + 1];   // in mm
     double velocity[MAX_SPEED + 1];         // in um / tick
 } Velocity_model;
-
+typedef enum {
+	IDLE,
+	ACCELERATE,
+	CONSTANT,
+	DEACCELERATE,
+	SLOW_WALK
+} Velocity_state;
 
 typedef struct Train_br_switch{
     int sensor_stop;
@@ -93,13 +99,18 @@ typedef struct Br_lifo{
 typedef struct Train {
 	char id;
 	int speed;
+	int last_speed;
     int last_stop;
     int predict_stop;
+	int predict_time_lo;
+	int predict_time_hi;
     int last_sensor_triggered_time;
     int deaccel_stop;
     int park_delay_distance;
     Br_lifo br_lifo_struct;
     Velocity_model velocity_model;
+	Velocity_state velocity_state;	// indicate whether the train velocity state
+	int current_speed_num_query; // number of the sensor reads since the speed change, reset every time after speed change
 } Train;
 
 int track_node_name_to_num(char *name);

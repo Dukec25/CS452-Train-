@@ -19,23 +19,31 @@ typedef enum {
 
 typedef struct Cli_request {
 	Cli_request_type type;
+
 	Command cmd;
-	Train train_update;
+
 	Switch switch_update;
 
+	Train *train_update;
+
 	Sensor sensor_update;
+	int sensor_triggered_time;
 	int	last_sensor_update;
-	int next_sensor_update;
+	int attributed;
+	int real_velocity;
+	int expected_velocity;
 
 	Clock clock_update;
+
 	Calibration_package calibration_update;
 } Cli_request;
 
 Cli_request get_train_command_request(Command cmd);
-Cli_request get_update_train_request(char id, char speed);
+Cli_request get_update_train_request(Train *train_update);
 Cli_request get_update_switch_request(char id, char state);
-Cli_request get_update_sensor_request(Sensor sensor, int last_stop, int next_stop);
-Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int time, int velocity);
+Cli_request get_update_sensor_request(Sensor sensor, int sensor_triggered_time, int last_stop,
+									  int attributed, Train *train_update, int real_velocity, int expected_velocity);
+Cli_request get_update_calibration_request(int last_stop, int current_stop, int distance, int real_velocity, int velocity);
 Cli_request get_update_clock_request(Clock clock);
 Cli_request get_shutdown_request();
 

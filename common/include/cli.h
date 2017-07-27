@@ -39,9 +39,10 @@
 #define MAP_FIRST_ROW       SENSOR_ROW
 
 /* Switch */
-#define SWITCH_LABEL_ROW 	LABEL_BORDER - 1
-#define SWITCH_ROW			LABEL_BORDER + 1
+#define SWITCH_LABEL_ROW 	STATUS_BORDER - 1
+#define SWITCH_ROW			STATUS_BORDER + 1
 #define SWITCH_COL 			MIDDLE_BORDER + 1
+
 /* Track */
 #define TRACK_DATA_ROW              UPPER_BORDER
 #define TRACK_DATA_COL              RIGHT_BORDER + 10
@@ -49,6 +50,13 @@
 #define TRACK_DATA_PER_COL			26
 #define TRACK_LABEL_LENGTH			7
 #define TRACK_DATA_LENGTH			45
+
+/* Train 69 Status */
+/* Train 71 Status */
+#define TRAIN_LEFT_BAR				RIGHT_BORDER + 2
+#define TRAIN_DATA_ROW				STATUS_BORDER - 1
+#define TRAIN_DATA_COL				TRAIN_LEFT_BAR + 35
+#define TRAIN_DATA_WIDTH			30
 
 typedef struct loc{
     int row;
@@ -68,16 +76,6 @@ typedef struct Map{
 void cli_startup();
 
 /*
- * Draw the initial track A display
- */
-void cli_track_startup();
-
-/*
- * Display user input
- */
-void cli_user_input(Command_buffer *command_buffer);
-
-/*
  * Update the digital clock in the command line interface
  */
 void cli_update_clock(Clock clock);
@@ -85,7 +83,7 @@ void cli_update_clock(Clock clock);
 /*
  * Update the train status in the command line interface
  */
-void cli_update_train(Train train);
+void cli_update_train(Train *train);
 
 /*
  * Update the switch status in the command line interface
@@ -97,10 +95,11 @@ void cli_update_switch(Switch sw, Map *map);
  * Update the last triggered sensor in the command line interface 
  */
 //void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update);
-void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map);
+void cli_update_sensor(Sensor sensor, int time, int last_sensor_update, int attributed,
+						Train *train, int real_velocity, int expected_velocity, Map *map);
 
 /*
- * Update the track A display
+ * Update the track
  */
 void cli_update_track(Calibration_package calibration_pkg, int updates);
 #endif // __CLI_H__

@@ -1,4 +1,4 @@
-LIB_SRC		= cli_server.c  train_server.c train_server_helper.c train_task.c track_server.c workers.c
+LIB_SRC		= cli_server.c  train_server.c train_server_helper.c train_task.c track_server.c workers.c project.c
 TEST_SRC	= milestone1_test.c
 SRC			= $(LIB_SRC) user_tasks.c main.c
 

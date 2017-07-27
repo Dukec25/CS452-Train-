@@ -8,11 +8,17 @@
 
 void trains_init(Train_server *train_server){
     int i = 0;
-    for( ; i < MAX_NUM_TRAINS; i++ ){
+    for( ; i < MAX_NUM_TRAINS; i++ ) {
         train_server->trains[i].id = 0;
         train_server->trains[i].speed = 0;
+		train_server->trains[i].last_speed = 0;
         train_server->trains[i].last_stop = -1;
+		train_server->trains[i].predict_stop = -1;
+		train_server->trains[i].predict_time_lo = -1;
+		train_server->trains[i].predict_time_hi = -1;
         train_server->trains[i].last_sensor_triggered_time = 0;
+		train_server->trains[i].velocity_state = IDLE;
+		train_server->trains[i].current_speed_num_query = 0;
         br_lifo_init(&train_server->trains[i].br_lifo_struct);
     }
 }
@@ -94,6 +100,9 @@ void train_server()
     int delay_task_tid = Create(PRIOR_MEDIUM, delay_task);
     Send(delay_task_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
 
+	//int project_tid = Create(PRIOR_MEDIUM, project);
+    //Send(project_tid, &train_server_address, sizeof(train_server_address), &handshake, sizeof(handshake));
+
 	while (*kill_all != HANDSHAKE_SHUTDOWN) {
 		// receive command request
 		int requester_tid;
@@ -127,7 +136,7 @@ void train_server()
                     break;
                 }
             }
-            int no_more_command = track_cmd_handle(&train_server, &ts_request, train);
+            int no_more_command = track_cmd_handle(&train_server, &ts_request, train, delay_task_tid);
             if(no_more_command == -1){
                 //TODO no_more_command, ask track_server_for_more
             }
@@ -158,8 +167,10 @@ void train_server()
             }
             Command tr_cmd = get_tr_stop_command(train->id);
             push_cmd_fifo(&train_server, tr_cmd);
-            /*train->deaccel_stop = -1;*/ // TODO, case slow walk and park
-            int no_more_command = track_cmd_handle(&train_server, &ts_request, train);
+			if (train->velocity_state == DEACCELERATE) {
+            	train->deaccel_stop = -1; // TODO, case slow walk and park
+			}
+            int no_more_command = track_cmd_handle(&train_server, &ts_request, train, delay_task_tid);
             if(no_more_command == -1){
                 //TODO no_more_command, ask track_server_for_more
             }
@@ -194,18 +205,24 @@ void train_server()
 			/*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
 			command_handle(&cmd);
 
+			train_server.train_idx = (cmd.arg0 == 58 ? 0 : 1);
+
 			train_server.trains[train_server.train_idx].id = cmd.arg0;
+			if (train_server.trains[train_server.train_idx].speed != cmd.arg1) {
+				train_server.trains[train_server.train_idx].last_speed = train_server.trains[train_server.train_idx].speed;
+				train_server.trains[train_server.train_idx].current_speed_num_query += 1;
+			}
 			train_server.trains[train_server.train_idx].speed = cmd.arg1;
 
-            if(cmd.arg0 == 69){
-                velocity69_initialization(&train_server.trains[train_server.train_idx].velocity_model);
+            if(cmd.arg0 == 58){
+                velocity58_initialization(&train_server.trains[train_server.train_idx].velocity_model);
             } else if(cmd.arg0 == 71){
                 velocity71_initialization(&train_server.trains[train_server.train_idx].velocity_model);
             } else{
-                irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
+                irq_debug(SUBMISSION, "incorrect train id, only 58 and %d", 71);
             }
 
-			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
+			cli_update_request = get_update_train_request(&(train_server.trains[train_server.train_idx]));
 			push_cli_req_fifo(&train_server, cli_update_request);
 	
 			break;
@@ -232,13 +249,10 @@ void train_server()
 			break;
 
 		case GO:
+			irq_debug(SUBMISSION, "%s", "go command");
             go_handle(&train_server, cmd);
             break;
 
-        case WALK:
-            irq_debug(SUBMISSION, "%s", "WALK GET TRIGGERED");
-            walk_handle(&train_server.walk_table, 71, cmd);
-            break;
 		default:
 			break;
 		}
@@ -351,10 +365,9 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
 
 			int current_stop = sensor_to_num(sensor);
             int current_sensor_triggered_time = Time();
-			int next_stop = predict_next(train_server->track, current_stop, train_server);
 
             // code for initializing two trains 
-            if( train_server->go_cmd_state == 0 ){
+            if( train_server->go_cmd_state == 0 ) {
                 Train *train = &(train_server->trains[0]);
                 train->last_stop = current_stop;
                 train->last_sensor_triggered_time = current_sensor_triggered_time;
@@ -363,7 +376,7 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
                 irq_printf(COM1, "%c%c", MIN_SPEED+16, train->id); // stop the train 
 
                 continue;
-            } else if (train_server->go_cmd_state == 1){
+            } else if (train_server->go_cmd_state == 1) {
                 Train *train = &(train_server->trains[1]);
                 train->last_stop = current_stop;
                 train->last_sensor_triggered_time = current_sensor_triggered_time;
@@ -382,45 +395,167 @@ void sensor_handle(Train_server *train_server, int delay_task_tid)
             }
 
             // sensor attribution, detect which train hits the sensor
+			int attributed = 0;
             Train *train;
             int i = 0;
-            for( ; i < MAX_NUM_TRAINS; i++){
-                if(current_stop == train_server->trains[i].predict_stop){
-                    train = &(train_server->trains[i]);
-                    break;
+            for( ; i < MAX_NUM_TRAINS; i++) {
+                if (current_stop == train_server->trains[i].predict_stop) {
+					if ((train_server->trains[i].predict_time_lo == -1) && (train_server->trains[i].predict_time_hi == -1)) {
+						// time unpredictable, use sensor prediction only
+						train = &(train_server->trains[i]);
+						attributed = 1;
+                    	break;
+					}
+					else if ((train_server->trains[i].predict_time_lo <= current_sensor_triggered_time) &&
+							 (train_server->trains[i].predict_time_hi >= current_sensor_triggered_time)) {
+						// time predictable, use sensor as well as time bound
+						train = &(train_server->trains[i]);
+						attributed = 1;
+                    	break;
+					}
                 }
             }
 
 			int last_stop = train->last_stop;
             int last_sensor_triggered_time = train->last_sensor_triggered_time;
-	
+			// update the current number of sensor queries on the current train
+			train->current_speed_num_query += 1;
+
+			if (attributed == 0) {
+				// try to recover sensor attribution failure
+				int recoverable = 0;
+				int sensor_error = 0;
+				int switch_error = 0;
+	            for( ; i < MAX_NUM_TRAINS; i++) {
+					int predict_two_stop = predict_next(train_server->track, train_server->trains[i].predict_stop, train_server);
+					if (predict_two_stop == current_stop) {
+						recoverable = 1;
+						sensor_error = 1;
+						break;
+					}
+					if (train_server->track[train_server->trains[i].last_stop].edge[DIR_AHEAD].dest->type == NODE_BRANCH) {
+						track_node *prev_sw = train_server->track[train_server->trains[i].last_stop].edge[DIR_AHEAD].dest;
+						int sw_id = prev_sw->num;
+						int sw_state = train_server->switches_status[sw_id];
+						if ((sw_state == STRAIGHT) && (prev_sw->edge[DIR_CURVED].dest->num == current_stop)) {
+							train_server->switches_status[sw_id] = CURVE;
+							recoverable = 1;
+							switch_error = sw_id;
+						}
+						else if ((sw_state == CURVE) && (prev_sw->edge[DIR_STRAIGHT].dest->num == current_stop)) {
+							train_server->switches_status[sw_id] = STRAIGHT;
+							recoverable = 1;
+							switch_error = sw_id;
+						}
+					}
+                }
+				if (recoverable == 0) {
+					irq_printf(COM2, "!!! SENSOR %c%d FAILURE\r\n", sensor.group, sensor.id);
+					Cli_request update_sensor_request = get_update_sensor_request(sensor, 0, -1, 0, 0, 0, 0);
+					push_cli_req_fifo(train_server, update_sensor_request);
+					continue;
+				}
+				else if (sensor_error) {
+					irq_printf(COM2, "!!! SENSOR %c%d ERROR, recoverable\r\n", sensor.group, sensor.id);
+				}
+				else if (switch_error) {
+					irq_printf(COM2, "!!! SWICTH ERROR at %d, recoverable\r\n", switch_error);
+				}
+            }
+
+			// update the velocity_state based on current_speed_num_query and previous velocity_state
+			if (train->velocity_state == IDLE) {
+				// IDLE->ACCELERATE
+				if ((train->last_speed < train->speed) && (current_stop != last_stop)) {
+					train->velocity_state = ACCELERATE;
+				}
+				// else IDLE->IDLE
+			}
+			else if (train->velocity_state == ACCELERATE) {
+				// ACCELERATE->CONSTANT
+				if ((current_stop != last_stop) && (train->speed != 0) && (train->current_speed_num_query >= 4)) {
+					train->velocity_state = CONSTANT;
+				}
+				// else ACCELERATE->ACCELERATE
+			}
+			else if (train->velocity_state == CONSTANT) {
+				// CONSTANT->ACCELERATE
+				if (train->last_speed > train->speed) {
+					train->velocity_state = ACCELERATE;
+				}
+				// CONSTANT->DEACCELERATE
+				else if (train->last_speed < train->speed) {
+					train->velocity_state = DEACCELERATE;
+				}
+				// else CONSTANT->CONSTANT
+			}
+			else if (train->velocity_state == DEACCELERATE) {
+				// DEACCELERATE->IDLE 
+				if ((train->speed == 0) && (current_stop == last_stop) && (train->current_speed_num_query >= 4)) {
+					train->velocity_state = IDLE;
+				}
+			}
+			else if (train->velocity_state == SLOW_WALK) {
+				// SLOW_WALK->IDLE
+				if ((train->speed == 0) && (current_stop == last_stop) && (train->current_speed_num_query >= 4)) {
+					train->velocity_state = IDLE;
+				}
+			} 
+
             if ((current_stop == last_stop)){
-				return;
+				continue;
 			}
 
 			// calculate distance, next stop, time, and new_velocity
 			int distance = cal_distance(train_server->track, last_stop, current_stop);
 
-			// update 
+			// update last_stop and last_sensor_triggered_time 
 			train->last_stop = current_stop;
-            train->last_sensor_triggered_time = current_sensor_triggered_time; 
-            train->predict_stop = next_stop;
+            train->last_sensor_triggered_time = current_sensor_triggered_time;
 
+			// update velocity
             int time = current_sensor_triggered_time - last_sensor_triggered_time;
             double real_velocity = (double) distance / (double) time;
-
-			// update velocity_data
+			double last_expected_velocity = train->velocity_model.velocity[train->speed];
             velocity_update(train->speed, real_velocity, &train->velocity_model);
+			double expected_velocity = train->velocity_model.velocity[train->speed];
 
-			Cli_request update_sensor_request = get_update_sensor_request(sensor, last_stop, next_stop);
+			// update prediction
+			int next_stop = predict_next(train_server->track, current_stop, train_server);
+            train->predict_stop = next_stop;
+			if (train->velocity_state == CONSTANT) {
+				int predict_distance = cal_distance(train_server->track, current_stop, next_stop);
+				train->predict_time_lo = current_sensor_triggered_time + (int) ((predict_distance - PREDICTON_ERROR) / expected_velocity);
+				train->predict_time_hi = current_sensor_triggered_time + (int) ((predict_distance + PREDICTON_ERROR) / expected_velocity);
+			}
+			else if ((train->velocity_state == DEACCELERATE) && (train->speed == 0) && (train->deaccel_stop != -1)) {
+				// park cmd prediction
+				int predict_distance = cal_distance(train_server->track, current_stop, next_stop);
+				// d = (v + v0) / 2 + t
+				double expected_velocity_median = (expected_velocity + last_expected_velocity) / 2;
+				train->predict_time_lo = current_sensor_triggered_time + predict_distance - PREDICTON_ERROR - expected_velocity_median;
+				train->predict_time_hi = current_sensor_triggered_time + predict_distance + PREDICTON_ERROR - expected_velocity_median;
+			}
+			else {
+				// unpredictable
+				train->predict_time_lo = -1;
+				train->predict_time_hi = -1;
+			}
+			
+			Cli_request update_sensor_request = get_update_sensor_request(sensor, current_sensor_triggered_time,
+												last_stop, attributed, train, real_velocity, expected_velocity);
 			push_cli_req_fifo(train_server, update_sensor_request);
 
-            Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
-                (int) real_velocity, (int) train->velocity_model.velocity[train->speed]); 
-            push_cli_req_fifo(train_server, update_calibration_request);
+            //Cli_request update_calibration_request = get_update_calibration_request(last_stop, current_stop, distance,
+            //    (int) real_velocity, (int) expected_velocity); 
+            //push_cli_req_fifo(train_server, update_calibration_request);
 
             if (current_stop == train->deaccel_stop){
                 irq_debug(SUBMISSION, "%s", "about to delay");
+				// update the velocity_state to DEACCELERATE
+				train->velocity_state = DEACCELERATE;
+
+				// delay
                 Delay_request delay_req;
                 Handshake handshake = HANDSHAKE_AKG;
                 int velocity = train->velocity_model.velocity[train->speed];
@@ -461,24 +596,24 @@ void go_handle(Train_server *train_server, Command go_cmd)
             // state 2 
             train_server->trains[0].speed = GO_CMD_START_SPEED;
 
-            if(go_cmd.arg0 == 69){
-                velocity69_initialization(&train_server->trains[0].velocity_model);
+            if(go_cmd.arg0 == 58){
+                velocity58_initialization(&train_server->trains[0].velocity_model);
             } else if(go_cmd.arg0 == 71) {
                 velocity71_initialization(&train_server->trains[0].velocity_model);
             } else{
-                irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
+                irq_debug(SUBMISSION, "incorrect train id, only 58 and %d", 71);
             }
             break;
         case 0:
             train_server->trains[1].id = go_cmd.arg0;
             train_server->trains[1].speed = GO_CMD_START_SPEED;
 
-            if(go_cmd.arg0 == 69){
-                velocity69_initialization(&train_server->trains[1].velocity_model);
+            if(go_cmd.arg0 == 58){
+                velocity58_initialization(&train_server->trains[1].velocity_model);
             } else if(go_cmd.arg0 == 71) {
                 velocity71_initialization(&train_server->trains[1].velocity_model);
             } else{
-                irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
+                irq_debug(SUBMISSION, "incorrect train id, only 58 and %d", 71);
             }
             train_server->go_cmd_state = 1;
             break;
@@ -491,7 +626,7 @@ void go_handle(Train_server *train_server, Command go_cmd)
     irq_printf(COM1, "%c%c", GO_CMD_START_SPEED+16, go_cmd.arg0);
 }
 
-void kc_handle(int train_id, Command kc_cmd)
+void kc_handle(int train_id, Command kc_cmd, int delay_task_tid)
 {
     int speed = kc_cmd.arg0;
     int delay_time = kc_cmd.arg1;
@@ -500,20 +635,18 @@ void kc_handle(int train_id, Command kc_cmd)
     Command tr_cmd = get_tr_command(train_id, speed);
     command_handle(&tr_cmd);
 
-    Delay(delay_time * 10);
-
+	if (delay_time <= 25) {
+    	Delay(delay_time * 10);
+	}
+	else {
+        Delay_request delay_req;
+        Handshake handshake = HANDSHAKE_AKG;
+        delay_req.delay_time = delay_time; 
+        delay_req.train_id   = train_id;
+        Send(delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
+	} 
     Command tr_stop_cmd = get_tr_stop_command(train_id);
     command_handle(&tr_stop_cmd);
-}
-
-void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd)
-{
-	int speed = walk_cmd.arg0;
-	int distance = walk_cmd.arg1;
-	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance);
-    irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);
-	Command kc_cmd = get_kc_command(speed, delay_time);
-	kc_handle(train_id, kc_cmd);
 }
 
 void static_reverse(int train_id){
@@ -521,15 +654,15 @@ void static_reverse(int train_id){
     irq_printf(COM1, "%c%c", REVERSE, train_id);
 }                                     
 
-void slow_walk(Walk_table *walk_table, int train_id, int speed, int distance)
+void slow_walk(Walk_table *walk_table, int train_id, int speed, int distance, int delay_task_tid)
 {
 	int delay_time = walk_table_lookup(walk_table, train_id, speed, distance);
     irq_debug(SUBMISSION, "wal: speed = %d, delay_time = %d 100ms", speed, delay_time);
 	Command kc_cmd = get_kc_command(speed, delay_time);
-	kc_handle(train_id, kc_cmd);
+	kc_handle(train_id, kc_cmd, delay_task_tid);
 }
 
-int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train){
+int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train, int delay_task_tid){
     Track_cmd track_cmd;
     if(is_track_cmd_fifo_empty(&ts_request->track_result.cmd_fifo_struct)){
         return -1;
@@ -541,7 +674,10 @@ int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *
 
             pop_track_cmd_fifo(&ts_request->track_result.cmd_fifo_struct, &track_cmd);
             if(track_cmd.type == TRACK_SLOW_WALK){
-                slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance);
+				// update the velocity_state to SLOW_WALK
+				train->velocity_state = SLOW_WALK;
+
+	            slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance, delay_task_tid);
                 irq_debug(SUBMISSION, "slow walk finished, train_id %d, speed %d, distance %d", 
                         train->id, SLOW_WALK_SPEED, track_cmd.distance);
             } else if(track_cmd.type == TRACK_PARK){
@@ -558,7 +694,10 @@ int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *
             train->deaccel_stop = track_cmd.park_info.deaccel_stop; 
             irq_printf(COM1, "%c%c", GO_CMD_FINAL_SPEED+16, train->id); // speed up the current train 
         } else if(track_cmd.type == TRACK_SLOW_WALK){
-            slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance);
+			// update the velocity_state to SLOW_WALK
+			train->velocity_state = SLOW_WALK;
+	
+            slow_walk(&train_server->walk_table, train->id, SLOW_WALK_SPEED, track_cmd.distance, delay_task_tid);
             irq_debug(SUBMISSION, "slow walk finished, train_id %d, speed %d, distance %d", 
                     train->id, SLOW_WALK_SPEED, track_cmd.distance);
         } else{

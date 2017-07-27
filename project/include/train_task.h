@@ -36,4 +36,5 @@ void track_to_train_courier();
 /* Test */
 void milestone1_test();
 
+void project();
 #endif // __TRAIN_TASK__

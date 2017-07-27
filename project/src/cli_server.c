@@ -13,12 +13,11 @@ Cli_request get_train_command_request(Command cmd)
 	return train_cmd_request;	
 }
 
-Cli_request get_update_train_request(char id, char speed)
+Cli_request get_update_train_request(Train *train_update)
 {
 	Cli_request update_train_request;
 	update_train_request.type = CLI_UPDATE_TRAIN;
-	update_train_request.train_update.id = id; 
-	update_train_request.train_update.speed = speed;
+	update_train_request.train_update = train_update; 
 	return update_train_request;
 }
 
@@ -31,13 +30,18 @@ Cli_request get_update_switch_request(char id, char state)
 	return update_switch_request;
 }
 
-Cli_request get_update_sensor_request(Sensor sensor, int last_stop, int next_stop)
+Cli_request get_update_sensor_request(Sensor sensor, int sensor_triggered_time, int last_stop,
+									  int attributed, Train *train_update, int real_velocity, int expected_velocity)
 {
 	Cli_request update_sensor_request;
 	update_sensor_request.type = CLI_UPDATE_SENSOR;
 	update_sensor_request.sensor_update = sensor;
+	update_sensor_request.sensor_triggered_time = sensor_triggered_time;
 	update_sensor_request.last_sensor_update = last_stop;
-	update_sensor_request.next_sensor_update = next_stop;
+	update_sensor_request.attributed = attributed;
+	update_sensor_request.train_update = train_update;
+	update_sensor_request.real_velocity = real_velocity;
+	update_sensor_request.expected_velocity = expected_velocity;
 	return update_sensor_request;	
 }
 
@@ -101,7 +105,6 @@ void cli_server()
 	/*irq_debug(SUBMISSION, "cli_io_tid %d", cli_io_tid);*/
 
     vint train_server_address;
-    irq_printf(COM2, "HELLO cli\r\n");
     Receive(&train_server_tid, &train_server_address, sizeof(train_server_address));
     Reply(train_server_tid, &handshake, sizeof(handshake));
     Train_server *train_server = (Train_server *) train_server_address;
@@ -188,7 +191,10 @@ void cli_server()
 				cli_update_switch(update_request->switch_update, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_SENSOR:
-				cli_update_sensor(update_request->sensor_update, update_request->last_sensor_update, update_request->next_sensor_update, &(train_server->cli_map));
+				cli_update_sensor(update_request->sensor_update, update_request->sensor_triggered_time,
+								  update_request->last_sensor_update, update_request->attributed,
+								  update_request->train_update, update_request->real_velocity,
+								  update_request->expected_velocity, &(train_server->cli_map));
 				break;
 			case CLI_UPDATE_CALIBRATION:
 				//irq_debug(SUBMISSION, "%s", "cli pop calibration update req");

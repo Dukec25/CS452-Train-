@@ -8,57 +8,17 @@
 
 void cli_startup()
 {
-	int row, col;
-
 	// clear screen
 	bw_cls();
-
-
-	// draw borders
-	for (col = LEFT_BORDER + 1; col <= RIGHT_BORDER - 1; col++) {
-		// upper border
-		bw_pos(UPPER_BORDER, col);
-		/*bwputc(COM2, '-');*/
-		// status border
-		bw_pos(STATUS_BORDER, col);
-		/*bwputc(COM2, '-');*/
-		// label border
-		bw_pos(LABEL_BORDER, col);
-		/*bwputc(COM2, '-');*/
-		// bottom borders
-		bw_pos(BOTTOM_BORDER, col);
-        /*bwputc(COM2, '-');*/
-	}
-	// left, middle, and right borders
-	/*for (row = UPPER_BORDER; row <= BOTTOM_BORDER; row++) {*/
-		/*bw_pos(row, LEFT_BORDER);*/
-		/*bwputc(COM2, '|');*/
-		/*bw_pos(row, MIDDLE_BORDER);*/
-		/*bwputc(COM2, '|');*/
-		/*bw_pos(row, RIGHT_BORDER);*/
-		/*bwputc(COM2, '|');*/
-	/*}*/
 
 	// Place clock
 	bw_pos(CLOCK_ROW, CLOCK_COL);
 	bwputstr(COM2, "000:00:0");
 
-	// Place train
-	bw_pos(TRAIN_ROW, TRAIN_COL);
-	bwputstr(COM2, "tr 00 00");
-
-	// Place sensors
+	// Place track
 	bw_pos(SENSOR_LABEL_ROW, SENSOR_COL);
 	bwputstr(COM2, "Track Map");
-	int sensor_num;
     bwprintf(COM2, "\033[32m"); // make sensor display green
-	/*for (sensor_num = 0; sensor_num < SENSOR_GROUPS * SENSORS_PER_GROUP; sensor_num++) {*/
-		/*Sensor sensor = num_to_sensor(sensor_num);*/
-		/*int row = SENSOR_ROW + sensor.id * SENSOR_INDENT_HEIGHT;*/
-		/*int col = SENSOR_COL + sensor.group * SENSOR_INDENT_WIDTH;*/
-		/*bw_pos(row, col);*/
-		/*bwprintf(COM2, "%c%s%d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id);*/
-	/*}*/
     bwprintf(COM2, "\033[0m"); // reset special format
 
 	// Place switches
@@ -74,20 +34,32 @@ void cli_startup()
     }
     bwprintf(COM2, "\033[0m"); // reset special format
 
+	// Place train data
+	bw_pos(TRAIN_DATA_ROW, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "train:");
+	bw_pos(TRAIN_DATA_ROW + 2, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "speed:");
+	bw_pos(TRAIN_DATA_ROW + 4, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "state:");
+	bw_pos(TRAIN_DATA_ROW + 6, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "current sensor:");
+	bw_pos(TRAIN_DATA_ROW + 8, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "predict sensor:");
+	bw_pos(TRAIN_DATA_ROW + 10, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "predict sensor time low[tick]:");
+	bw_pos(TRAIN_DATA_ROW + 12, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "predict sensor time high[tick]:");
+	bw_pos(TRAIN_DATA_ROW + 14, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "real velocity[um/tick]:");
+	bw_pos(TRAIN_DATA_ROW + 16, TRAIN_LEFT_BAR);
+	bwputstr(COM2, "virtual velocity[um/tick]:");
+
 	// Place input cursor at the end
 	bw_pos(HEIGHT, 0);
 	bwputstr(COM2, "> ");
 
 	// Save screen setup
 	bw_save();
-}
-
-void cli_user_input(Command_buffer *command_buffer)
-{
-    /*irq_pos(HEIGHT, 0);*/
-	command_buffer->data[command_buffer->pos] = '\0';
-    /*irq_printf(COM2, "> %s", command_buffer->data);*/
-    bwprintf(COM2, "\r\n");
 }
 
 void cli_update_clock(Clock clock)
@@ -104,11 +76,16 @@ void cli_update_clock(Clock clock)
 	irq_restore();
 }
 
-void cli_update_train(Train train)
+void cli_update_train(Train *train)
 {
 	irq_save();
-	irq_pos(TRAIN_ROW, TRAIN_COL);
-	irq_printf(COM2, "tr %d %s%d", train.id, train.speed < 10 ? "0" : "", train.speed);
+
+	int idx = (train->id == 58 ? 0 : 1);
+	// Place train data
+	irq_pos(TRAIN_DATA_ROW, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+	irq_printf(COM2, "%d", train->id);
+	irq_pos(TRAIN_DATA_ROW + 2, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+	irq_printf(COM2, "%d", train->speed);
 	irq_restore();
 }
 
@@ -120,12 +97,15 @@ void cli_update_switch(Switch sw, Map *map)
 	irq_restore();
 }
 
-void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_update, Map *map)
+void cli_update_sensor(Sensor sensor, int time, int last_sensor_update, int attributed,
+						Train *train, int real_velocity, int expected_velocity, Map *map)
 {
 	irq_save();
 
-    irq_pos(map->sensors[last_sensor_update].row, map->sensors[last_sensor_update].col);
-    Putc(COM2, 'X');
+	if (last_sensor_update >= 0) {
+		irq_pos(map->sensors[last_sensor_update].row, map->sensors[last_sensor_update].col);
+    	Putc(COM2, 'X');
+	}
 
     int cur_sensor = sensor_to_num(sensor);
     irq_pos(map->sensors[cur_sensor].row, map->sensors[cur_sensor].col);
@@ -133,9 +113,45 @@ void cli_update_sensor(Sensor sensor, int last_sensor_update, int next_sensor_up
     Putc(COM2, 'X');
     irq_printf(COM2, "\033[0m"); // reset special format
 
-	Sensor next_sensor = num_to_sensor(next_sensor_update);
-	irq_pos(SENSOR_PREDICTION_ROW, SENSOR_PREDICTION_COL);
-	irq_printf(COM2, "Next Sensor: %c%s%d", SENSOR_LABEL_BASE + next_sensor.group, next_sensor.id < 10 ? "0" : "", next_sensor.id);
+	if (attributed == 0) {
+		irq_pos(SENSOR_PREDICTION_ROW, SENSOR_PREDICTION_COL);
+		irq_printf(COM2, "\033[33m");
+		irq_printf(COM2, "!!! FAILURE: %c%s%d at %d", SENSOR_LABEL_BASE + sensor.group, sensor.id < 10 ? "0" : "", sensor.id, time);
+    	irq_printf(COM2, "\033[0m"); // reset special format
+	}
+	else {
+		int idx = (train->id == 58 ? 0 : 1);
+		irq_pos(TRAIN_DATA_ROW + 4, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		switch(train->velocity_state) {
+		case IDLE:
+			irq_printf(COM2, "%s", "idle");
+			break;
+		case ACCELERATE:
+			irq_printf(COM2, "%s", "accelerating");
+			break;
+		case CONSTANT:
+			irq_printf(COM2, "%s", "constant velocity");
+			break;
+		case DEACCELERATE:
+			irq_printf(COM2, "%s", "deaccelerating");
+			break;
+		case SLOW_WALK:
+			irq_printf(COM2, "%s", "slow walking");
+			break;
+		}
+		irq_pos(TRAIN_DATA_ROW + 6, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		irq_printf(COM2, "%c%d", num_to_sensor(train->last_stop).group, num_to_sensor(train->last_stop).id);
+		irq_pos(TRAIN_DATA_ROW + 8, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		irq_printf(COM2, "%c%d", num_to_sensor(train->predict_stop).group, num_to_sensor(train->predict_stop).id);
+		irq_pos(TRAIN_DATA_ROW + 10, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		irq_printf(COM2, "%d", train->predict_time_lo);
+		irq_pos(TRAIN_DATA_ROW + 12, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		irq_printf(COM2, "%d", train->predict_time_hi);
+		irq_pos(TRAIN_DATA_ROW + 14, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		irq_printf(COM2, "%d", real_velocity);
+		irq_pos(TRAIN_DATA_ROW + 16, TRAIN_DATA_COL + idx * TRAIN_DATA_WIDTH + 1);
+		irq_printf(COM2, "%d", expected_velocity);
+	}
 
 	irq_restore();
 }
@@ -146,6 +162,7 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 		return;
 	}
 	irq_save();
+
 	irq_printf(COM2, "\033[33m");
 	Sensor src = num_to_sensor(calibration_pkg.src);
 	Sensor dest = num_to_sensor(calibration_pkg.dest);
@@ -154,6 +171,7 @@ void cli_update_track(Calibration_package calibration_pkg, int updates)
 				src.group + SENSOR_LABEL_BASE, src.id, dest.group + SENSOR_LABEL_BASE, dest.id,
 				calibration_pkg.distance, calibration_pkg.real_velocity, calibration_pkg.velocity);
     irq_printf(COM2, "\033[0m"); // reset special format
+
 	irq_restore();
 }
 
@@ -809,9 +827,18 @@ void cli_draw_trackB(Map *map_b){
     map_b->sensors[0].col = col_idx;
     map_b->sensors[1].row = map_first_row+14;
     map_b->sensors[1].col = col_idx;
+	irq_restore();
 }
 
-// use busy wait 
-cli_next_line(){
-    irq_printf(COM2, "\033E"); 
+void cli_user_input(Command_buffer *command_buffer)
+{   
+	/*irq_pos(HEIGHT, 0);*/
+	command_buffer->data[command_buffer->pos] = '\0';
+    /*irq_printf(COM2, "> %s", command_buffer->data);*/
+    bwprintf(COM2, "\r\n");
+}
+
+cli_next_line()
+{
+    irq_printf(COM2, "\033E");
 }

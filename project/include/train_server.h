@@ -7,6 +7,7 @@
 #define GO_CMD_FINAL_SPEED 10 
 #define GO_CMD_START_SPEED 4
 #define SLOW_WALK_SPEED 6
+#define PREDICTON_ERROR 200000
 
 typedef enum {
     TRAIN_WANT_GUIDANCE, // select random destination and route 
@@ -78,6 +79,8 @@ typedef struct Train_server {
 	int is_shutdown;
     int train_idx; // used mainly by tr command
 
+	int delay_task_tid;
+
 #define TRACK_REQ_FIFO_SIZE  100
     Track_request track_req_fifo[TRACK_REQ_FIFO_SIZE];
     int track_req_fifo_head;
@@ -114,8 +117,8 @@ void train_server_init(Train_server *train_server);
 void train_server();
 void sensor_reader_task();
 void sensor_handle(Train_server *train_server, int delay_task_tid);
-void kc_handle(int train_id, Command kc_cmd);
-void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd);
+void kc_handle(int train_id, Command kc_cmd, int delay_task_tid);
+void slow_walk(Walk_table *walk_table, int train_id, int speed, int distance, int delay_task_tid);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);
@@ -132,6 +135,6 @@ int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch);
 void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd);
 void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd);
 int is_track_cmd_fifo_empty(Track_cmd_fifo_struct *track_cmd_fifo_struct);
-int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train);
+int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train, int delay_task_tid);
 
 #endif // __TRAIN_SERVER__
