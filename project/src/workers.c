@@ -14,6 +14,8 @@ void delay_task()
         Delay_request delay_req;
 
         Receive(&requester_tid, &delay_req, sizeof(delay_req));
+        /*debug(SUBMISSION, "Receive delay_request from train, tid = %d", */
+                /*delay_req.train_id);*/
         Reply(requester_tid, &handshake, sizeof(handshake));
 
         Delay(delay_req.delay_time);

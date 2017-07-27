@@ -89,6 +89,24 @@ typedef struct Br_lifo{
     int br_lifo_top;
 } Br_lifo;
 
+typedef struct Park_info{
+    int delay_distance;
+    int deaccel_stop;
+} Park_info;
+
+typedef struct Track_cmd{
+    int type;
+    Park_info park_info;
+    int distance; // slow_walk distance 
+} Track_cmd;
+
+#define TRACK_CMD_FIFO_SIZE 50
+typedef struct Track_cmd_fifo_struct{
+    Track_cmd track_cmd_fifo[TRACK_CMD_FIFO_SIZE];
+    int track_cmd_fifo_head;
+    int track_cmd_fifo_tail;
+} Track_cmd_fifo_struct;
+
 /* Train */
 typedef struct Train {
 	char id;
@@ -99,7 +117,9 @@ typedef struct Train {
     int deaccel_stop;
     int park_delay_distance;
     Br_lifo br_lifo_struct;
+    Track_cmd_fifo_struct cmd_fifo_struct;
     Velocity_model velocity_model;
+    int delay_task_tid;
 } Train;
 
 int track_node_name_to_num(char *name);
@@ -148,6 +168,7 @@ typedef struct Command_buffer
 
 Command get_tr_command(char id, char speed);
 Command get_sw_command(char id, char state);
+Command get_rv_command(char id);
 Command get_sensor_command();
 Command get_tr_stop_command(char id);
 Command get_br_command(char group, char id);

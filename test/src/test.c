@@ -271,7 +271,7 @@ void rand_test(){
 }
 
 void calculation_test(){
-    int stop = choose_rand_destination();
+    int stop = choose_rand_destination(40);
     debug(SUBMISSION, "choosed stop %d\r\n", stop);
     int resource_available[144]; 
     Train_server train_server;

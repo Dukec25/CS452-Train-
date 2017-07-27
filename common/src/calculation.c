@@ -27,13 +27,13 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
 
     track_node *temp = node;
     while(temp->num != src && temp->num != pair_src) {
-        debug(SUBMISSION, "%s ", temp->name);
+        /*debug(SUBMISSION, "%s ", temp->name);*/
         temp = temp->previous;
     }
-    debug(SUBMISSION, "%s", temp->name);
+    /*debug(SUBMISSION, "%s", temp->name);*/
 
     while(node->num != src && node->num != pair_src){
-        debug(SUBMISSION, "visiting %s\r\n", node->name);
+        /*debug(SUBMISSION, "visiting %s\r\n", node->name);*/
         if(node->previous->type != NODE_BRANCH){
             /*debug(SUBMISSION, "%s", "not branch");*/
             node = node->previous;
@@ -63,7 +63,7 @@ int switches_need_changes(int src, track_node *node, Train_server *train_server,
                 /*debug(SUBMISSION, "straight %s\r\n", "");*/
                 if(train_server->switches_status[node_id-1] != STRAIGHT){
                     int next_stop = previous_sensor_finder(node->previous);
-                    debug(SUBMISSION, "%s", "switch to stright \r\n");
+                    /*debug(SUBMISSION, "%s", "switch to stright \r\n");*/
 
                     Train_br_switch br_switch;
                     br_switch.sensor_stop = next_stop;
@@ -397,7 +397,7 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     while(1){
         track_node *cur_node;
         fifo_get(&queue, &cur_node);
-        irq_debug(SUBMISSION, "visiting %s", cur_node->name);
+        /*irq_debug(SUBMISSION, "visiting %s", cur_node->name);*/
 
         // make sure previous is the reverse of the branch
         if(cur_node->type == NODE_BRANCH){
@@ -405,7 +405,7 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
             int previous_num = get_track_idx(cur_node->previous);
             /*irq_debug(SUBMISSION, "current_num %d, previous_num %d", current_num, previous_num);*/
             if(current_num == pair(previous_num)){
-                irq_debug(SUBMISSION, "name is %s", cur_node->previous->name);
+                /*irq_debug(SUBMISSION, "name is %s", cur_node->previous->name);*/
                 lifo_push(&parsing_table , cur_node->previous);
             }
         }

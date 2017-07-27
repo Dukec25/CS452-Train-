@@ -19,8 +19,8 @@ void train_task_admin()
 	bwputc(COM1, START); // switches won't work without start command
 	irq_io_tasks_cluster();
 
-    /*reverse_initialize_switch();*/
-	/*initialize_switch();*/
+    reverse_initialize_switch();
+    initialize_switch();
 	sensor_initialization();
 
 	int cli_tid = Create(PRIOR_MEDIUM, cli_server);

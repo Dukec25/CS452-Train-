@@ -6,7 +6,7 @@
 
 #define GO_CMD_FINAL_SPEED 10 
 #define GO_CMD_START_SPEED 4
-#define SLOW_WALK_SPEED 6
+#define SLOW_WALK_SPEED 7
 #define TRAIN_LENGTH 210000 // 21cm, tested on 69, 71
 
 typedef enum {
@@ -30,29 +30,12 @@ typedef enum {
     TRACK_PARK
 } Track_cmd_type;
 
-typedef struct Park_info{
-    int delay_distance;
-    int deaccel_stop;
-} Park_info;
-
-typedef struct Track_cmd{
-    int type;
-    Park_info park_info;
-    int distance; // slow_walk distance 
-} Track_cmd;
-
 typedef struct Track_request{
     Train *train;
 	Track_request_type type;
     int sensor_num;
 } Track_request;
 
-#define TRACK_CMD_FIFO_SIZE 50
-typedef struct Track_cmd_fifo_struct{
-    Track_cmd track_cmd_fifo[TRACK_CMD_FIFO_SIZE];
-    int track_cmd_fifo_head;
-    int track_cmd_fifo_tail;
-} Track_cmd_fifo_struct;
 
 typedef struct Delay_request{
     vint delay_time;
@@ -117,8 +100,8 @@ void train_server_init(Train_server *train_server);
 void train_server();
 void sensor_reader_task();
 void sensor_handle(Train_server *train_server, int delay_task_tid);
-void kc_handle(int train_id, Command kc_cmd);
-void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd);
+void kc_handle(Train *train, Command kc_cmd);
+//void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd);
 
 /* helper functions */
 Sensor parse_stop_sensor(Command cmd);
@@ -135,6 +118,7 @@ int peek_br_lifo(Br_lifo *br_lifo_struct, Train_br_switch *br_switch);
 void push_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd track_cmd);
 void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd *track_cmd);
 int is_track_cmd_fifo_empty(Track_cmd_fifo_struct *track_cmd_fifo_struct);
-int track_cmd_handle(Train_server *train_server, TS_request *ts_request, Train *train);
+int track_cmd_handle(Train_server *train_server, Train *train);
+void static_reverse(int train_id);
 
 #endif // __TRAIN_SERVER__

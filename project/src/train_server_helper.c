@@ -125,5 +125,5 @@ void pop_track_cmd_fifo(Track_cmd_fifo_struct *track_cmd_fifo_struct, Track_cmd 
 }
 
 int is_track_cmd_fifo_empty(Track_cmd_fifo_struct *track_cmd_fifo_struct){
-    return track_cmd_fifo_struct->track_cmd_fifo_head = track_cmd_fifo_struct->track_cmd_fifo_tail;
+    return track_cmd_fifo_struct->track_cmd_fifo_head == track_cmd_fifo_struct->track_cmd_fifo_tail;
 }

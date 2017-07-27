@@ -381,6 +381,14 @@ Command get_tr_command(char id, char speed)
     return tr_cmd;
 }
 
+Command get_rv_command(char id)
+{
+    Command rv_cmd;
+    rv_cmd.type = RV;
+    rv_cmd.arg0 = id;
+    return rv_cmd;
+}
+
 Command get_sw_command(char id, char state)
 {
 	Command sw_cmd;
@@ -634,10 +642,12 @@ void command_handle(Command *pcmd)
 	// pcmd->type get defined at train.h
 	switch(pcmd->type) {
 	case TR:
+        irq_debug(SUBMISSION, "enter tr speed is %d, train=%d", pcmd->arg1, pcmd->arg0);
         // add 16 here to turn on the headlight of the train
 		irq_printf(COM1, "%c%c", pcmd->arg1+16, pcmd->arg0);
 		break;
 	case RV:
+		irq_debug(SUBMISSION, "%s", "begin reverse command_handle");
 		irq_printf(COM1, "%c%c", MIN_SPEED, pcmd->arg0);
 
 		Delay(20);
