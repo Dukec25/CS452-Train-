@@ -271,7 +271,7 @@ void rand_test(){
 }
 
 void calculation_test(){
-    int stop = choose_rand_destination(40);
+    int stop = choose_rand_destination(41);
     debug(SUBMISSION, "choosed stop %d\r\n", stop);
     int resource_available[144]; 
     Train_server train_server;
@@ -279,7 +279,7 @@ void calculation_test(){
     Br_lifo br_lifo_struct;
     br_lifo_struct.br_lifo_top = -1;
     int i = 0;
-    for( ;i < 144; i++){
+    for(i = 0 ;i < 144; i++){
         resource_available[i] = 1;
     }
     /*resource_available[19] = 0;*/
@@ -289,9 +289,9 @@ void calculation_test(){
 		train_server.switches_status[sw-1] = switch_state_to_byte((sw == 16 || sw == 10 || sw == 19 || sw == 21) ? 'S' : 'C');
 	}
     // c10 and e2
-    track_node *node = find_path_with_blocks(train_server.track, 41, 65, resource_available);
+    track_node *node = find_path_with_blocks(train_server.track, 41, 29, resource_available);
     // c10 and a6
-    /*track_node *node = find_path_with_blocks(train_server.track, 41, 5, resource_available);*/
+    /*track_node *node = find_path_with_blocks(train_server.track, 41, stop, resource_available);*/
     track_node *temp_node = node;
     while(temp_node->num != 40 && temp_node->num != 41) {
         debug(SUBMISSION, "%s", temp_node->name);
@@ -304,7 +304,7 @@ void calculation_test(){
     Train train;
     train.last_stop = 41;
     TS_request ts_request;
-    put_cmd_fifo(train_server.track, 5, resource_available, node, &train, &ts_request);
+    put_cmd_fifo(train_server.track, 29, resource_available, node, &train, &ts_request);
 
     Track_cmd_fifo_struct *cmd_struct = &ts_request.track_result.cmd_fifo_struct;
     while(cmd_struct->track_cmd_fifo_head != cmd_struct->track_cmd_fifo_tail){
@@ -314,8 +314,9 @@ void calculation_test(){
         if(track_cmd.type == TRACK_SLOW_WALK){
             debug(SUBMISSION, "distance is %d", track_cmd.distance);
         } else if(track_cmd.type == TRACK_PARK){
-            debug(SUBMISSION, "deaccel stop is %d", track_cmd.park_info.deaccel_stop);
-            debug(SUBMISSION, "delay distance is %d", track_cmd.park_info.delay_distance);
+            debug(SUBMISSION, "%s", "park_command");
+            /*debug(SUBMISSION, "deaccel stop is %d", track_cmd.park_info.deaccel_stop);*/
+            /*debug(SUBMISSION, "delay distance is %d", track_cmd.park_info.delay_distance);*/
         } 
     }
     
@@ -353,6 +354,9 @@ int main()
 {
 	bwsetfifo(COM2, OFF);
 	/*track_test();*/
-    calculation_test();
+    int i = 0;
+    for(i = 0; i< 10; i++){
+        calculation_test();
+    }
 	return 0;
 }

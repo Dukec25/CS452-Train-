@@ -124,7 +124,7 @@ void train_server()
             }
         }
         else if (ts_request.type == TS_TRACK_SERVER) {
-            debug(SUBMISSION, "%s", "receive from track_server");
+            irq_debug(SUBMISSION, "%s", "receive from track_server");
             // result from track server
             int i = 0;
             Train *train;
@@ -200,25 +200,25 @@ void train_server()
                 cli_draw_trackB(&(train_server.cli_map));
             }
             break;
-		case TR:
-			/*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
-			command_handle(&cmd);
+		/*case TR:*/
+            /*irq_debug(SUBMISSION, "handle tr cmd %d %d", cmd.arg0, cmd.arg1);*/
+			/*command_handle(&cmd);*/
 
-			train_server.trains[train_server.train_idx].id = cmd.arg0;
-			train_server.trains[train_server.train_idx].speed = cmd.arg1;
+			/*train_server.trains[train_server.train_idx].id = cmd.arg0;*/
+			/*train_server.trains[train_server.train_idx].speed = cmd.arg1;*/
 
-            if(cmd.arg0 == 69){
-                velocity69_initialization(&train_server.trains[train_server.train_idx].velocity_model);
-            } else if(cmd.arg0 == 71){
-                velocity71_initialization(&train_server.trains[train_server.train_idx].velocity_model);
-            } else{
-                irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);
-            }
+            /*if(cmd.arg0 == 69){*/
+                /*velocity69_initialization(&train_server.trains[train_server.train_idx].velocity_model);*/
+            /*} else if(cmd.arg0 == 71){*/
+                /*velocity71_initialization(&train_server.trains[train_server.train_idx].velocity_model);*/
+            /*} else{*/
+                /*irq_debug(SUBMISSION, "incorrect train id, only 69 and %d", 71);*/
+            /*}*/
 
-			cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);
-			push_cli_req_fifo(&train_server, cli_update_request);
+			/*cli_update_request = get_update_train_request(cmd.arg0, cmd.arg1);*/
+			/*push_cli_req_fifo(&train_server, cli_update_request);*/
 	
-			break;
+			/*break;*/
 		case SW:
 			irq_debug(SUBMISSION, "%s", "handle sw cmd");
 			command_handle(&cmd);
@@ -229,8 +229,10 @@ void train_server()
 			push_cli_req_fifo(&train_server, cli_update_request);
 
 			break;
+
 		case RV:
 		case STOP:
+			irq_debug(SUBMISSION, "%s", "handle rv or stop");
 			command_handle(&cmd);
 			break;
 
@@ -529,15 +531,10 @@ void kc_handle(Train *train, Command kc_cmd)
     Handshake handshake = HANDSHAKE_AKG;
     delay_req.delay_time = delay_time * 10;//TODO ERROR PRONE
     delay_req.train_id   = train->id;
-    Send(train->delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
 
     Command tr_cmd = get_tr_command(train->id, speed);
     command_handle(&tr_cmd);
     Send(train->delay_task_tid, &delay_req, sizeof(delay_req), &handshake, sizeof(handshake));
-
-    /*Delay(delay_time * 10);*/
-    /*Command tr_stop_cmd = get_tr_stop_command(train_id);*/
-    /*command_handle(&tr_stop_cmd);*/
 }
 
 void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd)
@@ -552,11 +549,11 @@ void walk_handle(Walk_table *walk_table, int train_id, Command walk_cmd)
 
 void static_reverse(int train_id){
     /*Delay(20);*/
-    /*irq_debug(SUBMISSION, "%s", "reverse and delay");*/
-    /*irq_printf(COM1, "%c%c", REVERSE, train_id);*/
+    irq_debug(SUBMISSION, "%s", "reverse and delay");
+    irq_printf(COM1, "%c%c", REVERSE, train_id);
     /*Delay(20);*/
-    Command rv_cmd = get_rv_command(train_id);
-    command_handle(&rv_cmd);
+    /*Command rv_cmd = get_rv_command(train_id);*/
+    /*command_handle(&rv_cmd);*/
 }                                     
 
 void slow_walk(Walk_table *walk_table, Train *train, int speed, int distance)

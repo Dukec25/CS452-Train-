@@ -6,7 +6,7 @@
 int cal_distance(track_node *track, int src, int dest)
 {
     if (dest < 0 || src < 0 || dest > TRACK_MAX || src > TRACK_MAX || src == dest) {
-        debug(SUBMISSION, "invalid data src = %d, dest %d, in cal_distance", src, dest);
+        /*debug(SUBMISSION, "invalid data src = %d, dest %d, in cal_distance", src, dest);*/
         return 0;
     }
 	/*irq_debug(SUBMISSION, "%d %d", src, dest);*/
@@ -138,7 +138,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
     int pair_src = 0;
 
     pair_dest = pair(dest);
-    pair_src  = pair(src)  ;
+    pair_src  = pair(src);
     debug(SUBMISSION, "pair_src = %d, pair_dest = %d", pair_src, pair_dest);
 
     fifo_t queue; 
@@ -164,7 +164,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
         fifo_get(&queue, &temp);
 
         int node_num = get_track_idx(temp);
-        /*debug(SUBMISSION, "current node %s, node_num %d", temp->name, node_num);*/
+        debug(SUBMISSION, "current node %s, node_num %d", temp->name, node_num);
         if(node_num == -1){
             debug(SUBMISSION, "%s end", temp->name);
             continue; // this node is either type enter or exit 
@@ -172,7 +172,6 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
 
         if(visited_nodes[node_num]){
             debug(SUBMISSION, "%s already visited, node_num %d", temp->name, node_num);
-            debug(SUBMISSION, "visited_node %d", visited_nodes[node_num]);
             continue;
         }
 
@@ -237,7 +236,7 @@ track_node* find_path_with_blocks(track_node *track, int src, int dest, int *res
         }
     }
 
-    debug(SUBMISSION, "%s", "no path available");
+    /*debug(SUBMISSION, "%s", "no path available");*/
     return NULL;
 }
 
@@ -381,7 +380,7 @@ void put_cmd_fifo(track_node *track, int dest, int *resource, track_node *node, 
     if(node->num != dest){
         // indicate direction reversed
         // actual dest is 5, the real dest is 40 
-        debug(SUBMISSION, "actual dest is %d, the real dest is %d", dest, node->num);
+        /*debug(SUBMISSION, "actual dest is %d, the real dest is %d", dest, node->num);*/
         reverse_at_start = 1; 
     }
 
@@ -437,7 +436,7 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
     result.track_cmd_fifo_tail = 0;
 
     if(reverse){
-        debug(SUBMISSION, "%s", "reverse at beginning");
+        /*debug(SUBMISSION, "%s", "reverse at beginning");*/
         Track_cmd track_cmd;
         track_cmd.type = TRACK_REVERSE;
         push_track_cmd_fifo(&result, track_cmd);
@@ -445,11 +444,11 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
     
     track_node *previous_node; // first node 
     lifo_pop(parsing_table, &previous_node);
-    debug(SUBMISSION, "first name is %s", previous_node->name);
+    /*debug(SUBMISSION, "first name is %s", previous_node->name);*/
     while(!is_lifo_empty(parsing_table)){
         track_node *cur_node;
         lifo_pop(parsing_table, &cur_node);
-        debug(SUBMISSION, "name is %s", cur_node->name);
+        /*debug(SUBMISSION, "name is %s", cur_node->name);*/
         int previous_num = get_track_idx(previous_node);
         int current_num = get_track_idx(cur_node);
         if(cur_node->type == NODE_MERGE){
@@ -457,9 +456,9 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
             int node_before_switch_num = get_track_idx(cur_node->previous);
             if(previous_num != node_before_switch_num){
                 int distance = cal_distance(track, previous_num, node_before_switch_num);
-                debug(SUBMISSION, "merge distance is %d", distance);
+                /*debug(SUBMISSION, "merge distance is %d", distance);*/
                 if(distance > 90*10000){ //TODO, 90cm should be modified in the future
-                    debug(SUBMISSION, "%s", "park operation");
+                    /*debug(SUBMISSION, "%s", "park operation");*/
                     Track_cmd track_cmd_park;
                     track_cmd_park.type = TRACK_PARK;
                     calculate_park(cur_node, train, &track_cmd_park.park_info);
@@ -477,7 +476,7 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
             // distance between switches and previous node 
             track_cmd_slow.distance = cal_distance(track, node_before_switch_num, current_num) +
                 TRAIN_LENGTH; 
-            debug(SUBMISSION, "merge distance is %d", track_cmd_slow.distance);
+            /*debug(SUBMISSION, "merge distance is %d", track_cmd_slow.distance);*/
             push_track_cmd_fifo(&result, track_cmd_slow);
 
             Track_cmd track_cmd_reverse;
@@ -489,7 +488,7 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
             // the dest node 
             int distance = cal_distance(track, previous_num, current_num);
             if(distance > 90*10000){ // 90 cm should be modified in future
-                debug(SUBMISSION, "%s", "park operation");
+                /*debug(SUBMISSION, "%s", "park operation");*/
                 Track_cmd track_cmd_park;
                 track_cmd_park.type = TRACK_PARK;
                 calculate_park(cur_node, train, &track_cmd_park.park_info);
@@ -500,10 +499,10 @@ void generate_cmds_table(track_node *track, Lifo_t *parsing_table, int reverse, 
                 track_cmd_slow.distance = distance; 
                 push_track_cmd_fifo(&result, track_cmd_slow);
             }
-            debug(SUBMISSION, "final destination %s", "reached");
+            /*debug(SUBMISSION, "final destination %s", "reached");*/
             break;
         } else {
-            debug(SUBMISSION, "sth is wrong, type is %d", cur_node->type);
+            /*debug(SUBMISSION, "sth is wrong, type is %d", cur_node->type);*/
         }
     }
     ts_request->track_result.cmd_fifo_struct = result;
